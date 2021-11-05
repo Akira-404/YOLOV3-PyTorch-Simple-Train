@@ -5,7 +5,6 @@ import numpy as np
 
 
 def clip_by_tensor(t: torch.Tensor, t_min: torch.Tensor, t_max: torch.Tensor) -> torch.Tensor:
-
     # if t < t_min:
     #     return t_min
     # if t > t_max:
@@ -42,10 +41,15 @@ class YOLOLoss(nn.Module):
         self.ignore_threshold = 0.5
         self.cuda = cuda
 
-    def forward(self,l,input,targets=None):
-        bs=input.size(0)
-        in_h=input.size(1)
-        in_w=input.size(2)
+    def forward(self, l, input, targets=None):
+        bs = input.size(0)
+        in_h = input.size(1)
+        in_w = input.size(2)
+
+        stride_h = self.input_shape[0] / in_h
+        stride_w = self.input_shape[1] / in_w
+
+        scaled_anchors = [(a_w / stride_w, a_h / stride_h) for a_w, a_h in self.anchors]
 
 
 def weights_init(net, init_type='normal', init_gain=0.02):
