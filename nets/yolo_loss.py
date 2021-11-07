@@ -29,7 +29,12 @@ def BCELoss(pred: torch.Tensor, target: torch.Tensor):
 
 
 class YOLOLoss(nn.Module):
-    def __init__(self, anchors, num_classes, input_shape, cuda, anchors_mask=[[6, 7, 8], [3, 4, 5], [0, 1, 2]]):
+    def __init__(self,
+                 anchors,
+                 num_classes: int,
+                 input_shape,
+                 cuda,
+                 anchors_mask: list = [[6, 7, 8], [3, 4, 5], [0, 1, 2]]):
         super(YOLOLoss, self).__init__()
 
         self.anchors = anchors
@@ -52,7 +57,7 @@ class YOLOLoss(nn.Module):
         scaled_anchors = [(a_w / stride_w, a_h / stride_h) for a_w, a_h in self.anchors]
 
 
-def weights_init(net, init_type='normal', init_gain=0.02):
+def weights_init(net, init_type: str = 'normal', init_gain: float = 0.02):
     def init_func(m):
         classname = m.__class__.__name__
         if hasattr(m, 'weight') and classname.find('Conv') != -1:
