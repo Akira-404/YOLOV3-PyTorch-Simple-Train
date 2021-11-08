@@ -3,11 +3,17 @@ from tqdm import tqdm
 from lxml import etree
 
 
-class VOCDataSet(object):
-    def __init__(self, voc_root, year="2012", txt_name: str = "train.txt"):
+# dataset path:xxx/xxxx/VOCdevkit/VOC2007(2012)
+# voc_root path:xxx/xxxx
+class VOCDataSet:
+    def __init__(self, voc_root: str, year: str = "2012", txt_name: str = "train.txt"):
         assert year in ["2007", "2012"], "year must be in ['2007', '2012']"
         self.root = os.path.join(voc_root, "VOCdevkit", f"VOC{year}")
         self.annotations_root = os.path.join(self.root, "Annotations")
+        assert os.path.exists(self.root) is True, f'voc root:{self.root} is error'
+        assert os.path.exists(self.annotations_root) is True, f'annotations root:{self.annotations_root} is error'
+        print(f'root:{self.root}')
+        print(f'annotations root:{self.annotations_root}')
 
         # read train.txt or val.txt file
         txt_path = os.path.join(self.root, "ImageSets", "Main", txt_name)
@@ -61,6 +67,7 @@ class VOCDataSet(object):
             im_width = int(data["size"]["width"])
 
             wh = []
+            # 计算object wh相对于image wh的比值
             for obj in data["object"]:
                 xmin = float(obj["bndbox"]["xmin"])
                 xmax = float(obj["bndbox"]["xmax"])
@@ -75,3 +82,11 @@ class VOCDataSet(object):
             boxes_wh_list.append(wh)
 
         return im_wh_list, boxes_wh_list
+
+
+if __name__ == '__main__':
+    voc_root = '/home/cv/AI_Data/hat_worker_voc'
+    year = '2007'
+    txt_name = 'train.txt'
+    dataset = VOCDataSet(voc_root, year, txt_name)
+    im_wh_list, boxes_wh_list = dataset.get_info()
