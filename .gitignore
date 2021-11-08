@@ -2,3 +2,5 @@
 .idea/
 nets/__pycache__/
 /_test.py
+
+kmeans_anchors/

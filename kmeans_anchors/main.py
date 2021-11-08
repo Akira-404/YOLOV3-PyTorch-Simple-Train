@@ -17,21 +17,22 @@ def anchor_fitness(k: np.ndarray, wh: np.ndarray, thr: float):  # mutation fitne
     return f, bpr
 
 
-def main(img_size=512, n=9, thr=0.25, gen=1000):
+def main(img_size: int = 512, n: int = 9, thr: float = 0.25, gen: int = 1000):
     # 从数据集中读取所有图片的wh以及对应bboxes的wh
-    dataset = VOCDataSet(voc_root="/data", year="2012", txt_name="train.txt")
+    dataset = VOCDataSet(voc_root='/home/cv/AI_Data/hat_worker_voc', year="2007", txt_name="train.txt")
     im_wh, boxes_wh = dataset.get_info()
 
     # 最大边缩放到img_size
     im_wh = np.array(im_wh, dtype=np.float32)
-    shapes = img_size * im_wh / im_wh.max(1, keepdims=True)
+    shapes = img_size * im_wh / im_wh.max(1, keepdims=True)  # shapes.shape=im_wh.shpae
+    # boxes wh映射为正在的坐标
     wh0 = np.concatenate([l * s for s, l in zip(shapes, boxes_wh)])  # wh
 
     # Filter 过滤掉小目标
     i = (wh0 < 3.0).any(1).sum()
     if i:
         print(f'WARNING: Extremely small objects found. {i} of {len(wh0)} labels are < 3 pixels in size.')
-    wh = wh0[(wh0 >= 2.0).any(1)]  # 只保留wh都大于等于2个像素的box
+    wh = wh0[(wh0 >= 2.0).any(1)]  # 只保留wh>=2个像素的box
 
     # Kmeans calculation
     # print(f'Running kmeans for {n} anchors on {len(wh)} points...')
