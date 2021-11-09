@@ -1,3 +1,4 @@
+nc: 20
 classes:
   - aeroplane,
   - bicycle,

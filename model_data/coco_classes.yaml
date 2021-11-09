@@ -1,3 +1,6 @@
+
+#number of classes
+nc: 80
 classes:
  - person,
  - bicycle,
