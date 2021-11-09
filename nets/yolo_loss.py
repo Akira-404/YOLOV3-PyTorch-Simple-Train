@@ -38,9 +38,7 @@ class YOLOLoss(nn.Module):
         super(YOLOLoss, self).__init__()
 
         # yolov3 anchors
-        # [10,13,  16,30,  33,23,
-        # 30,61,  62,45,  59,119,
-        # 116,90,  156,198,  373,326]
+        # [10,13,  16,30,  33,23,30,61,  62,45,  59,119,116,90,  156,198,  373,326]
         self.anchors = anchors
         self.num_classes = num_classes
         self.bbox_attrs = 5 + num_classes  # (x,y,w,h,p)+num_classes
@@ -55,19 +53,25 @@ class YOLOLoss(nn.Module):
         #   input的shape为  bs(batch size),  3*(5+num_classes), 13, 13
         #                  bs,              3*(5+num_classes), 26, 26
         #                  bs,              3*(5+num_classes), 52, 52
+
+        # target shape:batch_size num_boj xmin,ymin,xmax,ymax,classes_id
+
         bs = input.size(0)
         # in_h in_w为feature layer output shape
-        in_h = input.size(1)
-        in_w = input.size(2)
+        in_h = input.size(2)
+        in_w = input.size(3)
 
-        # 计算缩放尺度
+        # 计算当前层累积到的缩放尺度
+        # layer shape(c,13,13):stride_h(w)=32
+        # layer shape(c,26,26):stride_h(w)=16
+        # layer shape(c,52,52):stride_h(w)=8
         stride_h = self.input_shape[0] / in_h
         stride_w = self.input_shape[1] / in_w
 
-        # 计算anchors与当前层的缩放比值
+        # 计算anchors与当前层的比值
         scaled_anchors = [(anchor_w / stride_w, anchor_h / stride_h) for anchor_w, anchor_h in self.anchors]
         # attributes of a bounding box : (tx,ty,tw,th,pc,c1,c2...cn)x3
-        # shape out:batch_size,3,13,13,5+num_classes,
+        # prediction shape:batch_size,3,13,13,5+num_classes,
         prediction = input.view(bs, len(self.anchors_mask[l]), self.bbox_attrs, in_h, in_w).permute(0, 1, 3, 4,
                                                                                                     2).contiguous()
         # 获取调整参数
@@ -123,7 +127,9 @@ class YOLOLoss(nn.Module):
         return loss, num_pos
 
     def get_target(self, l, targets, anchors, in_h, in_w):
-
+        """
+        targets shape:(batch_size,obj_size,5) :batch_size num_obj xmin,ymin,xmax,ymax,class_id
+        """
         # 计算一共有多少张图片
         bs = len(targets)
 
@@ -138,27 +144,32 @@ class YOLOLoss(nn.Module):
         # batch_size, 3, 13, 13, 5 + num_classes
         y_true = torch.zeros(bs, len(self.anchors_mask[l]), in_h, in_w, self.bbox_attrs, requires_grad=False)
         for b in range(bs):
-            if len(targets[b]) == 0:
+
+            if len(targets[b]) == 0:  # 无标注物体
                 continue
-            # batch_target shape:
+
+            # batch_target shape:(num_obj,5): num_obj xmin ymin xmax ymax class_id
             batch_target = torch.zeros_like(targets[b])
 
             #   计算出正样本在特征层上的中心点
-            batch_target[:, [0, 2]] = targets[b][:, [0, 2]] * in_w
-            batch_target[:, [1, 3]] = targets[b][:, [1, 3]] * in_h
-            # obj class
+            batch_target[:, [0, 2]] = targets[b][:, [0, 2]] * in_w  # xmin ymin * in_w
+            batch_target[:, [1, 3]] = targets[b][:, [1, 3]] * in_h  # xmax ymax * in_h
+            # get obj class
             batch_target[:, 4] = targets[b][:, 4]
             batch_target = batch_target.cpu()
 
-            #   将真实框转换一个形式
-            #   num_true_box, 4
+            # 将真实框转换一个形式
+            # batch_target.size(0)=num_obj
+            # cat:[num_obj,2]+[num_obj,2]->[num_obj,4]
+            # num_true_box, 4
             gt_box = torch.FloatTensor(
-                torch.cat((torch.zeros((batch_target.size(0), 2)), batch_target[:, 2:4]), 1))
+                torch.cat((torch.zeros((batch_target.size(0), 2)), batch_target[:, 2:4]), dim=1))
 
             #   将先验框转换一个形式
+            # cat:[9,2]+ [9,2]=[9,4]
             #   9, 4
             anchor_shapes = torch.FloatTensor(
-                torch.cat((torch.zeros((len(anchors), 2)), torch.FloatTensor(anchors)), 1))
+                torch.cat((torch.zeros((len(anchors), 2)), torch.FloatTensor(anchors)), dim=1))
 
             #   计算交并比
             #   self.calculate_iou(gt_box, anchor_shapes) = [num_true_box, 9]每一个真实框和9个先验框的重合情况
@@ -194,6 +205,7 @@ class YOLOLoss(nn.Module):
                 #   用于获得xywh的比例
                 #   大目标loss权重小，小目标loss权重大
                 box_loss_scale[b, k, j, i] = batch_target[t, 2] * batch_target[t, 3] / in_w / in_h
+
         return y_true, noobj_mask, box_loss_scale
 
     def get_ignore(self, l, x, y, h, w, targets, scaled_anchors, in_h, in_w, noobj_mask):
@@ -253,7 +265,14 @@ class YOLOLoss(nn.Module):
 
 
 def calculate_iou(_box_a: torch.Tensor, _box_b: torch.Tensor) -> torch.Tensor:
+    """
+    _box_a:gt box shape:[num_obj,4]=[num_obj,[cx,cy,w,h]]
+    _box_h:anchors box shape:[9,4]=[num_anchors,[cx,cy,w,h]]
+    """
     #   计算真实框的左上角和右下角
+    # x1=cx-w/2,x2=cx+w/2
+    # y1=cy-h/2,y2=cy+h/2
+
     b1_x1, b1_x2 = _box_a[:, 0] - _box_a[:, 2] / 2, _box_a[:, 0] + _box_a[:, 2] / 2
     b1_y1, b1_y2 = _box_a[:, 1] - _box_a[:, 3] / 2, _box_a[:, 1] + _box_a[:, 3] / 2
     #   计算先验框获得的预测框的左上角和右下角
@@ -261,14 +280,16 @@ def calculate_iou(_box_a: torch.Tensor, _box_b: torch.Tensor) -> torch.Tensor:
     b2_y1, b2_y2 = _box_b[:, 1] - _box_b[:, 3] / 2, _box_b[:, 1] + _box_b[:, 3] / 2
 
     #   将真实框和预测框都转化成左上角右下角的形式
-    box_a = torch.zeros_like(_box_a)
-    box_b = torch.zeros_like(_box_b)
+    box_a = torch.zeros_like(_box_a)  # [num_obj,4]
+    box_b = torch.zeros_like(_box_b)  # [num_anchors,4]
     box_a[:, 0], box_a[:, 1], box_a[:, 2], box_a[:, 3] = b1_x1, b1_y1, b1_x2, b1_y2
     box_b[:, 0], box_b[:, 1], box_b[:, 2], box_b[:, 3] = b2_x1, b2_y1, b2_x2, b2_y2
 
     #   A为真实框的数量，B为先验框的数量
-    A = box_a.size(0)
-    B = box_b.size(0)
+    A = box_a.size()[0]
+    B = box_b.size()[0]
+    # A = box_a.size(0)
+    # B = box_b.size(0)
 
     #   计算交的面积
     max_xy = torch.min(box_a[:, 2:].unsqueeze(1).expand(A, B, 2), box_b[:, 2:].unsqueeze(0).expand(A, B, 2))
@@ -303,3 +324,9 @@ def weights_init(net, init_type: str = 'normal', init_gain: float = 0.02):
 
     print('initialize network with %s type' % init_type)
     net.apply(init_func)
+
+
+if __name__ == '__main__':
+    x1 = torch.tensor([[1, 2, 3], [4, 5, 6]])
+    x2 = torch.tensor([[7, 8, 9], [0, 0, 0]])
+    print(torch.cat([x1, x2], dim=1))
