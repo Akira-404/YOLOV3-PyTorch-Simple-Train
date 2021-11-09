@@ -4,3 +4,9 @@ nets/__pycache__/
 /_test.py
 
 kmeans_anchors/
+
+model_data/_test.py
+utils/__pycache__/__init__.cpython-37.pyc
+utils/__pycache__/utils.cpython-37.pyc
+2007_train.txt
+2007_val.txt
