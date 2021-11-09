@@ -48,9 +48,9 @@ def get_annotation_data(root: str, year: str, image_name: str, list_file):
         list_file.write(' ' + ','.join([str(a) for a in box]) + ',' + str(cls_id))
 
 
-def generate(args):
+def generate_train_val_test(args):
     random.seed(0)
-    print('Generate train tainval val test txt in ImageSets.')
+    print('Generate train tainval val test txt in ImageSets/Main.')
     xml_file_path = os.path.join(args.root, 'VOC2007/Annotations')
     save_file_path = os.path.join(args.root, 'VOC2007/ImageSets/Main')
     xml_data = os.listdir(xml_file_path)
@@ -88,12 +88,10 @@ def generate(args):
     ftrain.close()
     fval.close()
     ftest.close()
-    print("Generate train tainval val test txt in ImageSets done.")
+    print("Generate train tainval val test txt in ImageSets/Main done.")
 
 
-def maia(args):
-    generate(args)
-
+def generate_yolo_train_val(args):
     print("Generate 2007_train.txt and 2007_val.txt for train.")
     for year, image_set in VOCdevkit_sets:
         image_names = open(os.path.join(args.root, f'VOC{year}/ImageSets/Main/{image_set}.txt'),
@@ -110,6 +108,11 @@ def maia(args):
 
         list_file.close()
     print("Generate 2007_train.txt and 2007_val.txt for train done.")
+
+
+def maia(args):
+    generate_train_val_test(args)
+    generate_yolo_train_val(args)
 
 
 if __name__ == '__main__':
