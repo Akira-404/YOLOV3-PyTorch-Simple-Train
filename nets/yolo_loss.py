@@ -68,7 +68,7 @@ class YOLOLoss(nn.Module):
         stride_h = self.input_shape[0] / in_h
         stride_w = self.input_shape[1] / in_w
 
-        # 计算anchors与当前层的比值
+        # 计算anchors在当前层的缩放值
         scaled_anchors = [(anchor_w / stride_w, anchor_h / stride_h) for anchor_w, anchor_h in self.anchors]
         # attributes of a bounding box : (tx,ty,tw,th,pc,c1,c2...cn)x3
         # prediction shape:batch_size,3,13,13,5+num_classes,
@@ -161,13 +161,11 @@ class YOLOLoss(nn.Module):
             # 将真实框转换一个形式
             # batch_target.size(0)=num_obj
             # cat:[num_obj,2]+[num_obj,2]->[num_obj,4]
-            # num_true_box, 4
             gt_box = torch.FloatTensor(
                 torch.cat((torch.zeros((batch_target.size(0), 2)), batch_target[:, 2:4]), dim=1))
 
             #   将先验框转换一个形式
             # cat:[9,2]+ [9,2]=[9,4]
-            #   9, 4
             anchor_shapes = torch.FloatTensor(
                 torch.cat((torch.zeros((len(anchors), 2)), torch.FloatTensor(anchors)), dim=1))
 
@@ -192,6 +190,7 @@ class YOLOLoss(nn.Module):
                 c = batch_target[t, 4].long()
 
                 #   noobj_mask代表无目标的特征点
+                # noobj_mask shape: batch_size 3,13,13
                 noobj_mask[b, k, j, i] = 0
 
                 #   tx、ty代表中心调整参数的真实值
@@ -239,11 +238,11 @@ class YOLOLoss(nn.Module):
         for b in range(bs):
 
             #   将预测结果转换一个形式
-            #   pred_boxes_for_ignore      num_anchors, 4
+            #   pred_boxes_for_ignore.shape:[num_anchors, 4]
             pred_boxes_for_ignore = pred_boxes[b].view(-1, 4)
 
             #   计算真实框，并把真实框转换成相对于特征层的大小
-            #   gt_box      num_true_box, 4
+            #   gt_box.shape[num_true_box, 4]
             if len(targets[b]) > 0:
                 batch_target = torch.zeros_like(targets[b])
 
@@ -253,11 +252,11 @@ class YOLOLoss(nn.Module):
                 batch_target = batch_target[:, :4]
 
                 #   计算交并比
-                #   anch_ious       num_true_box, num_anchors
-                anch_ious = self.calculate_iou(batch_target, pred_boxes_for_ignore)
+                #   anch_ious.shape[num_true_box, num_anchors]
+                anch_ious = calculate_iou(batch_target, pred_boxes_for_ignore)
 
                 #   每个先验框对应真实框的最大重合度
-                #   anch_ious_max   num_anchors
+                #   anch_ious_max.shpae[num_anchors]
                 anch_ious_max, _ = torch.max(anch_ious, dim=0)
                 anch_ious_max = anch_ious_max.view(pred_boxes[b].size()[:3])
                 noobj_mask[b][anch_ious_max > self.ignore_threshold] = 0
