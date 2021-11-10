@@ -12,7 +12,7 @@ parse.add_argument('-tp', '--train_percent', type=float, default=0.9,
                    help='train percent default=0.9')
 parse.add_argument('-tvp', '--trainval_percent', type=float, default=0.9,
                    help='train_val percent default=0.9')
-parse.add_argument('-r', '--root', type=str, default='/home/cv/AI_Data/HardHatWorker_voc/VOCdevkit',
+parse.add_argument('-r', '--root', type=str, default='/home/cv/AI_Data/hat_worker_voc/VOCdevkit',
                    help='dataset root')
 args = parse.parse_args()
 

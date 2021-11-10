@@ -1,0 +1,27 @@
+classes_path: 'model_data/my_classes.yaml' #数据集类别文件
+anchors_path: 'model_data/my_anchors.yaml' #数据集聚类anchors
+
+anchors_mask: [ [ 6, 7, 8 ], [ 3, 4, 5 ], [ 0, 1, 2 ] ]
+model_path: 'model_data/yolo_weights.pth' #预加载yolov3权重文件
+input_shape: [ 416, 416 ] #模型输入图片尺度
+cuda: True
+
+Init_Epoch: 0
+
+#冻结训练参数设置
+Freeze_Epoch: 50
+Freeze_batch_size: 8
+Freeze_lr: 1e-3
+
+#全网络训练参数设置
+UnFreeze_Epoch: 100
+Unfreeze_batch_size: 8
+Unfreeze_lr: 1e-4
+
+Freeze_Train: True
+
+num_workers: 8
+
+#训练数据集路径文件
+train_annotation_path: '2007_train.txt'
+val_annotation_path: '2007_val.txt'

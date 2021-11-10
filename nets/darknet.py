@@ -1,6 +1,7 @@
 import math
 from collections import OrderedDict
 
+import numpy as np
 import torch.nn as nn
 
 
@@ -161,4 +162,5 @@ def darknet53():
 
 if __name__ == '__main__':
     darknet = darknet53()
-    print(darknet)
+    for k, v in darknet.state_dict().items():
+        print(k, np.shape(k))

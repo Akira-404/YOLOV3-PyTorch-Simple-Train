@@ -1,9 +1,10 @@
 from collections import OrderedDict
 
+import numpy as np
 import torch
 import torch.nn as nn
 
-from darknet import darknet53
+from nets.darknet import darknet53
 
 
 def conv2d(in_channel: int, out_channel: int, kernel_size):
@@ -100,5 +101,13 @@ class YOLO(nn.Module):
 
 
 if __name__ == '__main__':
-    m = _make_yolo_block([512, 1024], 512, 255)
-    print(m[:5])
+    anchors_mask = [[6, 7, 8], [3, 4, 5], [0, 1, 2]]
+
+    net = YOLO(anchors_mask, 2)
+    dict = net.state_dict()
+    # for k,v in dict.items():
+    #     print(k,' ',np.shape(v))
+
+    yw = torch.load('../model_data/yolo_weights.pth',map_location='cpu')
+    for k, v in yw.items():
+        print(k, ' ', np.shape(v))

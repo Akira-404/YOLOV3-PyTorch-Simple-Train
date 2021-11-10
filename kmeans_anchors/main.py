@@ -1,10 +1,22 @@
 import random
+import argparse
+
 import numpy as np
+import yaml
 from tqdm import tqdm
 from scipy.cluster.vq import kmeans
 
 from read_voc import VOCDataSet
 from yolo_kmeans import k_means, wh_iou
+
+parse = argparse.ArgumentParser('k-means get the anchors')
+parse.add_argument('-r', '--root', type=str, default='/home/cv/AI_Data/hat_worker_voc',
+                   help='voc dataset rot:xxx/xxx')
+parse.add_argument('-y', '--year', type=str, default='2007',
+                   help='2007 or 2012')
+parse.add_argument('-s', '--save_path', type=str, default='../model_data/my_anchors.yaml',
+                   help='this path will save you anchors.yaml')
+args = parse.parse_args()
 
 
 def anchor_fitness(k: np.ndarray, wh: np.ndarray, thr: float):  # mutation fitness
@@ -19,7 +31,7 @@ def anchor_fitness(k: np.ndarray, wh: np.ndarray, thr: float):  # mutation fitne
 
 def main(img_size: int = 512, n: int = 9, thr: float = 0.25, gen: int = 1000):
     # 从数据集中读取所有图片的wh以及对应bboxes的wh
-    dataset = VOCDataSet(voc_root='/home/cv/AI_Data/hat_worker_voc', year="2007", txt_name="train.txt")
+    dataset = VOCDataSet(voc_root=args.root, year=args.year, txt_name="train.txt")
     im_wh, boxes_wh = dataset.get_info()
 
     # 最大边缩放到img_size
@@ -67,6 +79,11 @@ def main(img_size: int = 512, n: int = 9, thr: float = 0.25, gen: int = 1000):
     k = k[np.argsort(k.prod(1))]  # sort small to large
     print("genetic: " + " ".join([f"[{int(i[0])}, {int(i[1])}]" for i in k]))
     print(f"fitness: {f:.5f}, best possible recall: {bpr:.5f}")
+    k_f = [int(i) for i in k.flatten()]
+    print(k_f)
+    anchors = {'anchors': k_f}
+    with open(args.save_path, 'w') as f:
+        yaml.dump(anchors, f)
 
 
 if __name__ == "__main__":

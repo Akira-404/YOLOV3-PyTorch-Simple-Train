@@ -74,3 +74,7 @@ def get_lr(optimizer):
 def preprocess_input(image):
     image /= 255.0
     return image
+
+
+def check_dataset_classes(dataset_root: str, save_path: str = '../model_data/my_classes.yaml'):
+    ...

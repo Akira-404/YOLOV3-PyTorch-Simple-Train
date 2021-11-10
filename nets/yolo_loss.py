@@ -323,9 +323,3 @@ def weights_init(net, init_type: str = 'normal', init_gain: float = 0.02):
 
     print('initialize network with %s type' % init_type)
     net.apply(init_func)
-
-
-if __name__ == '__main__':
-    x1 = torch.tensor([[1, 2, 3], [4, 5, 6]])
-    x2 = torch.tensor([[7, 8, 9], [0, 0, 0]])
-    print(torch.cat([x1, x2], dim=1))
