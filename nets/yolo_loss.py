@@ -6,15 +6,15 @@ import numpy as np
 
 
 # 限制数据范围
-def clip_by_tensor(t, t_min, t_max):
-    _t = t_min if t < t_min else t
-    _t = t_max if t > t_max else _t
-    return _t
+def clip_by_tensor(t: torch.Tensor, t_min, t_max):
+    t = t.float()
+    # _t = t_min if (t < t_min).float() else t
+    # _t = t_max if (t > t_max).float() else _t
+    # return _t
 
-    # t = t.float()
-    # result = (t >= t_min).float() * t + (t < t_min).float() * t_min
-    # result = (result <= t_max).float() * result + (result > t_max).float() * t_max
-    # return result
+    result = (t >= t_min).float() * t + (t < t_min).float() * t_min
+    result = (result <= t_max).float() * result + (result > t_max).float() * t_max
+    return result
 
 
 def MSELoss(pred: torch.Tensor, target: torch.Tensor) -> torch.Tensor:

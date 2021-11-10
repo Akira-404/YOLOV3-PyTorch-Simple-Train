@@ -17,3 +17,4 @@ model_data/yolo_weights.pth
 /model_data/yw.txt
 
 utils/__pycache__/callbacks.cpython-37.pyc
+logs/

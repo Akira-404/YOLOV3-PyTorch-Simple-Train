@@ -67,7 +67,7 @@ def get_anchors(anchors_path: str):
 
 
 def get_lr(optimizer):
-    for param_group in optimizer.param_group:
+    for param_group in optimizer.param_groups:
         return param_group['lr']
 
 

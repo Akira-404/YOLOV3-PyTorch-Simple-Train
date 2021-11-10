@@ -37,7 +37,7 @@ def fit_one_epoch(model_train, model, yolo_loss, loss_history, optimizer, epoch,
                 num_pos_all += num_pos
 
             loss_value = loss_value_all / num_pos_all
-
+            loss+=loss_value.item()
             loss_value.backward()
             optimizer.step()
             pbar.set_postfix(**{'loss': loss / (iteration + 1),
@@ -58,20 +58,14 @@ def fit_one_epoch(model_train, model, yolo_loss, loss_history, optimizer, epoch,
                 else:
                     images = torch.from_numpy(images).type(torch.FloatTensor)
                     targets = [torch.from_numpy(ann).type(torch.FloatTensor) for ann in targets]
-                # ----------------------#
                 #   清零梯度
-                # ----------------------#
                 optimizer.zero_grad()
-                # ----------------------#
                 #   前向传播
-                # ----------------------#
                 outputs = model_train(images)
 
                 loss_value_all = 0
                 num_pos_all = 0
-                # ----------------------#
                 #   计算损失
-                # ----------------------#
                 for l in range(len(outputs)):
                     loss_item, num_pos = yolo_loss(l, outputs[l], targets)
                     loss_value_all += loss_item
