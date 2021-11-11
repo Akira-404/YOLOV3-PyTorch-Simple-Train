@@ -3,28 +3,29 @@ import random
 import xml.etree.ElementTree as ET
 import argparse
 
-from utils.utils import get_classes
+from utils.utils import get_classes, load_yaml_conf
 
-parse = argparse.ArgumentParser(description='Generate train and train_val file')
-parse.add_argument('-cp', '--classes_path', type=str, default='./model_data/my_classes.yaml',
-                   help='xxx/xxx/voc_classes.txt(yaml)')
-parse.add_argument('-tp', '--train_percent', type=float, default=0.9,
-                   help='train percent default=0.9')
-parse.add_argument('-tvp', '--trainval_percent', type=float, default=0.9,
-                   help='train_val percent default=0.9')
-parse.add_argument('-r', '--root', type=str, default='/home/cv/AI_Data/hat_worker_voc/VOCdevkit',
-                   help='dataset root')
-args = parse.parse_args()
-
-print(args)
+# parse = argparse.ArgumentParser(description='Generate train and train_val file')
+# parse.add_argument('-cp', '--classes_path', type=str, default='./model_data/my_classes.yaml',
+#                    help='xxx/xxx/voc_classes.txt(yaml)')
+# parse.add_argument('-tp', '--train_percent', type=float, default=0.9,
+#                    help='train percent default=0.9')
+# parse.add_argument('-tvp', '--trainval_percent', type=float, default=0.9,
+#                    help='train_val percent default=0.9')
+# parse.add_argument('-r', '--root', type=str, default='/home/cv/AI_Data/hat_worker_voc/VOCdevkit',
+#                    help='dataset root')
+# args = parse.parse_args()
+#
+# print(args)
+conf = load_yaml_conf('train.yaml')
 
 VOCdevkit_sets = [('2007', 'train'), ('2007', 'val')]
 
-classes, classes_len = get_classes(args.classes_path)
+classes, classes_len = get_classes(conf['classes_path'])
 
 
 def get_annotation_data(root: str, year: str, image_name: str, list_file):
-    xml_file = open(os.path.join(root, f'VOC{year}/Annotations/{image_name}.xml'), encoding='utf-8')
+    xml_file = open(os.path.join(root, f'VOCdevkit/VOC{year}/Annotations/{image_name}.xml'), encoding='utf-8')
     tree = ET.parse(xml_file)
     root = tree.getroot()
 
@@ -48,11 +49,11 @@ def get_annotation_data(root: str, year: str, image_name: str, list_file):
         list_file.write(' ' + ','.join([str(a) for a in box]) + ',' + str(cls_id))
 
 
-def generate_train_val_test(args):
+def generate_train_val_test():
     random.seed(0)
     print('Generate train tainval val test txt in ImageSets/Main.')
-    xml_file_path = os.path.join(args.root, 'VOC2007/Annotations')
-    save_file_path = os.path.join(args.root, 'VOC2007/ImageSets/Main')
+    xml_file_path = os.path.join(conf['dataset_root'], 'VOCdevkit/VOC2007/Annotations')
+    save_file_path = os.path.join(conf['dataset_root'], 'VOCdevkit/VOC2007/ImageSets/Main')
     xml_data = os.listdir(xml_file_path)
     total_xml = []
     for xml in xml_data:
@@ -61,8 +62,8 @@ def generate_train_val_test(args):
 
     num_xml = len(total_xml)
     list = range(num_xml)
-    tv = int(num_xml * args.trainval_percent)
-    tr = int(tv * args.train_percent)
+    tv = int(num_xml * conf['trainval_percent'])
+    tr = int(tv * conf['train_percent'])
     trainval = random.sample(list, tv)
     train = random.sample(trainval, tr)
 
@@ -91,29 +92,29 @@ def generate_train_val_test(args):
     print("Generate train tainval val test txt in ImageSets/Main done.")
 
 
-def generate_yolo_train_val(args):
+def generate_yolo_train_val():
     print("Generate 2007_train.txt and 2007_val.txt for train.")
     for year, image_set in VOCdevkit_sets:
-        image_names = open(os.path.join(args.root, f'VOC{year}/ImageSets/Main/{image_set}.txt'),
+        image_names = open(os.path.join(conf["dataset_root"], f'VOCdevkit/VOC{year}/ImageSets/Main/{image_set}.txt'),
                            encoding='utf-8').read().strip().split()
         # 2007_tarin.txt
         # 2007_val.txt
         list_file = open(f'{year}_{image_set}.txt', 'w', encoding='utf-8')
         for image_name in image_names:
             # write:xxx/xxx/xxx/jpg
-            list_file.write(f'{os.path.abspath(args.root)}/VOC{year}/JPEGImages/{image_name}.jpg')
+            list_file.write(f'{os.path.abspath(conf["dataset_root"])}/VOCdevkit/VOC{year}/JPEGImages/{image_name}.jpg')
             # write: xmin ymin xmax ymax classed_id
-            get_annotation_data(args.root, year, image_name, list_file)
+            get_annotation_data(conf['dataset_root'], year, image_name, list_file)
             list_file.write('\n')
 
         list_file.close()
     print("Generate 2007_train.txt and 2007_val.txt for train done.")
 
 
-def maia(args):
-    generate_train_val_test(args)
-    generate_yolo_train_val(args)
+def maia():
+    generate_train_val_test()
+    generate_yolo_train_val()
 
 
 if __name__ == '__main__':
-    maia(args)
+    maia()
