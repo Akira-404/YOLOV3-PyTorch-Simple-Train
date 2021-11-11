@@ -26,3 +26,11 @@ num_workers: 8
 train_annotation_path: '2007_train.txt'
 val_annotation_path: '2007_val.txt'
 
+#get_anchors.py config
+dataset_root: '/home/cv/AI_Data/hat_worker_voc'
+year: '2007'
+save_path: model_data/my_anchors.yaml
+
+#generate config
+train_percent: 0.9
+trainval_percent: 0.9

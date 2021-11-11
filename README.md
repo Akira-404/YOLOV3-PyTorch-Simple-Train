@@ -57,36 +57,12 @@ python scripts/VOC2007.sh
 
 ### 步骤一：
 
-获取数据集anchors，修改kmeans_anchors/main.py中的root参数，让其指向个人数据集路径，然后运行main.py文件，程序将自动计算个人数据集anchors并以yaml文件格式保存在model_data/my_anchors.yaml中。
+修改train.yaml配置文件并生成my_anchors.yaml，需要重点关键的参数有：
 
-```python
-parse.add_argument('-r', '--root', type=str, default='/home/cv/AI_Data/hat_worker_voc',
-                   help='voc dataset rot:xxx/xxx')
-
-python kmeans_anchors/main.py
-```
-
-### 步骤二：
-
-修改model_data/my_classes.yaml中目标个数（nc），和目标名称（names）。
-
-```yaml
-nc: 2
-names: ['person','hat']
-```
-
-### 步骤三：
-
-修改generate_training_file.py中的参数root，让其指向个人数据集路径。该文件将自动分类数据集，并在当前目录下产生用于train val的txt文件。
-
-```python
-parse.add_argument('-r', '--root', type=str,default='/home/cv/AI_Data/hat_worker_voc/VOCdevkit',
-                   help='dataset root')
-```
-
-### 步骤四：
-
-根据个人需求，修改设置train.yaml中的参数，也可以不修改。**model_path**参数用于预训练。
+- classes_path:数据集类别文件
+- anchors_path:数据集聚类anchors
+- model_path:预加载yolov3权重文件
+- dataset_roo:数据集根目录
 
 ```yaml
 classes_path: 'model_data/my_classes.yaml' #数据集类别文件
@@ -116,9 +92,50 @@ num_workers: 8
 #训练数据集路径文件
 train_annotation_path: '2007_train.txt'
 val_annotation_path: '2007_val.txt'
+
+#get_anchors.py config
+dataset_root: '/home/cv/AI_Data/hat_worker_voc'
+year: '2007'
+save_path: model_data/my_anchors.yaml
+
+#generate config
+train_percent: 0.9
+trainval_percent: 0.9
 ```
 
-步骤五：
+运行get_anchors.py生成数据集的anchors文件，文件保存在model_data/my_anchors.yaml中
+
+```python
+python get_anchors.py
+```
+
+### 步骤二：
+
+修改model_data/my_classes.yaml中目标个数（nc），和目标类别名称（names）。
+
+```yaml
+nc: 2
+names: ['person','hat']
+```
+
+### 步骤三：
+
+修改generate_training_file.py中的参数root，让其指向个人数据集路径。该文件将自动分类数据集，并在当前目录下产生用于train val的txt文件。
+
+```python
+parse.add_argument('-r', '--root', type=str,default='/home/cv/AI_Data/hat_worker_voc/VOCdevkit',
+                   help='dataset root')
+```
+
+### 步骤四：
+
+根据个人需求，修改设置train.yaml中的参数，也可以不修改。**model_path**参数用于预训练。
+
+```yaml
+
+```
+
+### 步骤五：
 
 运行train.py进行模型训练，自动读取yolo_cofig.yaml中的配置信息，进行训练，权重文件在logs文件夹中。
 
