@@ -1,4 +1,4 @@
-# YOLO-V3-Sample-Train：基于PyTorch框架的目标检测模型
+# YOLO-V3-Simple-Train：基于PyTorch框架的目标检测模型
 
 更新时间：2021-11-10
 

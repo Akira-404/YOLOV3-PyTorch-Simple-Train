@@ -25,3 +25,4 @@ num_workers: 8
 #训练数据集路径文件
 train_annotation_path: '2007_train.txt'
 val_annotation_path: '2007_val.txt'
+
