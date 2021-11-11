@@ -31,7 +31,7 @@ print('Load model done.')
 
 print('Get predict result.')
 for image_id in tqdm(image_ids):
-    image_path = os.path.join(_conf['dataset_root'], "VOCdevkt/VOC2007/JPEGImages/" + image_id + ".jpg")
+    image_path = os.path.join(_conf['dataset_root'], "VOCdevkit/VOC2007/JPEGImages/" + image_id + ".jpg")
     image = Image.open(image_path)
     predict.get_map_txt(image_id, image, class_names, _map_out_path)
 print('Get predict result done.')
@@ -63,7 +63,7 @@ for image_id in tqdm(image_ids):
 print("Get ground truth result done.")
 
 print("Get map.")
-get_map(_conf['MINOVERLAP'], True, path=_map_out_path)
+get_map(_conf['minoverlap'], True, path=_map_out_path)
 print("Get map done.")
 
 print("Get map.")

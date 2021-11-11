@@ -11,23 +11,10 @@ from nets.yolo import YOLO
 from nets.yolo_loss import YOLOLoss, weights_init
 from utils.callbacks import LossHistory
 from utils.dataloader import YoloDataset, yolo_dataset_collate
-from utils.utils import get_anchors, get_classes
+from utils.utils import get_anchors, get_classes, load_yaml_conf
 from utils.utils_fit import fit_one_epoch
 
-
-# 加载配置文件
-def load_conf(conf_path: str) -> dict:
-    """
-    :param conf_path :type:yaml
-    :return: :type:dict yolo config
-    """
-    with open(conf_path, 'r') as f:
-        conf = yaml.safe_load(f)
-    print(conf)
-    return conf
-
-
-conf = load_conf('yolo_config.yaml')
+conf = load_yaml_conf('train.yaml')
 CUDA = True if (torch.cuda.is_available() and conf["cuda"]) else False
 device = torch.device('cuda' if CUDA else 'cpu')
 print(f'CUDA:{CUDA}')
@@ -40,7 +27,7 @@ def load_weights(model, model_path, device):
     _model_dict = {}
     pretrained_dict = torch.load(model_path, map_location=device)
 
-    for k,v in model_dict.items():
+    for k, v in model_dict.items():
         # pytorch 0.4.0后BN layer新增 num_batches_tracked 参数
         if 'num_batches_tracked' in k:
             print('pass->', k)

@@ -8,13 +8,13 @@ from PIL import Image
 from utils.utils_prediect import Predict
 
 parse = argparse.ArgumentParser('predict config')
-parse.add_argument('-m', '--mode', type=str, choices=['image', 'video', 'dir'], default='image',
-                   help='predicct image or video or dir')
-parse.add_argument('-i', '--image', type=str, default='',
+parse.add_argument('-m', '--mode', type=str, choices=['image', 'video', 'dir'], default='dir',
+                   help='predict image or video or dir')
+parse.add_argument('-i', '--image', type=str, default='img.jpg',
                    help='image path')
 parse.add_argument('-v', '--video', type=str, default='',
                    help='video path')
-parse.add_argument('-d', '-dir', type=str, default='',
+parse.add_argument('-d', '--dir', type=str, default='/home/cv/PycharmProjects/rabbitmq-proj/download/src/cloud/202193',
                    help='dir path')
 args = parse.parse_args()
 
@@ -73,11 +73,12 @@ def main(args):
     elif args.mode == 'dir':
         assert os.path.exists(args.dir) is True, f'{args.dir} is error'
         _support_img_type = ['.bmp', '.dib', '.png', '.jpg', '.jpeg', '.pbm', '.pgm', '.ppm', '.tif', '.tiff']
-        _dir_out_path = os.path.join(output_path, 'dir_out')
+        _dir_out_path = os.path.join(output_path,os.path.basename(args.dir))
 
-        image_names = os.listdir(args.dir_path)
+        image_names = os.listdir(args.dir)
         for image_name in tqdm(image_names):
-            if image_name.lower().endswith(_support_img_type):
+            print(image_name)
+            if image_name.lower().endswith('jpg'):
                 image_path = os.path.join(args.dir, image_name)
                 image = Image.open(image_path)
                 r_image = predict.detect_image(image)

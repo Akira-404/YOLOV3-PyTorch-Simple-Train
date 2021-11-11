@@ -21,3 +21,10 @@ logs/
 
 utils/__pycache__/utils_bbox.cpython-37.pyc
 utils/__pycache__/utils_prediect.cpython-37.pyc
+/out/
+/map_out/
+/mAP.png
+/img.jpg
+
+__pycache__/predict.cpython-37.pyc
+utils/__pycache__/utils_map.cpython-37.pyc

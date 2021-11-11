@@ -30,8 +30,8 @@ class DecodeBox:
             # batch_size 255,26,26
             # batch_size 255,52,52a
             batch_size = input.size(0)
-            input_height = input.size(1)
-            input_width = input.size(2)
+            input_height = input.size(2)
+            input_width = input.size(3)
 
             # stride_h=stride_w
             stride_h = self.input_shape[0] / input_height
