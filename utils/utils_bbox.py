@@ -6,15 +6,23 @@ import numpy as np
 
 
 class DecodeBox:
-    def __init__(self, anchors: list, num_classes: int, input_shape: tuple, anchors_mask: Optional[list] = None):
+    def __init__(self, anchors: list,
+                 num_classes: int,
+                 input_shape: tuple,
+                 anchors_mask: Optional[list] = None):
         super(DecodeBox, self).__init__()
+
         self.anchors = anchors
         self.num_classes = num_classes
         self.bbox_attrs = 5 + num_classes  # xmin,ymin,xmax,ymax,conf,num_classes
         self.input_shape = input_shape
         self.anchors_mask = [[6, 7, 8], [3, 4, 5], [0, 1, 2]] if anchors_mask is None else anchors_mask
 
-    def decode_box(self, inputs) -> list:
+    def decode_box(self, inputs: torch.Tensor) -> list:
+        """
+        :param inputs: net output shape:(out1,out2,out3):(small,medium,big)
+        :return: result shape: (3,batch_size,x,y,w,h,conf,classes)
+        """
         outputs = []
         for i, input in enumerate(inputs):
             # input shape:(3,4)
@@ -29,12 +37,12 @@ class DecodeBox:
             stride_h = self.input_shape[0] / input_height
             stride_w = self.input_shape[1] / input_width
 
-            scaled_anchors = [(anchor_width / stride_w, anchor_height / stride_h) for anchor_width, anchor_height in
-                              self.anchors[self.anchors_mask[i]]]
+            scaled_anchors = [(anchor_width / stride_w, anchor_height / stride_h)
+                              for anchor_width, anchor_height in self.anchors[self.anchors_mask[i]]]
 
             # (batch_size,3,5+num_class,h,w)->(batch_size,3,h,w,5+num_classes)
-            prediction = input.view(batch_size, len(self.anchors_mask[i]),
-                                    self.bbox_attrs, input_height, input_width).permute(0, 1, 3, 4, 2).contiguous()
+            prediction = input.view(batch_size, len(self.anchors_mask[i]), self.bbox_attrs,
+                                    input_height, input_width).permute(0, 1, 3, 4, 2).contiguous()
 
             #   先验框的中心位置的调整参数
             x = torch.sigmoid(prediction[..., 0])
@@ -78,10 +86,13 @@ class DecodeBox:
 
             #   将输出结果归一化成小数的形式
             _scale = torch.Tensor([input_width, input_height, input_width, input_height]).type(FloatTensor)
+
+            # output shape:(batch_size,x,y,w,h,conf,classes)
             output = torch.cat((pred_boxes.view(batch_size, -1, 4) / _scale,
                                 conf.view(batch_size, -1, 1),
-                                pred_cls.view(batch_size, -1, self.num_classes)), -1)
+                                pred_cls.view(batch_size, -1, self.num_classes)), dim=-1)
             outputs.append(output.data)
+            # outputs shape:((out1,out2,out3),input)
         return outputs
 
     def yolo_correct_boxes(self, box_xy: list,
@@ -102,10 +113,12 @@ class DecodeBox:
 
             box_yx = (box_yx - offset) * scale
             box_hw *= scale
-        box_mins = box_yx - (box_hw / 2.)
-        box_maxes = box_yx + (box_hw / 2.)
-        boxes = np.concatenate([box_mins[..., 0:1], box_mins[..., 1:2], box_maxes[..., 0:1], box_maxes[..., 1:2]],
-                               axis=-1)
+        box_mins = box_yx - (box_hw / 2.)  # ymin xmin
+        box_maxes = box_yx + (box_hw / 2.)  # ymax xmin
+        boxes = np.concatenate([box_mins[..., 0:1],
+                                box_mins[..., 1:2],
+                                box_maxes[..., 0:1],
+                                box_maxes[..., 1:2]], axis=-1)  # ymin xmin ymax xmax
         boxes *= np.concatenate([image_shape, image_shape], axis=-1)
         return boxes
 
@@ -118,15 +131,16 @@ class DecodeBox:
              nms_thres: float = 0.4) -> list:
 
         #   将预测结果的格式转换成左上角右下角的格式。
-        #   prediction  [batch_size, num_anchors, 85]
+        #   prediction  [batch_size, num_anchors, num_classes+5]
         box_corner = prediction.new(prediction.shape)
-        box_corner[:, :, 0] = prediction[:, :, 0] - prediction[:, :, 2] / 2
-        box_corner[:, :, 1] = prediction[:, :, 1] - prediction[:, :, 3] / 2
-        box_corner[:, :, 2] = prediction[:, :, 0] + prediction[:, :, 2] / 2
-        box_corner[:, :, 3] = prediction[:, :, 1] + prediction[:, :, 3] / 2
+        # prediction[:, :, i] shape: cx cy w,h
+        box_corner[:, :, 0] = prediction[:, :, 0] - prediction[:, :, 2] / 2  # cx-w/2
+        box_corner[:, :, 1] = prediction[:, :, 1] - prediction[:, :, 3] / 2  # cy-h/2
+        box_corner[:, :, 2] = prediction[:, :, 0] + prediction[:, :, 2] / 2  # cx+w/2
+        box_corner[:, :, 3] = prediction[:, :, 1] + prediction[:, :, 3] / 2  # cy+h/2
         prediction[:, :, :4] = box_corner[:, :, :4]
 
-        output = [None for _ in range(len(prediction))]
+        output = [None for _ in range(len(prediction))]  # output shape:(batch_size)
         for i, image_pred in enumerate(prediction):
 
             #   对种类预测部分取max。
@@ -145,7 +159,7 @@ class DecodeBox:
                 continue
 
             #   detections  [num_anchors, 7]
-            #   7的内容为：x1, y1, x2, y2, obj_conf, class_conf, class_pred
+            #   7：x1, y1, x2, y2, obj_conf, class_conf, class_pred
             detections = torch.cat((image_pred[:, :5], class_conf.float(), class_pred.float()), 1)
 
             #   获得预测结果中包含的所有种类
@@ -182,8 +196,12 @@ class DecodeBox:
 
                 # Add max detections to outputs
                 output[i] = max_detections if output[i] is None else torch.cat((output[i], max_detections))
+
             if output[i] is not None:
                 output[i] = output[i].cpu().numpy()
+                # box_xy box_wh shape:(num_anchors,2)
                 box_xy, box_wh = (output[i][:, 0:2] + output[i][:, 2:4]) / 2, output[i][:, 2:4] - output[i][:, 0:2]
+
+                # output shape(len(prediction),num_anchors,6)
                 output[i][:, :4] = self.yolo_correct_boxes(box_xy, box_wh, input_shape, image_shape, letterbox_image)
         return output

@@ -15,6 +15,9 @@ from utils.utils_bbox import DecodeBox
 
 class Predict:
     def __init__(self, conf_path: str):
+        """
+        :param conf_path: xxx.yaml
+        """
         super(Predict, self).__init__()
         self.conf = load_yaml_conf(conf_path)
 
@@ -50,7 +53,7 @@ class Predict:
             self.net = self.net.cuda()
 
     def detect_image(self, image):
-        image_shape = np.array(np.shape(image)[0:2])
+        image_shape = np.array(np.shape(image)[0:2])  # w,h
         #   在这里将图像转换成RGB图像，防止灰度图在预测时报错。
         #   代码仅仅支持RGB图像的预测，所有其它类型的图像都会转化成RGB
         image = img2rgb(image)
@@ -67,11 +70,12 @@ class Predict:
             images = images.cuda() if self.CUDA else images
 
             #   将图像输入网络当中进行预测！
-
             outputs = self.net(images)
+            # outputs shape: (3,batch_size,x,y,w,h,conf,classes)
             outputs = self.bbox_util.decode_box(outputs)
 
             #   将预测框进行堆叠，然后进行非极大抑制
+            # results shape:(len(prediction),num_anchors,4)
             results = self.bbox_util.nms_(torch.cat(outputs, 1),
                                           self.num_classes,
                                           self.conf['input_shape'],
@@ -99,26 +103,29 @@ class Predict:
             box = top_boxes[i]
             score = top_conf[i]
 
-            top, left, bottom, right = box
+            # top, left, bottom, right = box
+            y0, x0, y1, x1 = box
+            # x0, y0, x1, y1 = box
 
-            top = max(0, np.floor(top).astype('int32'))
-            left = max(0, np.floor(left).astype('int32'))
-            bottom = min(image.size[1], np.floor(bottom).astype('int32'))
-            right = min(image.size[0], np.floor(right).astype('int32'))
+            y0 = max(0, np.floor(y0).astype('int32'))
+            x0 = max(0, np.floor(x0).astype('int32'))
+            y1 = min(image.size[1], np.floor(y1).astype('int32'))
+            x1 = min(image.size[0], np.floor(x1).astype('int32'))
 
             label = '{} {:.2f}'.format(predicted_class, score)
             draw = ImageDraw.Draw(image)
             label_size = draw.textsize(label, font)
             label = label.encode('utf-8')
-            print(label, top, left, bottom, right)
+            print(label, x0, y0, x1, y1)
 
-            if top - label_size[1] >= 0:
-                text_origin = np.array([left, top - label_size[1]])
+            if y0 - label_size[1] >= 0:
+                text_origin = np.array([x0, y0 - label_size[1]])
             else:
-                text_origin = np.array([left, top + 1])
+                text_origin = np.array([x0, y0 + 1])
 
             for i in range(thickness):
-                draw.rectangle([left + i, top + i, right - i, bottom - i], outline=self.colors[c])
+                # rectangle param:xy:[x0,y0,x1,y1]
+                draw.rectangle([x0 + i, y0 + i, x1 - i, y1 - i], outline=self.colors[c])
             draw.rectangle([tuple(text_origin), tuple(text_origin + label_size)], fill=self.colors[c])
             draw.text(text_origin, str(label, 'UTF-8'), fill=(0, 0, 0), font=font)
             del draw
@@ -170,13 +177,13 @@ class Predict:
 
                 #   将预测框进行堆叠，然后进行非极大抑制
 
-                results = self.bbox_util.non_max_suppression(torch.cat(outputs, 1),
-                                                             self.num_classes,
-                                                             self.conf['input_shape'],
-                                                             image_shape,
-                                                             self.conf['letterbox_image'],
-                                                             conf_thres=self.conf['confidence'],
-                                                             nms_thres=self.conf['nms_iou'])
+                results = self.bbox_util.nms_(torch.cat(outputs, 1),
+                                              self.num_classes,
+                                              self.conf['input_shape'],
+                                              image_shape,
+                                              self.conf['letterbox_image'],
+                                              conf_thres=self.conf['confidence'],
+                                              nms_thres=self.conf['nms_iou'])
 
         t2 = time.time()
         tact_time = (t2 - t1) / test_interval
@@ -207,13 +214,13 @@ class Predict:
             outputs = self.bbox_util.decode_box(outputs)
 
             #   将预测框进行堆叠，然后进行非极大抑制
-            results = self.bbox_util.non_max_suppression(torch.cat(outputs, 1),
-                                                         self.num_classes,
-                                                         self.conf['input_shape'],
-                                                         image_shape,
-                                                         self.conf['letterbox_image'],
-                                                         conf_thres=self.conf['confidence'],
-                                                         nms_thres=self.conf['nms_iou'])
+            results = self.bbox_util.nms_(torch.cat(outputs, 1),
+                                          self.num_classes,
+                                          self.conf['input_shape'],
+                                          image_shape,
+                                          self.conf['letterbox_image'],
+                                          conf_thres=self.conf['confidence'],
+                                          nms_thres=self.conf['nms_iou'])
 
             if results[0] is None:
                 return
