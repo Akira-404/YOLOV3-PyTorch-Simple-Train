@@ -118,7 +118,23 @@ names: ['class1','class2']
 
 ![](/home/cv/PycharmProjects/YOLOV3-PyTorch/docs/Dataset_Info_Pie_Chart.png)
 
-### 步骤三：生成anchors
+### 步骤三：配置train.yaml&分割数据集
+
+运行**generate_training_file.py**将数据集进行分割，并在当前文件目录下生成训练数据集文件：2007_train.txt和验证集文件2007_val.txt。
+
+如果需要自己设置数据集分割参数请修改**train.yaml**中的两个参数：
+
+```yaml
+#数据集分割比例参数
+train_percent: 0.9 #训练集划分比例
+trainval_percent: 0.9 #训练集+验证集划分比例
+```
+
+```python
+python generate_training_file.py
+```
+
+### 步骤四：生成anchors
 
 运行**get_anchors.py**生成数据集的anchors文件，文件保存在**model_data/my_anchors.yaml**中。
 
@@ -149,22 +165,6 @@ anchors:
 - 88
 - 99
 
-```
-
-### 步骤四：配置train.yaml&分割数据集
-
-运行**generate_training_file.py**将数据集进行分割，并在当前文件目录下生成训练数据集文件：2007_train.txt和验证集文件2007_val.txt。
-
-如果需要自己设置数据集分割参数请修改**train.yaml**中的两个参数：
-
-```yaml
-#数据集分割比例参数
-train_percent: 0.9 #训练集划分比例
-trainval_percent: 0.9 #训练集+验证集划分比例
-```
-
-```python
-python generate_training_file.py
 ```
 
 ### 步骤五：训练
@@ -221,7 +221,7 @@ parse.add_argument('-i', '--image', type=str, default='img.jpg',
                    help='image path')
 parse.add_argument('-v', '--video', type=str, default='xxxx/xxxx/xxx.mp4',
                    help='video path')
-parse.add_argument('-d', '--dir', type=str, default='/home/cv/PycharmProjects/rabbitmq-proj/download/src/cloud/202193',
+parse.add_argument('-d', '--dir', type=str, default='/home/cv/PycharmProjects/rabbitmq-proj/download/src/cloud/202193_1',
                    help='dir path')
 ```
 

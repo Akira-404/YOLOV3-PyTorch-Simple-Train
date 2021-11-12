@@ -1,4 +1,5 @@
-model_path: 'logs/hat_worker_voc-ep098-loss3.201-val_loss3.313.pth' #模型权重路径
+#model_path: 'logs/hat_worker_voc-ep098-loss3.201-val_loss3.313.pth' #模型权重路径
+model_path: 'logs/HardHatWorker_voc-ep099-loss3.918-val_loss3.740.pth' #模型权重路径
 classes_path: 'model_data/my_classes.yaml' #数据类别文件
 
 anchors_path: 'model_data/my_anchors.yaml' #数据集anchors文件
@@ -13,4 +14,5 @@ letterbox_image: False #是否使用letterbox缩放
 cuda: True
 
 minoverlap: 0.5 #map计算中的iou阈值
-dataset_root: '/home/cv/AI_Data/hat_worker_voc' #数据集根目录
+#dataset_root: '/home/cv/AI_Data/hat_worker_voc' #数据集根目录
+dataset_root: '/home/cv/AI_Data/HardHatWorker_voc' #数据集根目录

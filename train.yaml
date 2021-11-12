@@ -29,7 +29,7 @@ val_annotation_path: '2007_val.txt'
 
 #get_anchors.py config
 #dataset_root: '/home/cv/AI_Data/hat_worker_voc'
-dataset_root: '/home/cv/AI_Data/HardHatWorker_voc'
+dataset_root: '/home/cv/AI_Data/head_datas_yolo'
 #dataset_root: '/home/cv/AI_Data/head_dataset_coco_yolo'
 year: '2007'
 save_path: 'model_data/my_anchors.yaml'

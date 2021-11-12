@@ -14,7 +14,7 @@ parse.add_argument('-i', '--image', type=str, default='img.jpg',
                    help='image path')
 parse.add_argument('-v', '--video', type=str, default='',
                    help='video path')
-parse.add_argument('-d', '--dir', type=str, default='/home/cv/PycharmProjects/rabbitmq-proj/download/src/cloud/202193',
+parse.add_argument('-d', '--dir', type=str, default='/home/cv/PycharmProjects/rabbitmq-proj/download/src/cloud/202197',
                    help='dir path')
 args = parse.parse_args()
 

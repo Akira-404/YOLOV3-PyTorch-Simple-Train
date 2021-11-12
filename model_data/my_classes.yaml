@@ -1,2 +1,2 @@
-nc: 3
-names: ['helmet','head','person']
+nc: 1
+names: [ 'head' ]
