@@ -3,6 +3,7 @@ import numpy as np
 from PIL import Image
 import yaml
 import torch
+import xml.etree.ElementTree as ET
 
 
 # 加载yaml配置文件
@@ -119,5 +120,50 @@ def preprocess_input(image):
     return image
 
 
-def check_dataset_classes(dataset_root: str, save_path: str = '../model_data/my_classes.yaml'):
-    ...
+def read_xml(path: str):
+    tree = ET.parse(path)
+    return tree
+
+
+def check_dataset(conf: dict):
+    import matplotlib.pyplot as plt
+
+    annoa_root = os.path.join(conf['dataset_root'], f'VOCdevkit/VOC{conf["year"]}/Annotations')
+    assert os.path.exists(annoa_root) is True, f'{annoa_root} is error'
+    # dataset_info = {'total': 0, 'difficult': 0}
+    dataset_info = {}
+    xmls = os.listdir(annoa_root)
+    for xml in xmls:
+        # dataset_info['total'] += 1
+        xml_p = os.path.join(annoa_root, xml)
+        assert os.path.exists(xml_p) is True, f'{xml_p} is error'
+        tree = read_xml(xml_p)
+        root = tree.getroot()
+
+        for obj in root.iter('object'):
+            # if obj.find('difficult').text == '1':
+            #     dataset_info['difficult'] += 1
+
+            name = obj.find('name').text
+            if name not in dataset_info.keys():
+                dataset_info[name] = 0
+            dataset_info[name] += 1
+    print(dataset_info)
+
+    import matplotlib.pyplot as plt
+    fig = plt.figure('Dataset Info Pie Chart')
+
+    # 柱状图
+    data = dataset_info.values()
+    classes = [f'{v[0]}:{v[1]}' for v in dataset_info.items()]
+
+    # 添加图形对象
+    ax = fig.add_axes([0, 0, 1, 1])
+    ax.axis('equal')
+    ax.pie(data, labels=classes, autopct='%1.2f%%')
+    plt.show()
+
+
+if __name__ == '__main__':
+    conf = load_yaml_conf('../train.yaml')
+    check_dataset(conf)
