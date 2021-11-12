@@ -2,7 +2,8 @@ classes_path: 'model_data/my_classes.yaml' #数据集类别文件
 anchors_path: 'model_data/my_anchors.yaml' #数据集聚类anchors
 
 anchors_mask: [ [ 6, 7, 8 ], [ 3, 4, 5 ], [ 0, 1, 2 ] ]
-model_path: 'model_data/yolo_weights.pth' #预加载yolov3权重文件
+#model_path: 'model_data/yolo_weights.pth' #预加载yolov3权重文件
+model_path: 'logs/hat_worker_voc-ep098-loss3.201-val_loss3.313.pth' #预加载yolov3权重文件
 input_shape: [ 416, 416 ] #模型输入图片尺度
 cuda: True
 
@@ -27,7 +28,9 @@ train_annotation_path: '2007_train.txt'
 val_annotation_path: '2007_val.txt'
 
 #get_anchors.py config
-dataset_root: '/home/cv/AI_Data/hat_worker_voc'
+#dataset_root: '/home/cv/AI_Data/hat_worker_voc'
+dataset_root: '/home/cv/AI_Data/HardHatWorker_voc'
+#dataset_root: '/home/cv/AI_Data/head_dataset_coco_yolo'
 year: '2007'
 save_path: 'model_data/my_anchors.yaml'
 

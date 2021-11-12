@@ -1,4 +1,4 @@
-model_path: 'logs/ep098-loss3.201-val_loss3.313.pth' #模型权重路径
+model_path: 'logs/hat_worker_voc-ep098-loss3.201-val_loss3.313.pth' #模型权重路径
 classes_path: 'model_data/my_classes.yaml' #数据类别文件
 
 anchors_path: 'model_data/my_anchors.yaml' #数据集anchors文件

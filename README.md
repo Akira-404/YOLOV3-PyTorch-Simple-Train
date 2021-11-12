@@ -57,12 +57,12 @@ python scripts/VOC2007.sh
 
 ## 训练
 
-### 步骤一：
+### 步骤一：检查train.yaml文件
 
 修改**train.yaml**配置文件，需要**重点关注**的参数有：
 
-- classes_path:数据集类别文件，**此文件手动修改**
-- anchors_path:数据集聚类anchors文件，**此文件自动生成**
+- classes_path:数据集类别文件，**此文件内容需要手动修改**（具体请看步骤二）
+- anchors_path:数据集聚类anchors文件，**此文件内容自动生成**（具体请看步骤三）
 - model_path:预加载yolov3权重文件，**此文件根据个人选择**
 - dataset_root:数据集根目录，**此参数根据个人数据集进行修改**
 
@@ -105,11 +105,57 @@ train_percent: 0.9 #训练集划分比例
 trainval_percent: 0.9 #训练集+验证集划分比例
 ```
 
-### 步骤二：
+### 步骤二：检查数据集&配置my_classes.yaml
+
+使用**utils/utils.py**进行数据集分析，将会以饼图的形式展示当前数据集存在的标签个数和分类情况。
+
+修改**model_data/my_classes.yaml**中目标个数（nc），和目标类别名称（names）。
+
+```yaml
+nc: 2
+names: ['class1','class2']	
+```
+
+![](/home/cv/PycharmProjects/YOLOV3-PyTorch/docs/Dataset_Info_Pie_Chart.png)
+
+### 步骤三：生成anchors
+
+运行**get_anchors.py**生成数据集的anchors文件，文件保存在**model_data/my_anchors.yaml**中。
+
+```python
+python get_anchors.py
+```
+
+生成内容如下：
+
+```yaml
+anchors:
+- 13
+- 16
+- 32
+- 12
+- 18
+- 23
+- 24
+- 28
+- 29
+- 36
+- 61
+- 26
+- 40
+- 47
+- 56
+- 64
+- 88
+- 99
+
+```
+
+### 步骤四：配置train.yaml&分割数据集
 
 运行**generate_training_file.py**将数据集进行分割，并在当前文件目录下生成训练数据集文件：2007_train.txt和验证集文件2007_val.txt。
 
-如果需要自己设置数据集分割参数请修改train.yaml中的两个参数：
+如果需要自己设置数据集分割参数请修改**train.yaml**中的两个参数：
 
 ```yaml
 #数据集分割比例参数
@@ -121,20 +167,7 @@ trainval_percent: 0.9 #训练集+验证集划分比例
 python generate_training_file.py
 ```
 
-### 步骤三：
-
-运行**get_anchors.py**生成数据集的anchors文件，文件保存在**model_data/my_anchors.yaml**中
-
-### 步骤四：
-
-修改**model_data/my_classes.yaml**中目标个数（nc），和目标类别名称（names）。
-
-```yaml
-nc: 2
-names: ['person','hat']	
-```
-
-### 步骤五：
+### 步骤五：训练
 
 运行**train.py**进行模型训练，自动读取**train.yaml**中的配置信息，进行训练，权重文件在logs文件夹中。
 
@@ -154,7 +187,7 @@ python train.py
 - dataset_root：数据集根目录
 
 ```yaml
-model_path: 'logs/ep098-loss3.201-val_loss3.313.pth' #模型权重路径
+model_path: 'logs/hat_worker_voc-ep098-loss3.201-val_loss3.313.pth' #模型权重路径
 classes_path: 'model_data/my_classes.yaml' #数据类别文件
 
 anchors_path: 'model_data/my_anchors.yaml' #数据集anchors文件
@@ -172,7 +205,7 @@ minoverlap: 0.5 #map计算中的iou阈值
 dataset_root: '/home/cv/AI_Data/hat_worker_voc' #数据集根目录
 ```
 
-使用predict.py进行模型测试，测试支持图片，文件夹，视频三种方法。
+使用**predict.py**进行模型测试，测试支持图片，文件夹，视频三种方法。
 
 **需要修改的参数**:
 
