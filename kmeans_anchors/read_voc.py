@@ -68,6 +68,8 @@ class VOCDataSet:
 
             wh = []
             # 计算object wh相对于image wh的比值
+            if data.get('object') is None:
+                continue
             for obj in data["object"]:
                 xmin = float(obj["bndbox"]["xmin"])
                 xmax = float(obj["bndbox"]["xmax"])
