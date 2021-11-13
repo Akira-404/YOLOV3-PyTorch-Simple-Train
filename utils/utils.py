@@ -15,7 +15,7 @@ def load_yaml_conf(conf_path: str) -> dict:
     assert conf_path.endswith(".yaml") is True, f'file type must be yaml'
     assert os.path.exists(conf_path) is True, f'{conf_path}is error'
     if conf_path.endswith(".yaml"):
-        with open(conf_path, 'r') as f:
+        with open(conf_path, 'r', encoding='UTF-8') as f:
             conf = yaml.safe_load(f)
     return conf
 
@@ -162,6 +162,22 @@ def check_dataset(conf: dict):
     ax.axis('equal')
     ax.pie(data, labels=classes, autopct='%1.2f%%')
     plt.show()
+
+
+# 检查预加载权重细节
+def check_pretrained_weight(model_path: str, save_name: str, device: str):
+    pretrained_dict = torch.load(model_path, map_location=device)
+    print(f'model layer num:{len(pretrained_dict)}')
+
+    if os.path.exists(f'{save_name}') is True:
+        os.remove(f'{save_name}')
+
+    f = open(f'{save_name}', 'a')
+    for i, (k, v) in enumerate(pretrained_dict['model'].items()):
+        f.write(str(k) + '\t' + str(np.shape(v)))
+        f.write('\n')
+    f.close()
+    print(f'write:{save_name}')
 
 
 if __name__ == '__main__':
