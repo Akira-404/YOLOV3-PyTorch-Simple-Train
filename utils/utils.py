@@ -3,6 +3,7 @@ import numpy as np
 from PIL import Image
 import yaml
 import torch
+from tqdm import tqdm
 import xml.etree.ElementTree as ET
 
 
@@ -133,7 +134,7 @@ def check_dataset(conf: dict):
     # dataset_info = {'total': 0, 'difficult': 0}
     dataset_info = {}
     xmls = os.listdir(annoa_root)
-    for xml in xmls:
+    for xml in tqdm(xmls):
         # dataset_info['total'] += 1
         xml_p = os.path.join(annoa_root, xml)
         assert os.path.exists(xml_p) is True, f'{xml_p} is error'

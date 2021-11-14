@@ -1,5 +1,15 @@
-#dataset_root: '/home/cv/AI_Data/hat_worker_voc'
-#dataset_root: 'D:\\ai_data\\HardHatWorker_voc'
+#voc 2007
+#dataset_root: 'D:\\ai_data\\VOCtrainval2007'
+#dataset_root: 'D:\\ai_data\\VOCtest2007'
+#model_path: 'model_data/voc.pth' #预加载yolov3权重文件
+#classes_path: 'model_data/voc_classes.yaml' #数据集类别文件
+#anchors_path: 'model_data/voc_anchors.yaml' #数据集聚类anchors
+
+#coco
+#dataset_root: 'D:\\ai_data\\VOCtest2007'
+#model_path: 'model_data/coco.pt' #预加载yolov3权重文件
+#classes_path: 'model_data/coco_classes.yaml' #数据集类别文件
+#anchors_path: 'model_data/coco_anchors.yaml' #数据集聚类anchors
 
 #widerface
 #dataset_root: 'D:\\ai_data\\yolo_widerface_open_train'
@@ -19,16 +29,29 @@
 #classes_path: 'model_data/helmet_classes.yaml' #数据集类别文件
 #anchors_path: 'model_data/helmet_anchors.yaml' #数据集聚类anchors
 
-#model_path: 'logs/hat_worker_voc-ep098-loss3.201-val_loss3.313.pth' #预加载yolov3权重文件
-#dataset_root: '/home/cv/AI_Data/head_dataset_coco_yolo'
+#hat_worker_voc
+#dataset_root: 'D:\\ai_data\\HardHatWorker_voc' #数据集根目录
+#model_path: 'logs/hat_worker_voc-ep098-loss3.201-val_loss3.313.pth' #模型权重路径
+#classes_path: 'model_data/hat_worker_classes.yaml' #数据类别文件
+#anchors_path: 'model_data/hat_worker_anchors.yaml' #数据集anchors文件
+
+#HardHatWorker_voc
+#dataset_root: 'D:\\ai_data\\HardHatWorker_voc' #数据集根目录
+#model_path: 'logs/HardHatWorker_voc-ep099-loss3.918-val_loss.pth
+#classes_path: 'model_data/HardHatWorker_classes.yaml' #数据类别文件
+#anchors_path: 'model_data/HardHatWorker_anchors.yaml' #数据集anchors文件
+
+#head
+#dataset_root: 'D:\\ai_data\\head_datas_voc' #数据集根目录
+#model_path: 'logs/head.pth
+#classes_path: 'model_data/head_classes.yaml' #数据类别文件
+#anchors_path: 'model_data/head_anchors.yaml' #数据集anchors文件head
 
 year: '2007'
 
 
 anchors_mask: [ [ 6, 7, 8 ], [ 3, 4, 5 ], [ 0, 1, 2 ] ]
 
-#model_path: 'model_data/voc.pth' #预加载yolov3权重文件
-#model_path: 'model_data/coco.pt' #预加载yolov3权重文件
 
 input_shape: [ 416, 416 ] #模型输入图片尺度
 cuda: True

@@ -8,7 +8,7 @@ from tqdm import tqdm
 import cv2
 
 parser = argparse.ArgumentParser('YOLO TO VOC')
-parser.add_argument('-r', '--root', type=str, default='D:\\ai_data\\yolo_widerface_open_train',
+parser.add_argument('-r', '--root', type=str, default='D:\\ai_data\\head_datas_voc',
                     help='yolo dataset root')
 args = parser.parse_args()
 
