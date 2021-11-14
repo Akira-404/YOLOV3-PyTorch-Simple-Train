@@ -6,21 +6,40 @@ import cv2
 import numpy as np
 from PIL import Image
 from utils.utils_prediect import Predict
+from utils.utils import load_yaml_conf
 
 parse = argparse.ArgumentParser('predict config')
 parse.add_argument('-m', '--mode', type=str, choices=['image', 'video', 'dir'], default='dir',
                    help='predict image or video or dir')
-parse.add_argument('-i', '--image', type=str, default='img.jpg',
+parse.add_argument('-i', '--image', type=str, default='test_face.jpg',
                    help='image path')
 parse.add_argument('-v', '--video', type=str, default='',
                    help='video path')
-parse.add_argument('-d', '--dir', type=str, default='/home/cv/PycharmProjects/rabbitmq-proj/download/src/cloud/202197',
+parse.add_argument('-d', '--dir', type=str, default='D:\\ai_data\\yolo_person_train',
                    help='dir path')
 args = parse.parse_args()
 
 predict = Predict('predict.yaml')
-
+conf=load_yaml_conf('predict.yaml')
 output_path = './out'
+
+
+def run_test_image():
+    test_file = os.path.join(conf['dataset_root'], 'VOCdevkit/VOC2007/ImageSets/Main/test.txt')
+    with open(test_file, 'r') as f:
+        lines = f.readlines()
+    for i, line in enumerate(lines):
+        line=line.strip()
+        img_path = os.path.join(conf['dataset_root'], 'VOCdevkit/VOC2007/JPEGImages', line) + '.jpg'
+        assert os.path.exists(img_path), f'{img_path} is error'
+        print(img_path)
+        if img_path.lower().endswith('jpg'):
+            image = Image.open(img_path)
+            r_image = predict.detect_image(image)
+
+            r_image.save(os.path.join(output_path, line)+'.jpg')
+        if i > 10:
+            break
 
 
 def main(args):
@@ -73,7 +92,7 @@ def main(args):
     elif args.mode == 'dir':
         assert os.path.exists(args.dir) is True, f'{args.dir} is error'
         _support_img_type = ['.bmp', '.dib', '.png', '.jpg', '.jpeg', '.pbm', '.pgm', '.ppm', '.tif', '.tiff']
-        _dir_out_path = os.path.join(output_path,os.path.basename(args.dir))
+        _dir_out_path = os.path.join(output_path, os.path.basename(args.dir))
 
         image_names = os.listdir(args.dir)
         for image_name in tqdm(image_names):
@@ -91,4 +110,5 @@ def main(args):
 
 
 if __name__ == '__main__':
-    main(args)
+    run_test_image()
+    # main(args)

@@ -85,7 +85,7 @@ def main(img_size: int = 512, n: int = 9, thr: float = 0.25, gen: int = 1000):
     k_f = [int(i) for i in k.flatten()]
     print(k_f)
     anchors = {'anchors': k_f}
-    with open(conf['save_path'], 'w',encoding='UTF-8') as f:
+    with open(conf['anchors_path'], 'w',encoding='UTF-8') as f:
         yaml.dump(anchors, f)
 
 

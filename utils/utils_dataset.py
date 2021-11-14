@@ -5,28 +5,37 @@ from xml.dom import minidom
 from PIL import Image
 import numpy as np
 from tqdm import tqdm
+import cv2
 
 parser = argparse.ArgumentParser('YOLO TO VOC')
-parser.add_argument('-i', '--images_path', type=str,
-                    default='/home/cv/AI_Data/head_datas_yolo/VOCdevkit/VOC2007/JPEGImages')
-parser.add_argument('-l', '--labels_path', type=str,
-                    default='/home/cv/AI_Data/head_datas_yolo/labels')
-parser.add_argument('-a', '--annotations_path', type=str,
-                    default='/home/cv/AI_Data/head_datas_yolo/VOCdevkit/VOC2007/Annotations')
-parser.add_argument('-c', '--classes_path', type=str, default='/home/cv/AI_Data/head_datas_yolo/classes.txt')
+parser.add_argument('-r', '--root', type=str, default='D:\\ai_data\\yolo_widerface_open_train',
+                    help='yolo dataset root')
 args = parser.parse_args()
 
-# 类别
-classes = ["head"]
+assert os.path.exists(args.root) is True, f'{args.root} is error'
+
+_anno_path = os.path.join(args.root, 'VOCdevkit/VOC2007/Annotations')
+_jpeg_path = os.path.join(args.root, 'VOCdevkit/VOC2007/JPEGImages')
+if os.path.exists(_anno_path) is False:
+    os.makedirs(_anno_path)
+if os.path.exists(_jpeg_path) is False:
+    os.makedirs(_jpeg_path)
+
+images_path = os.path.join(args.root, 'images')
+labels_path = os.path.join(args.root, 'labels')
+classes_path = os.path.join(args.root, 'classes.txt')
+
+# 获取类别
+with open(classes_path, 'r') as f:
+    cls = f.read().split('\n')
+classes = cls
+print(f'classes:{classes}')
 
 # 图片的高度、宽度、深度
 img_h = img_w = img_d = 0
 
 
-def write_xml(imgname, img_w, img_h, img_d, filepath, labeldicts):
-    '''
-    imgname: 没有扩展名的图片名称
-    '''
+def write_xml(imgname: str, img_w: int, img_h: int, img_d: int, filepath: str, labeldicts: list):
 
     # 创建Annotation根节点
     root = ET.Element('annotation')
@@ -55,31 +64,44 @@ def write_xml(imgname, img_w, img_h, img_d, filepath, labeldicts):
     tree.write(filepath, encoding='utf-8')
 
 
-labels = os.listdir(args.labels_path)
-for label in tqdm(labels):
-    with open(os.path.join(args.labels_path, label), 'r') as f:
-        img_id = os.path.splitext(label)[0]
-        contents = f.readlines()
-        labeldicts = []
-        for content in contents:
-            img = np.array(Image.open(os.path.join(args.images_path, label).replace('txt', 'jpg')))
+def yolo2voc():
+    for label in tqdm(os.listdir(labels_path)):
+        label_path = os.path.join(labels_path, label)
+        with open(label_path, 'r') as f:
+            # 获取图片名
+            img_name = os.path.splitext(label)[0]
 
-            # 图片的高度和宽度
-            img_h, img_w, img_d = img.shape[0], img.shape[1], img.shape[2]
-            content = content.strip('\n').split()
-            x = float(content[1]) * img_w
-            y = float(content[2]) * img_h
-            w = float(content[3]) * img_w
-            h = float(content[4]) * img_h
+            # 读取图片
+            img = cv2.imread(os.path.join(images_path, label).replace('txt', 'jpg'))
+            img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+            # img = np.array(Image.open(os.path.join(images_path, label).replace('txt', 'jpg')))
 
-            # 坐标的转换，x_center y_center width height -> xmin ymin xmax ymax
-            new_dict = {'name': classes[int(content[0])],
-                        'difficult': '0',
-                        'xmin': x + 1 - w / 2,
-                        'ymin': y + 1 - h / 2,
-                        'xmax': x + 1 + w / 2,
-                        'ymax': y + 1 + h / 2
-                        }
-            labeldicts.append(new_dict)
-        write_xml(img_id, img_w, img_h, img_d, os.path.join(args.annotations_path, label).replace('txt', 'xml'),
-                  labeldicts)
+            # 读取lable内容
+            contents = f.readlines()
+            labeldicts = []
+            for content in contents:
+                # 图片的高度和宽度
+                # print(img.shape)
+                img_h, img_w, img_d = int(img.shape[0]), int(img.shape[1]), int(img.shape[2])
+                content = content.strip('\n').split()
+                x = float(content[1]) * img_w
+                y = float(content[2]) * img_h
+                w = float(content[3]) * img_w
+                h = float(content[4]) * img_h
+
+                # 坐标的转换，x_center y_center width height -> xmin ymin xmax ymax
+                new_dict = {'name': classes[int(content[0])],
+                            'difficult': '0',
+                            'xmin': x + 1 - w / 2,
+                            'ymin': y + 1 - h / 2,
+                            'xmax': x + 1 + w / 2,
+                            'ymax': y + 1 + h / 2
+                            }
+                labeldicts.append(new_dict)
+
+            write_xml(img_name, img_w, img_h, img_d, os.path.join(_anno_path, label).replace('txt', 'xml'),
+                      labeldicts)
+
+
+if __name__ == '__main__':
+    yolo2voc()

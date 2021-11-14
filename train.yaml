@@ -1,9 +1,35 @@
-classes_path: 'model_data/my_classes.yaml' #数据集类别文件
-anchors_path: 'model_data/my_anchors.yaml' #数据集聚类anchors
+#dataset_root: '/home/cv/AI_Data/hat_worker_voc'
+#dataset_root: 'D:\\ai_data\\HardHatWorker_voc'
+
+#widerface
+#dataset_root: 'D:\\ai_data\\yolo_widerface_open_train'
+#model_path: 'model_data/widerface.pt' #预加载yolov3权重文件
+#classes_path: 'model_data/widerface_classes.yaml' #数据集类别文件
+#anchors_path: 'model_data/widerface_anchors.yaml' #数据集聚类anchors
+
+#person
+#dataset_root: 'D:\\ai_data\\yolo_person_train'
+#model_path: 'model_data/person.pt' #预加载yolov3权重文件
+#classes_path: 'model_data/person_classes.yaml' #数据集类别文件
+#anchors_path: 'model_data/person_anchors.yaml' #数据集聚类anchors
+
+#Helmet
+#dataset_root: 'D:\\ai_data\\yolo_helmet_train\\anno'
+#model_path: 'model_data/helmet.pt' #预加载yolov3权重文件
+#classes_path: 'model_data/helmet_classes.yaml' #数据集类别文件
+#anchors_path: 'model_data/helmet_anchors.yaml' #数据集聚类anchors
+
+#model_path: 'logs/hat_worker_voc-ep098-loss3.201-val_loss3.313.pth' #预加载yolov3权重文件
+#dataset_root: '/home/cv/AI_Data/head_dataset_coco_yolo'
+
+year: '2007'
+
 
 anchors_mask: [ [ 6, 7, 8 ], [ 3, 4, 5 ], [ 0, 1, 2 ] ]
-#model_path: 'model_data/yolo_weights.pth' #预加载yolov3权重文件
-model_path: 'logs/hat_worker_voc-ep098-loss3.201-val_loss3.313.pth' #预加载yolov3权重文件
+
+#model_path: 'model_data/voc.pth' #预加载yolov3权重文件
+#model_path: 'model_data/coco.pt' #预加载yolov3权重文件
+
 input_shape: [ 416, 416 ] #模型输入图片尺度
 cuda: True
 
@@ -21,18 +47,12 @@ Unfreeze_lr: 1e-4
 
 Freeze_Train: True
 
-num_workers: 8
+num_workers: 0
 
 #训练数据集路径文件
 train_annotation_path: '2007_train.txt'
 val_annotation_path: '2007_val.txt'
 
-#get_anchors.py config
-#dataset_root: '/home/cv/AI_Data/hat_worker_voc'
-dataset_root: '/home/cv/AI_Data/head_datas_yolo'
-#dataset_root: '/home/cv/AI_Data/head_dataset_coco_yolo'
-year: '2007'
-save_path: 'model_data/my_anchors.yaml'
 
 #generate config
 train_percent: 0.9

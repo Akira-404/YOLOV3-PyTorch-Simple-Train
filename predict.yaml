@@ -1,8 +1,41 @@
-#model_path: 'logs/hat_worker_voc-ep098-loss3.201-val_loss3.313.pth' #模型权重路径
-model_path: 'logs/HardHatWorker_voc-ep099-loss3.918-val_loss3.740.pth' #模型权重路径
-classes_path: 'model_data/my_classes.yaml' #数据类别文件
+#helmet
+#dataset_root: 'D:\\ai_data\\yolo_helmet_train\\anno'
+#model_path: 'model_data/helmet.pt' #模型权重路径
+#classes_path: 'model_data/helmet_classes.yaml' #数据类别文件
+#anchors_path: 'model_data/helmet_anchors.yaml' #数据集anchors文件
 
-anchors_path: 'model_data/my_anchors.yaml' #数据集anchors文件
+#person
+#dataset_root: 'D:\\ai_data\\yolo_person_train'
+#model_path: 'model_data/person.pt' #模型权重路径
+#classes_path: 'model_data/person_classes.yaml' #数据类别文件
+#anchors_path: 'model_data/person_anchors.yaml' #数据集anchors文件
+
+#widerface
+#dataset_root: 'D:\\ai_data\\yolo_widerface_open_train'
+#model_path: 'model_data/widerface.pt' #模型权重路径
+#classes_path: 'model_data/widerface_classes.yaml' #数据类别文件
+#anchors_path: 'model_data/widerface_anchors.yaml' #数据集anchors文件
+
+#coco
+#dataset_root: 'D:\\ai_data\\yolo_widerface_open_train'
+#model_path: 'model_data/coco.pt' #模型权重路径
+#classes_path: 'model_data/coco_classes.yaml' #数据类别文件
+#anchors_path: 'model_data/coco_anchors.yaml' #数据集anchors文件
+
+#voc
+dataset_root: 'D:\\ai_data\\VOCtest2007'
+model_path: 'model_data/voc.pth' #模型权重路径
+classes_path: 'model_data/voc_classes.yaml' #数据类别文件
+anchors_path: 'model_data/voc_anchors.yaml' #数据集anchors文件
+
+#dataset_root: '/home/cv/AI_Data/hat_worker_voc' #数据集根目录
+#dataset_root: 'D:\\ai_data\\HardHatWorker_voc' #数据集根目录
+
+#model_path: 'logs/hat_worker_voc-ep098-loss3.201-val_loss3.313.pth' #模型权重路径
+#model_path: 'logs/HardHatWorker_voc-ep099-loss3.918-val_loss3.740.pth' #模型权重路径
+#model_path: 'model_data/widerface.pt' #模型权重路径
+
+
 anchors_mask: [ [ 6, 7, 8 ], [ 3, 4, 5 ], [ 0, 1, 2 ] ]
 
 input_shape: [ 416,416 ]
@@ -14,5 +47,3 @@ letterbox_image: False #是否使用letterbox缩放
 cuda: True
 
 minoverlap: 0.5 #map计算中的iou阈值
-#dataset_root: '/home/cv/AI_Data/hat_worker_voc' #数据集根目录
-dataset_root: '/home/cv/AI_Data/HardHatWorker_voc' #数据集根目录

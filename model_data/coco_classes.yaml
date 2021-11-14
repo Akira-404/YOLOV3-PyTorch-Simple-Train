@@ -1,7 +1,7 @@
 
 #number of classes
 nc: 80
-classes:
+names:
  - person,
  - bicycle,
  - car,

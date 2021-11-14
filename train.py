@@ -21,15 +21,18 @@ print(f'CUDA:{CUDA}')
 
 
 # 加载权重
-def load_weights(model, model_path, device):
+def load_weights(model, model_path: str, device, ignore_track: bool = False):
     print(f'Load weights {model_path}')
     model_dict = model.state_dict()
     _model_dict = {}
     pretrained_dict = torch.load(model_path, map_location=device)
 
     for k, v in model_dict.items():
+
         # pytorch 0.4.0后BN layer新增 num_batches_tracked 参数
-        if 'num_batches_tracked' in k:
+        # ignore_track=False:加载net中的 num_batches_tracked参数
+        # ignore_track=True:忽略加载net中的 num_batches_tracked参数
+        if 'num_batches_tracked' in k and ignore_track:
             print('pass->', k)
         else:
             _model_dict[k] = v
