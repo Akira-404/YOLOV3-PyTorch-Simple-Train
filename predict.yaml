@@ -1,4 +1,4 @@
-#model_path: 'logs/hat_worker_voc-ep098-loss3.201-val_loss3.313.pth' #模型权重路径
+#model_path: 'logs/backbone_yolov3coco_hat_worker_voc-ep098-loss3.201-val_loss3.313.pth' #模型权重路径
 model_path: 'logs/HardHatWorker_voc-ep099-loss3.918-val_loss3.740.pth' #模型权重路径
 classes_path: 'model_data/my_classes.yaml' #数据类别文件
 
