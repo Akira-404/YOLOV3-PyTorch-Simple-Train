@@ -13,6 +13,32 @@ from utils.utils import (img2rgb, get_anchors, get_classes, preprocess_input, re
 from utils.utils_bbox import DecodeBox
 
 
+# 加载权重
+def load_weights(model, model_path: str, device, ignore_track: bool = False):
+    print(f'Load weights {model_path}')
+    model_dict = model.state_dict()
+    _model_dict = {}
+    pretrained_dict = torch.load(model_path, map_location=device)
+
+    for k, v in model_dict.items():
+
+        # pytorch 0.4.0后BN layer新增 num_batches_tracked 参数
+        # ignore_track=False:加载net中的 num_batches_tracked参数
+        # ignore_track=True:忽略加载net中的 num_batches_tracked参数
+        if 'num_batches_tracked' in k and ignore_track:
+            print('pass->', k)
+        else:
+            _model_dict[k] = v
+    load_dict = {}
+    pretrained_dict = pretrained_dict['model'] if pretrained_dict.keys in ['model'] else pretrained_dict
+    for kv1, kv2 in zip(_model_dict.items(), pretrained_dict.items()):
+        if np.shape(kv1[1]) == np.shape(kv2[1]):
+            load_dict[kv1[0]] = kv2[1]
+    model_dict.update(load_dict)
+    model.load_state_dict(model_dict)
+    return model
+
+
 class Predict:
     def __init__(self, conf_path: str):
         """
@@ -44,7 +70,11 @@ class Predict:
     def generate_model(self):
         self.net = YOLO(self.conf['anchors_mask'], self.num_classes)
         device = torch.device('cuda' if torch.cuda.is_available() and self.conf['cuda'] else 'cpu')
-        self.net.load_state_dict(torch.load(self.conf['model_path'], map_location=device))
+
+        self.net = load_weights(self.net, self.conf['model_path'], device, ignore_track=True)
+
+        # self.net.load_state_dict(torch.load(self.conf['model_path'], map_location=device))
+
         self.net = self.net.eval()
         print(f'{self.conf["model_path"]} model,anchors,classes loaded')
 
@@ -73,7 +103,7 @@ class Predict:
             outputs = self.net(images)
             # outputs shape: (3,batch_size,x,y,w,h,conf,classes)
             outputs = self.bbox_util.decode_box(outputs)
-
+            # results=outputs
             #   将预测框进行堆叠，然后进行非极大抑制
             # results shape:(len(prediction),num_anchors,4)
             results = self.bbox_util.nms_(torch.cat(outputs, 1),
@@ -116,7 +146,7 @@ class Predict:
             draw = ImageDraw.Draw(image)
             label_size = draw.textsize(label, font)
             label = label.encode('utf-8')
-            print(label, x0, y0, x1, y1)
+            # print(label, x0, y0, x1, y1)
 
             if y0 - label_size[1] >= 0:
                 text_origin = np.array([x0, y0 - label_size[1]])
@@ -159,13 +189,13 @@ class Predict:
 
             #   将预测框进行堆叠，然后进行非极大抑制
 
-            results = self.bbox_util.non_max_suppression(torch.cat(outputs, 1),
-                                                         self.num_classes,
-                                                         self.conf['input_shape'],
-                                                         image_shape,
-                                                         self.conf['letterbox_image'],
-                                                         conf_thres=self.conf['confidence'],
-                                                         nms_thres=self.conf['nms_iou'])
+            results = self.bbox_util.nms_(torch.cat(outputs, 1),
+                                          self.num_classes,
+                                          self.conf['input_shape'],
+                                          image_shape,
+                                          self.conf['letterbox_image'],
+                                          conf_thres=self.conf['confidence'],
+                                          nms_thres=self.conf['nms_iou'])
 
         t1 = time.time()
         for _ in range(test_interval):

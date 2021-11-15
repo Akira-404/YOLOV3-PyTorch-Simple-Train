@@ -55,6 +55,33 @@ python scripts/VOC2007.sh
 - 标注文件：xxx/xxx/VOCdevkit/VOC2007(2012)/Annotations
 - 图片文件：xxx/xxx/VOCdevkit/VOC2007(2012)/JPEGImages
 
+### 数据集格式转换
+
+此项目需要提供VOC数据集格式，项目提供了一个YOLO数据集转VOC数据集的python文件：utils/utils_dataset.py
+
+YOLO数据集格式
+
+- images：图片文件夹
+- labels：标签文件夹
+- classes.txt：标签分类文件
+
+VOC数据集格式
+
+- VOCdevkit/VOC2007(2012)/Annotations：xml标签文件夹
+- VOCdevkit/VOC2007(2012)/ImageSets：数据集划分文件夹
+- VOCdevkit/VOC2007(2012)/JPEGImages：图片文件夹
+
+添加YOLO数据集根目录，文件执行后将在YOLO根目录下自动创建 VOCdevkit/VOC2007(2012)/Annotations，VOCdevkit/VOC2007(2012)/JPEGImages两个文件夹，并且自动转换xml标签文件于Annotations中，但是JPEGImages文件夹为空，需要自己手动把图片放进去。
+
+```python
+parser = argparse.ArgumentParser('YOLO TO VOC')
+parser.add_argument('-r', '--root', type=str, default='D:\\ai_data\\yolo_helmet_train\\anno',
+                    help='yolo dataset root')
+args = parser.parse_args()
+```
+
+
+
 ## 训练
 
 ### 步骤一：检查train.yaml文件
@@ -67,11 +94,12 @@ python scripts/VOC2007.sh
 - dataset_root:数据集根目录，**此参数根据个人数据集进行修改**
 
 ```yaml
+#file:train.yaml
 classes_path: 'model_data/my_classes.yaml' #数据集类别文件
 anchors_path: 'model_data/my_anchors.yaml' #数据集聚类anchors
 
 anchors_mask: [ [ 6, 7, 8 ], [ 3, 4, 5 ], [ 0, 1, 2 ] ]
-model_path: 'model_data/yolo_weights.pth' #预加载yolov3权重文件
+model_path: 'model_data/voc.pth' #预加载yolov3权重文件
 input_shape: [ 416, 416 ] #模型输入图片尺度
 cuda: True
 
@@ -98,7 +126,6 @@ val_annotation_path: '2007_val.txt'
 #get_anchors.py config
 dataset_root: '/home/cv/AI_Data/hat_worker_voc'
 year: '2007'
-save_path: 'model_data/my_anchors.yaml'
 
 #数据集分割比例参数
 train_percent: 0.9 #训练集划分比例
@@ -107,24 +134,40 @@ trainval_percent: 0.9 #训练集+验证集划分比例
 
 ### 步骤二：检查数据集&配置my_classes.yaml
 
-使用**utils/utils.py**进行数据集分析，将会以饼图的形式展示当前数据集存在的标签个数和分类情况。
+修改**model_data/my_classes.yaml**中目标个数（nc），和目标类别名称（names）如果对数据集分类不清楚的话可以调用**utils/utils.py**进行数据集分析，将会以饼图的形式展示当前数据集存在的标签个数和分类情况。
 
-修改**model_data/my_classes.yaml**中目标个数（nc），和目标类别名称（names）。
+`utils/utils.py`参与参数：
+
+- dataset_root
+- year
 
 ```yaml
+#file:train.yaml
+
+dataset_root: xxx
+year: xxx
 nc: 2
 names: ['class1','class2']	
 ```
 
-![](/home/cv/PycharmProjects/YOLOV3-PyTorch/docs/Dataset_Info_Pie_Chart.png)
+
 
 ### 步骤三：配置train.yaml&分割数据集
 
 运行**generate_training_file.py**将数据集进行分割，并在当前文件目录下生成训练数据集文件：2007_train.txt和验证集文件2007_val.txt。
 
+`generate_training_file.py`参与参数：
+
+- dataset_root
+- train_percent
+- trainval_percent
+
 如果需要自己设置数据集分割参数请修改**train.yaml**中的两个参数：
 
 ```yaml
+#file:train.yaml
+
+dataset_root: xxx/xxx
 #数据集分割比例参数
 train_percent: 0.9 #训练集划分比例
 trainval_percent: 0.9 #训练集+验证集划分比例
@@ -136,7 +179,12 @@ python generate_training_file.py
 
 ### 步骤四：生成anchors
 
-运行**get_anchors.py**生成数据集的anchors文件，文件保存在**model_data/my_anchors.yaml**中。
+运行`get_anchors.py`生成数据集的anchors文件，文件保存在**model_data/my_anchors.yaml**中，数据集中需要提供train.txt。
+
+`get_anchors.py`参与参数：
+
+- dataset_root
+- year
 
 ```python
 python get_anchors.py

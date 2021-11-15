@@ -17,7 +17,7 @@ class VOCDataSet:
 
         # read train.txt or val.txt file
         txt_path = os.path.join(self.root, "ImageSets", "Main", txt_name)
-        assert os.path.exists(txt_path), "not found {} file.".format(txt_name)
+        assert os.path.exists(txt_path), f"not found {txt_name} file."
 
         with open(txt_path) as read:
             self.xml_list = [os.path.join(self.annotations_root, line.strip() + ".xml")

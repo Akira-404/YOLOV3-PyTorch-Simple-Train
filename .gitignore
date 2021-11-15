@@ -12,7 +12,7 @@ utils/__pycache__/utils.cpython-37.pyc
 2007_val.txt
 utils/__pycache__/dataloader.cpython-37.pyc
 utils/__pycache__/utils_fit.cpython-37.pyc
-model_data/yolo_weights.pth
+model_data/voc.pth
 /model_data/myyolo.txt
 /model_data/yw.txt
 
@@ -28,3 +28,8 @@ utils/__pycache__/utils_prediect.cpython-37.pyc
 
 __pycache__/predict.cpython-37.pyc
 utils/__pycache__/
+*.pt
+*.pth
+*.pkl
+
+__pycache__/predict.cpython-36.pyc

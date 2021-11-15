@@ -43,7 +43,7 @@ def _make_yolo_block(channels: list, in_channel: int, out_channel: int):
 
 
 class YOLO(nn.Module):
-    def __init__(self, anchors_mask, num_classes: int):
+    def __init__(self, anchors_mask:list, num_classes: int):
         super(YOLO, self).__init__()
 
         self.backbone = darknet53()
@@ -108,6 +108,6 @@ if __name__ == '__main__':
     # for k,v in dict.items():
     #     print(k,' ',np.shape(v))
 
-    yw = torch.load('../model_data/yolo_weights.pth',map_location='cpu')
+    yw = torch.load('../model_data/voc.pth',map_location='cpu')
     for k, v in yw.items():
         print(k, ' ', np.shape(v))

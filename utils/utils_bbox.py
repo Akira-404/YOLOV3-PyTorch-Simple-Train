@@ -16,7 +16,7 @@ class DecodeBox:
         self.num_classes = num_classes
         self.bbox_attrs = 5 + num_classes  # xmin,ymin,xmax,ymax,conf,num_classes
         self.input_shape = input_shape
-        self.anchors_mask = [[6, 7, 8], [3, 4, 5], [0, 1, 2]] if anchors_mask is None else anchors_mask
+        self.anchors_mask: list = [[6, 7, 8], [3, 4, 5], [0, 1, 2]] if anchors_mask is None else anchors_mask
 
     def decode_box(self, inputs: torch.Tensor) -> list:
         """
