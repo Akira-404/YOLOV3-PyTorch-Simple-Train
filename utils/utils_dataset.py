@@ -8,7 +8,7 @@ from tqdm import tqdm
 import cv2
 
 parser = argparse.ArgumentParser('YOLO TO VOC')
-parser.add_argument('-r', '--root', type=str, default='D:\\ai_data\\head_datas_voc',
+parser.add_argument('-r', '--root', type=str, default='/home/cv/AI_Data/person_yolo',
                     help='yolo dataset root')
 args = parser.parse_args()
 
@@ -27,7 +27,7 @@ classes_path = os.path.join(args.root, 'classes.txt')
 
 # 获取类别
 with open(classes_path, 'r') as f:
-    cls = f.read().split('\n')
+    cls = f.read().split()
 classes = cls
 print(f'classes:{classes}')
 
@@ -36,7 +36,6 @@ img_h = img_w = img_d = 0
 
 
 def write_xml(imgname: str, img_w: int, img_h: int, img_d: int, filepath: str, labeldicts: list):
-
     # 创建Annotation根节点
     root = ET.Element('annotation')
 
@@ -72,7 +71,11 @@ def yolo2voc():
             img_name = os.path.splitext(label)[0]
 
             # 读取图片
-            img = cv2.imread(os.path.join(images_path, label).replace('txt', 'jpg'))
+            img_path = os.path.join(images_path, label).replace('txt', 'jpg')
+            if not os.path.exists(img_path):
+                print(img_path)
+                continue
+            img = cv2.imread(img_path)
             img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
             # img = np.array(Image.open(os.path.join(images_path, label).replace('txt', 'jpg')))
 
@@ -103,5 +106,19 @@ def yolo2voc():
                       labeldicts)
 
 
+def check_dataset():
+    annos = os.listdir(_anno_path)
+    images = os.listdir(_jpeg_path)
+    print(len(annos))
+    print(len(images))
+    assert len(annos) == len(images), f'anns len!=image len'
+
+    for anno in annos:
+        anno = os.path.join(_anno_path, anno)
+        image = anno.replace('Annotations', 'JPEGImages').replace('xml', 'jpg')
+        assert os.path.exists(image) is True, f'{image} is error'
+
+
 if __name__ == '__main__':
-    yolo2voc()
+    # yolo2voc()
+    check_dataset()

@@ -1,49 +1,49 @@
 #voc 2007
-#dataset_root: 'D:\\ai_data\\VOCtrainval2007'
-#dataset_root: 'D:\\ai_data\\VOCtest2007'
+#dataset_root: '/home/cv/AI_Data/VOCtrainval2007'
+#dataset_root: '/home/cv/AI_Data/VOCtest2007'
 #model_path: 'model_data/voc.pth' #预加载yolov3权重文件
 #classes_path: 'model_data/voc_classes.yaml' #数据集类别文件
 #anchors_path: 'model_data/voc_anchors.yaml' #数据集聚类anchors
 
 #coco
-#dataset_root: 'D:\\ai_data\\VOCtest2007'
+#dataset_root: '/home/cv/AI_Data/VOCtest2007'
 #model_path: 'model_data/coco.pt' #预加载yolov3权重文件
 #classes_path: 'model_data/coco_classes.yaml' #数据集类别文件
 #anchors_path: 'model_data/coco_anchors.yaml' #数据集聚类anchors
 
 #widerface
-#dataset_root: 'D:\\ai_data\\yolo_widerface_open_train'
+#dataset_root: '/home/cv/AI_Data/yolo_widerface_open_train'
 #model_path: 'model_data/widerface.pt' #预加载yolov3权重文件
 #classes_path: 'model_data/widerface_classes.yaml' #数据集类别文件
 #anchors_path: 'model_data/widerface_anchors.yaml' #数据集聚类anchors
 
 #person
-#dataset_root: 'D:\\ai_data\\yolo_person_train'
-#model_path: 'model_data/person.pt' #预加载yolov3权重文件
-#classes_path: 'model_data/person_classes.yaml' #数据集类别文件
-#anchors_path: 'model_data/person_anchors.yaml' #数据集聚类anchors
+dataset_root: '/home/cv/AI_Data/person_yolo'
+model_path: 'model_data/person.pt' #预加载yolov3权重文件
+classes_path: 'model_data/person_classes.yaml' #数据集类别文件
+anchors_path: 'model_data/person_anchors.yaml' #数据集聚类anchors
 
 #Helmet
-#dataset_root: 'D:\\ai_data\\yolo_helmet_train\\anno'
+#dataset_root: '/home/cv/AI_Data/yolo_helmet_train\\anno'
 #model_path: 'model_data/helmet.pt' #预加载yolov3权重文件
 #classes_path: 'model_data/helmet_classes.yaml' #数据集类别文件
 #anchors_path: 'model_data/helmet_anchors.yaml' #数据集聚类anchors
 
 #hat_worker_voc
-#dataset_root: 'D:\\ai_data\\HardHatWorker_voc' #数据集根目录
+#dataset_root: '/home/cv/AI_Data/HardHatWorker_voc' #数据集根目录
 #model_path: 'logs/hat_worker_voc-ep098-loss3.201-val_loss3.313.pth' #模型权重路径
 #classes_path: 'model_data/hat_worker_classes.yaml' #数据类别文件
 #anchors_path: 'model_data/hat_worker_anchors.yaml' #数据集anchors文件
 
 #HardHatWorker_voc
-#dataset_root: 'D:\\ai_data\\HardHatWorker_voc' #数据集根目录
-#model_path: 'logs/HardHatWorker_voc-ep099-loss3.918-val_loss.pth
+#dataset_root: '/home/cv/AI_Data/HardHatWorker_voc' #数据集根目录
+#model_path: 'model_data/HardHatWorker_voc-ep099-loss3.918.pth'
 #classes_path: 'model_data/HardHatWorker_classes.yaml' #数据类别文件
 #anchors_path: 'model_data/HardHatWorker_anchors.yaml' #数据集anchors文件
 
-#head
-#dataset_root: 'D:\\ai_data\\head_datas_voc' #数据集根目录
-#model_path: 'logs/head.pth
+#head_test
+#dataset_root: '/home/cv/AI_Data/head_datas_yolo' #数据集根目录
+#model_path: 'model_data/HardHatWorker.pth'
 #classes_path: 'model_data/head_classes.yaml' #数据类别文件
 #anchors_path: 'model_data/head_anchors.yaml' #数据集anchors文件head
 
@@ -57,18 +57,18 @@ cuda: True
 Init_Epoch: 0
 
 #冻结训练参数设置
-Freeze_Epoch: 100
-Freeze_batch_size: 8
+Freeze_Epoch: 50
+Freeze_batch_size: 16
 Freeze_lr: 1e-3
 
 #全网络训练参数设置
-UnFreeze_Epoch: 200
-Unfreeze_batch_size: 8
+UnFreeze_Epoch: 150
+Unfreeze_batch_size: 16
 Unfreeze_lr: 1e-4
 
 Freeze_Train: True
 
-num_workers: 0
+num_workers: 8
 
 #训练数据集路径文件
 train_annotation_path: '2007_train.txt'

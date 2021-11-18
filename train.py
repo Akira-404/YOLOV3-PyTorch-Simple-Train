@@ -126,7 +126,7 @@ def train(yolo_conf: dict):
 
     # 载入yolo weight
     if yolo_conf['model_path'] != '':
-        load_weights(model, yolo_conf['model_path'], device)
+        load_weights(model, yolo_conf['model_path'], device,False)
         # print(f'Load weights {yolo_conf["model_path"]}')
         # model_dict = model.state_dict()
         #

@@ -5,6 +5,9 @@ import yaml
 import torch
 from tqdm import tqdm
 import xml.etree.ElementTree as ET
+from PIL import ImageFile
+
+ImageFile.LOAD_TRUNCATED_IMAGES = True
 
 
 # 加载yaml配置文件

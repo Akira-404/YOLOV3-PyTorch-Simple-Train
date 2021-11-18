@@ -30,7 +30,7 @@ def load_weights(model, model_path: str, device, ignore_track: bool = False):
         else:
             _model_dict[k] = v
     load_dict = {}
-    pretrained_dict = pretrained_dict['model'] if pretrained_dict.keys in ['model'] else pretrained_dict
+    pretrained_dict = pretrained_dict['model'] if 'model' in pretrained_dict.keys() else pretrained_dict
     for kv1, kv2 in zip(_model_dict.items(), pretrained_dict.items()):
         if np.shape(kv1[1]) == np.shape(kv2[1]):
             load_dict[kv1[0]] = kv2[1]
@@ -71,7 +71,7 @@ class Predict:
         self.net = YOLO(self.conf['anchors_mask'], self.num_classes)
         device = torch.device('cuda' if torch.cuda.is_available() and self.conf['cuda'] else 'cpu')
 
-        self.net = load_weights(self.net, self.conf['model_path'], device, ignore_track=True)
+        self.net = load_weights(self.net, self.conf['model_path'], device, ignore_track=False)
 
         # self.net.load_state_dict(torch.load(self.conf['model_path'], map_location=device))
 
@@ -146,7 +146,7 @@ class Predict:
             draw = ImageDraw.Draw(image)
             label_size = draw.textsize(label, font)
             label = label.encode('utf-8')
-            # print(label, x0, y0, x1, y1)
+            print(label, x0, y0, x1, y1)
 
             if y0 - label_size[1] >= 0:
                 text_origin = np.array([x0, y0 - label_size[1]])

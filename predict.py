@@ -11,25 +11,30 @@ from utils.utils import load_yaml_conf
 parse = argparse.ArgumentParser('predict config')
 parse.add_argument('-m', '--mode', type=str, choices=['image', 'video', 'dir'], default='dir',
                    help='predict image or video or dir')
-parse.add_argument('-i', '--image', type=str, default='test_face.jpg',
+parse.add_argument('-i', '--image', type=str, default='img.jpg',
                    help='image path')
 parse.add_argument('-v', '--video', type=str, default='',
                    help='video path')
-parse.add_argument('-d', '--dir', type=str, default='D:\\ai_data\\yolo_person_train',
+parse.add_argument('-d', '--dir', type=str, default='/home/cv/PycharmProjects/rabbitmq-proj/download/src/cloud/2021914',
                    help='dir path')
+parse.add_argument('-s', '--save_path', type=str, default='./out/person_huiyuan')
 args = parse.parse_args()
 
 predict = Predict('predict.yaml')
-conf=load_yaml_conf('predict.yaml')
-output_path = './out'
+conf = load_yaml_conf('predict.yaml')
+# output_path = ''
+if os.path.exists(args.save_path) is False:
+    os.mkdir(args.save_path)
 
 
 def run_test_image():
     test_file = os.path.join(conf['dataset_root'], 'VOCdevkit/VOC2007/ImageSets/Main/test.txt')
     with open(test_file, 'r') as f:
         lines = f.readlines()
-    for i, line in enumerate(lines):
-        line=line.strip()
+    # for i, line in enumerate(lines):
+    cnt = 0
+    for line in tqdm(lines):
+        line = line.strip()
         img_path = os.path.join(conf['dataset_root'], 'VOCdevkit/VOC2007/JPEGImages', line) + '.jpg'
         assert os.path.exists(img_path), f'{img_path} is error'
         print(img_path)
@@ -37,8 +42,9 @@ def run_test_image():
             image = Image.open(img_path)
             r_image = predict.detect_image(image)
 
-            r_image.save(os.path.join(output_path, line)+'.jpg')
-        if i > 10:
+            r_image.save(os.path.join(args.save_path, line) + '.jpg')
+        cnt += 1
+        if cnt > 100:
             break
 
 
@@ -56,7 +62,7 @@ def main(args):
         assert os.path.exists(args.video) is True, f'{args.video} is error'
         _fps = 0.0
         _video_save_fps = 30.0
-        _video_save_path = os.path.join(output_path, 'video.mp4')
+        _video_save_path = os.path.join(args.save_path, 'video.mp4')
 
         capture = cv2.VideoCapture(args.video)
         fourcc = cv2.VideoWriter_fourcc(*'XVID')
@@ -92,7 +98,7 @@ def main(args):
     elif args.mode == 'dir':
         assert os.path.exists(args.dir) is True, f'{args.dir} is error'
         _support_img_type = ['.bmp', '.dib', '.png', '.jpg', '.jpeg', '.pbm', '.pgm', '.ppm', '.tif', '.tiff']
-        _dir_out_path = os.path.join(output_path, os.path.basename(args.dir))
+        # _dir_out_path = os.path.join(args.save_path, os.path.basename(args.dir))
 
         image_names = os.listdir(args.dir)
         for image_name in tqdm(image_names):
@@ -102,13 +108,11 @@ def main(args):
                 image = Image.open(image_path)
                 r_image = predict.detect_image(image)
 
-                if not os.path.exists(_dir_out_path):
-                    os.makedirs(_dir_out_path)
-                r_image.save(os.path.join(_dir_out_path, image_name))
+                r_image.save(os.path.join(args.save_path, image_name))
     else:
         raise TypeError('args.mode must be:image,video,dir')
 
 
 if __name__ == '__main__':
-    run_test_image()
-    # main(args)
+    # run_test_image()
+    main(args)
