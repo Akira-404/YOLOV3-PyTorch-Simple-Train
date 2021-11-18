@@ -21,7 +21,11 @@
 
 ## 权重下载
 
-*下载连接*
+权重包含，COCO，VOC，Head，Helmet，Person
+
+下载连接
+
+[Download](https://pan.baidu.com/s/1CAlqyszbB1sRvOVtCkC5Ag)  密码: rcs4
 
 ## 数据集
 
