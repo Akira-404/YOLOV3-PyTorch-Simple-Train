@@ -11,11 +11,11 @@
 #anchors_path: 'model_data/HardHatWorker_anchors.yaml' #数据集anchors文件
 
 #person
-dataset_root: '/home/cv/AI_Data/person_yolo'
+#dataset_root: '/home/cv/AI_Data/person_yolo'
 #dataset_root: '/home/cv/AI_Data/HardHatWorker_voc'
-model_path: 'model_data/person.pth' #模型权重路径
-classes_path: 'model_data/person_classes.yaml' #数据类别文件
-anchors_path: 'model_data/person_anchors.yaml' #数据集anchors文件
+#model_path: 'model_data/person.pth' #模型权重路径
+#classes_path: 'model_data/person_classes.yaml' #数据类别文件
+#anchors_path: 'model_data/person_anchors.yaml' #数据集anchors文件
 
 #widerface
 #dataset_root: '/home/cv/AI_Data/yolo_widerface_open_train'
@@ -42,10 +42,10 @@ anchors_path: 'model_data/person_anchors.yaml' #数据集anchors文件
 #anchors_path: 'model_data/hat_worker_anchors.yaml' #数据集anchors文件
 
 #head_test
-#dataset_root: '/home/cv/AI_Data/head_datas_yolo' #数据集根目录
-#model_path: 'model_data/head.pth'
-#classes_path: 'model_data/head_classes.yaml' #数据类别文件
-#anchors_path: 'model_data/head_anchors.yaml' #数据集anchors文件head
+dataset_root: '/home/cv/AI_Data/head_datas_yolo' #数据集根目录
+model_path: 'model_data/head.pth'
+classes_path: 'model_data/head_classes.yaml' #数据类别文件
+anchors_path: 'model_data/head_anchors.yaml' #数据集anchors文件head
 
 anchors_mask: [ [ 6, 7, 8 ], [ 3, 4, 5 ], [ 0, 1, 2 ] ]
 
@@ -58,3 +58,7 @@ letterbox_image: False #是否使用letterbox缩放
 cuda: True
 
 minoverlap: 0.5 #map计算中的iou阈值
+
+#onnx export config
+batch_size: 1
+onnx_model: model_data/head.onnx
