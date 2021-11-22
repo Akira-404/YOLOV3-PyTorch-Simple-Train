@@ -62,3 +62,4 @@ minoverlap: 0.5 #map计算中的iou阈值
 #onnx export config
 batch_size: 1
 onnx_model: model_data/head.onnx
+trt_model: model_data/head.trt
