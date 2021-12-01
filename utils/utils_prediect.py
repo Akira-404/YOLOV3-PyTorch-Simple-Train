@@ -11,6 +11,8 @@ from nets.yolo import YOLO
 from utils.utils import (img2rgb, get_anchors, get_classes, preprocess_input, resize_image, load_yaml_conf)
 
 from utils.utils_bbox import DecodeBox
+
+
 # import onnx
 # import onnxruntime as ort
 
@@ -238,12 +240,14 @@ class Predict:
             label = '{} {:.2f}'.format(predicted_class, score)
             label = label.encode('utf-8')
             # print(label, x0, y0, x1, y1)
-            item = {'class': predicted_class,
-                    'score': float(score),
-                    'x0': int(x0),
-                    'y0': int(y0),
-                    'x1': int(x1),
-                    'y1': int(y1)}
+            item = {
+                'label': predicted_class,
+                'score': float(score),
+                'height': int(y1 - y0),
+                'left': int(x1),
+                'top': int(y1),
+                'width': int(x1 - x0)
+            }
             data.append(item)
         return data
 
