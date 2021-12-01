@@ -11,8 +11,8 @@ from nets.yolo import YOLO
 from utils.utils import (img2rgb, get_anchors, get_classes, preprocess_input, resize_image, load_yaml_conf)
 
 from utils.utils_bbox import DecodeBox
-import onnx
-import onnxruntime as ort
+# import onnx
+# import onnxruntime as ort
 
 
 # 加载权重
@@ -107,79 +107,79 @@ class Predict:
         image_data = np.expand_dims(np.transpose(preprocess_input(np.array(image_data, dtype='float32')), (2, 0, 1)), 0)
         return image_data, image_shape
 
-    def onnx_test(self, onnx_path: str, image: str, gpu: bool):
-        image = Image.open(image)
-        img, image_shape = self.preprocess(image)
-
-        providers = ['CUDAExecutionProvider'] if gpu else ["CPUExecutionProvider"]
-        sess = ort.InferenceSession(onnx_path, providers=providers)
-        input_name = sess.get_inputs()[0].name
-        output_name = sess.get_outputs()[0].name
-
-        time_start = time.time()
-        outputs = sess.run([output_name], {input_name: img})
-        time_end = time.time()
-        print('totally cost', time_end - time_start)
-        print(f'output shape:{type(outputs)}', outputs)
-        outputs = self.bbox_util.decode_box(outputs)
-        # results=outputs
-        #   将预测框进行堆叠，然后进行非极大抑制
-        # results shape:(len(prediction),num_anchors,4)
-        results = self.bbox_util.nms_(torch.cat(outputs, 1),
-                                      self.num_classes,
-                                      self.conf['input_shape'],
-                                      image_shape,
-                                      self.conf['letterbox_image'],
-                                      conf_thres=self.conf['confidence'],
-                                      nms_thres=self.conf['nms_iou'])
-
-        if results[0] is None:
-            return image
-
-        top_label = np.array(results[0][:, 6], dtype='int32')
-        top_conf = results[0][:, 4] * results[0][:, 5]
-        top_boxes = results[0][:, :4]
-
-        #   设置字体与边框厚度
-
-        font = ImageFont.truetype(font='model_data/simhei.ttf',
-                                  size=np.floor(3e-2 * image.size[1] + 0.5).astype('int32'))
-        thickness = int(max((image.size[0] + image.size[1]) // np.mean(self.conf['input_shape']), 1))
-
-        #   图像绘制
-        for i, c in list(enumerate(top_label)):
-            predicted_class = self.class_names[int(c)]
-            box = top_boxes[i]
-            score = top_conf[i]
-
-            # top, left, bottom, right = box
-            y0, x0, y1, x1 = box
-            # x0, y0, x1, y1 = box
-
-            y0 = max(0, np.floor(y0).astype('int32'))
-            x0 = max(0, np.floor(x0).astype('int32'))
-            y1 = min(image.size[1], np.floor(y1).astype('int32'))
-            x1 = min(image.size[0], np.floor(x1).astype('int32'))
-
-            label = '{} {:.2f}'.format(predicted_class, score)
-            draw = ImageDraw.Draw(image)
-            label_size = draw.textsize(label, font)
-            label = label.encode('utf-8')
-            print(label, x0, y0, x1, y1)
-
-            if y0 - label_size[1] >= 0:
-                text_origin = np.array([x0, y0 - label_size[1]])
-            else:
-                text_origin = np.array([x0, y0 + 1])
-
-            for i in range(thickness):
-                # rectangle param:xy:[x0,y0,x1,y1]
-                draw.rectangle([x0 + i, y0 + i, x1 - i, y1 - i], outline=self.colors[c])
-            draw.rectangle([tuple(text_origin), tuple(text_origin + label_size)], fill=self.colors[c])
-            draw.text(text_origin, str(label, 'UTF-8'), fill=(0, 0, 0), font=font)
-            del draw
-
-        return image
+    # def onnx_test(self, onnx_path: str, image: str, gpu: bool):
+    #     image = Image.open(image)
+    #     img, image_shape = self.preprocess(image)
+    #
+    #     providers = ['CUDAExecutionProvider'] if gpu else ["CPUExecutionProvider"]
+    #     sess = ort.InferenceSession(onnx_path, providers=providers)
+    #     input_name = sess.get_inputs()[0].name
+    #     output_name = sess.get_outputs()[0].name
+    #
+    #     time_start = time.time()
+    #     outputs = sess.run([output_name], {input_name: img})
+    #     time_end = time.time()
+    #     print('totally cost', time_end - time_start)
+    #     print(f'output shape:{type(outputs)}', outputs)
+    #     outputs = self.bbox_util.decode_box(outputs)
+    #     # results=outputs
+    #     #   将预测框进行堆叠，然后进行非极大抑制
+    #     # results shape:(len(prediction),num_anchors,4)
+    #     results = self.bbox_util.nms_(torch.cat(outputs, 1),
+    #                                   self.num_classes,
+    #                                   self.conf['input_shape'],
+    #                                   image_shape,
+    #                                   self.conf['letterbox_image'],
+    #                                   conf_thres=self.conf['confidence'],
+    #                                   nms_thres=self.conf['nms_iou'])
+    #
+    #     if results[0] is None:
+    #         return image
+    #
+    #     top_label = np.array(results[0][:, 6], dtype='int32')
+    #     top_conf = results[0][:, 4] * results[0][:, 5]
+    #     top_boxes = results[0][:, :4]
+    #
+    #     #   设置字体与边框厚度
+    #
+    #     font = ImageFont.truetype(font='model_data/simhei.ttf',
+    #                               size=np.floor(3e-2 * image.size[1] + 0.5).astype('int32'))
+    #     thickness = int(max((image.size[0] + image.size[1]) // np.mean(self.conf['input_shape']), 1))
+    #
+    #     #   图像绘制
+    #     for i, c in list(enumerate(top_label)):
+    #         predicted_class = self.class_names[int(c)]
+    #         box = top_boxes[i]
+    #         score = top_conf[i]
+    #
+    #         # top, left, bottom, right = box
+    #         y0, x0, y1, x1 = box
+    #         # x0, y0, x1, y1 = box
+    #
+    #         y0 = max(0, np.floor(y0).astype('int32'))
+    #         x0 = max(0, np.floor(x0).astype('int32'))
+    #         y1 = min(image.size[1], np.floor(y1).astype('int32'))
+    #         x1 = min(image.size[0], np.floor(x1).astype('int32'))
+    #
+    #         label = '{} {:.2f}'.format(predicted_class, score)
+    #         draw = ImageDraw.Draw(image)
+    #         label_size = draw.textsize(label, font)
+    #         label = label.encode('utf-8')
+    #         print(label, x0, y0, x1, y1)
+    #
+    #         if y0 - label_size[1] >= 0:
+    #             text_origin = np.array([x0, y0 - label_size[1]])
+    #         else:
+    #             text_origin = np.array([x0, y0 + 1])
+    #
+    #         for i in range(thickness):
+    #             # rectangle param:xy:[x0,y0,x1,y1]
+    #             draw.rectangle([x0 + i, y0 + i, x1 - i, y1 - i], outline=self.colors[c])
+    #         draw.rectangle([tuple(text_origin), tuple(text_origin + label_size)], fill=self.colors[c])
+    #         draw.text(text_origin, str(label, 'UTF-8'), fill=(0, 0, 0), font=font)
+    #         del draw
+    #
+    #     return image
 
     def tiny_detect_image(self, image):
         # image_shape = np.array(np.shape(image)[0:2])  # w,h
