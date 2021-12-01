@@ -50,7 +50,6 @@ def get_person():
     params = request.json if request.method == "POST" else request.args
     img = _base64_to_pil(params['img'])
     data = predict.tiny_detect_image(img)
-    print(type(data))
     return _get_result(200, 'success', data)
 
 
