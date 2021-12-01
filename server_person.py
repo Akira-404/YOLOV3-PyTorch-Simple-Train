@@ -47,16 +47,10 @@ def _get_result(code: int, message: str, data):
 
 @app.route('/yolov3_get_person', methods=['POST'])
 def get_person():
-    # img = Image.open('img.jpg')
     params = request.json if request.method == "POST" else request.args
     img = _base64_to_pil(params['img'])
-    # img.show()
     data = predict.tiny_detect_image(img)
-    for i, item in enumerate(data):
-        print(i, item)
-    return _get_result(200,
-                       'success',
-                       data)
+    return _get_result(200, 'success', data)
 
 
 def run():
