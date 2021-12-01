@@ -59,6 +59,20 @@ def img2rgb(image):
         return image
 
 
+def cv_resize_image(image, size: tuple, letterbox_image: bool = False):
+    #TODO
+    ih = image.shape[0]
+    iw = image.shape[1]
+    w, h = size
+    if letterbox_image:
+        scale = min(w / iw, h / ih)
+        nw = int(iw * scale)
+        nh = int(ih * scale)
+    else:
+        ...
+    return
+
+
 def resize_image(image, size: tuple, letterbox_image: bool = False):
     iw, ih = image.size
     w, h = size

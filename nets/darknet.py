@@ -21,7 +21,7 @@ class ConvBNLeakyRelu(nn.Module):
                               padding=padding,
                               bias=bias)
         self.bn = nn.BatchNorm2d(output_channel)
-        self.leaky_relu = nn.LeakyReLU(0.1)
+        self.leaky_relu = nn.LeakyReLU(0.1818)
 
     def forward(self, x):
         out = self.conv(x)
@@ -30,7 +30,7 @@ class ConvBNLeakyRelu(nn.Module):
         return out
 
 
-# 残差结构
+# Res module
 class ResBlock(nn.Module):
     def __init__(self, input_channel: int, output_channel: list):
         """
@@ -38,6 +38,7 @@ class ResBlock(nn.Module):
         input->1x1 conv -> 3x3 conv->output1
         output1+input->output2
         input channel==output channel
+
         :param input_channel: type:int one number
         :param output_channel: type:list[int] list number eg:[n1,n2]
         """
@@ -48,30 +49,21 @@ class ResBlock(nn.Module):
         # self.bn1 = nn.BatchNorm2d(output_channel[0])
         # self.leaky_relu1 = nn.LeakyReLU(0.1)
 
-        self.cbl1 = ConvBNLeakyRelu(input_channel, output_channel[0], kernel_size=(1, 1), stride=(1, 1), padding=0,
-                                    bias=False)
-
         # 3x3
         # self.conv2 = nn.Conv2d(output_channel[0], output_channel[1], kernel_size=(3, 3), stride=(1, 1), padding=1,
         #                        bias=False)
         # self.bn2 = nn.BatchNorm2d(output_channel[1])
         # self.leaky_relu2 = nn.LeakyReLU(0.1)
-
-        self.cbl2 = ConvBNLeakyRelu(output_channel[0], output_channel[1], kernel_size=(3, 3), stride=(1, 1), padding=1,
-                                    bias=False)
+        self.conv1 = ConvBNLeakyRelu(input_channel, output_channel[0], kernel_size=(1, 1), stride=(1, 1), padding=0,
+                                     bias=False)
+        self.conv2 = ConvBNLeakyRelu(output_channel[0], output_channel[1], kernel_size=(3, 3), stride=(1, 1), padding=1,
+                                     bias=False)
 
     def forward(self, x):
         residual = x
-        # out = self.conv1(x)
-        # out = self.bn1(out)
-        # out = self.leaky_relu1(out)
-        #
-        # out = self.conv2(out)
-        # out = self.bn1(out)
-        # out = self.leaky_relu2(out)
 
-        out = self.cbl1(x)
-        out = self.cbl2(out)
+        out = self.conv1(x)
+        out = self.conv2(out)
 
         out += residual
 
@@ -83,13 +75,8 @@ class DarkNet(nn.Module):
         super(DarkNet, self).__init__()
         self.input_channel = 32
 
-        # input size(416,416,3)->conv->(416,416,32)
-        # self.conv1 = nn.Conv2d(3, self.inplanes, kernel_size=(3, 3), stride=(1, 1), padding=1, bias=False)
-        # self.bn1 = nn.BatchNorm2d(self.inplanes)
-        # self.leaky_relu1 = nn.LeakyReLU(0.1)
-
         # (416,416,3)->(416,416,32)
-        self.cbl = ConvBNLeakyRelu(3, self.input_channel, kernel_size=(3, 3), stride=(1, 1), padding=1, bias=False)
+        self.conv = ConvBNLeakyRelu(3, self.input_channel, kernel_size=(3, 3), stride=(1, 1), padding=1, bias=False)
 
         # 416,416,32 -> 208,208,64
         self.layer1 = self._make_res_layer([32, 64], layers[0])  # 1
@@ -118,19 +105,14 @@ class DarkNet(nn.Module):
     def _make_res_layer(self, io_channels: list, blocks_num: int):
         """
         note:
-        make layer of ResOperator: 3x3conv(x=2) + nxResBlock
-
-        :param io_channels: type:list[int],resblock input and output channel
-        :param blocks_num: type:int num of resblock
+        create ResX=Conv+nxRes unit
+        :param io_channels: type:list[int],Resblock [input,output]
+        :param blocks_num: type:int num of Resblock
         :return:
         """
-        # layers = [
-        #     ('ds_conv', nn.Conv2d(self.inplanes, planes[1], kernel_size=(3, 3), stride=(2, 2), padding=1, bias=False)),
-        #     ('ds_bn', nn.BatchNorm2d(planes[1])),
-        #     ('ds_leaky_relu', nn.LeakyReLU(0.1))]
 
         # down sampling stride=2
-        layers = [('cbl',
+        layers = [('conv',
                    ConvBNLeakyRelu(self.input_channel, io_channels[1], kernel_size=(3, 3), stride=(2, 2), padding=1,
                                    bias=False))]
 
@@ -141,23 +123,24 @@ class DarkNet(nn.Module):
         return nn.Sequential(OrderedDict(layers))
 
     def forward(self, x):
-        # x = self.conv1(x)
-        # x = self.bn1(x)
-        # x = self.leaky_relu1(x)
-        x = self.cbl(x)
+        x = self.conv(x)
 
         x = self.layer1(x)
         x = self.layer2(x)
-        out3 = self.layer3(x)
-        out4 = self.layer4(out3)
-        out5 = self.layer5(out4)
+        out1 = self.layer3(x)  # 52x52
+        out2 = self.layer4(out1)  # 26x26
+        out3 = self.layer5(out2)  # 13x13
 
-        return out3, out4, out5
+        return out1, out2, out3
 
 
 def darknet53():
     model = DarkNet([1, 2, 8, 8, 4])
     return model
+
+
+def darknet19():
+    ...
 
 
 if __name__ == '__main__':

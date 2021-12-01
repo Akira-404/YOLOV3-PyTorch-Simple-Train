@@ -42,22 +42,22 @@ def load_weights(model, model_path: str, device, ignore_track: bool = False):
 
 
 class Predict:
-    def __init__(self, conf_path: str, ignore_track: bool = False):
+    def __init__(self, conf_path: str, type: str, ignore_track: bool = False):
         """
         :param conf_path: xxx.yaml
         """
         super(Predict, self).__init__()
         self.ignore_track = ignore_track
         self.conf = load_yaml_conf(conf_path)
-
+        self.type = self.conf['det_type'][type]
         self.CUDA = True if torch.cuda.is_available() and self.conf['cuda'] else False
 
-        assert os.path.exists(self.conf['classes_path']) is True, f'{self.conf["classes_path"]} is error'
-        assert os.path.exists(self.conf['anchors_path']) is True, f'{self.conf["anchors_path"]} is error'
-        assert os.path.exists(self.conf['model_path']) is True, f'{self.conf["model_path"]} is error'
+        assert os.path.exists(self.type['classes_path']) is True, f'{self.type["classes_path"]} is error'
+        assert os.path.exists(self.type['anchors_path']) is True, f'{self.type["anchors_path"]} is error'
+        assert os.path.exists(self.type['model_path']) is True, f'{self.type["model_path"]} is error'
 
-        self.class_names, self.num_classes = get_classes(self.conf['classes_path'])
-        self.anchors, self.num_anchors = get_anchors(self.conf['anchors_path'])
+        self.class_names, self.num_classes = get_classes(self.type['classes_path'])
+        self.anchors, self.num_anchors = get_anchors(self.type['anchors_path'])
 
         self.bbox_util = DecodeBox(self.anchors,
                                    self.num_classes,
@@ -75,7 +75,7 @@ class Predict:
         self.net = YOLO(self.conf['anchors_mask'], self.num_classes)
         device = torch.device('cuda' if torch.cuda.is_available() and self.conf['cuda'] else 'cpu')
 
-        self.net = load_weights(self.net, self.conf['model_path'], device, ignore_track)
+        self.net = load_weights(self.net, self.type['model_path'], device, ignore_track)
         return self.net
 
     def generate_model(self, ignore_track: bool = False):
@@ -94,7 +94,7 @@ class Predict:
             self.net = self.net.cuda()
 
     def preprocess(self, image):
-        image_shape = np.array(np.shape(image)[0:2])  # w,h
+        image_shape = np.array(np.shape(image)[0:2])  # h,w
         #   在这里将图像转换成RGB图像，防止灰度图在预测时报错。
         #   代码仅仅支持RGB图像的预测，所有其它类型的图像都会转化成RGB
         image = img2rgb(image)
@@ -120,7 +120,7 @@ class Predict:
         outputs = sess.run([output_name], {input_name: img})
         time_end = time.time()
         print('totally cost', time_end - time_start)
-        print(f'output shape:{type(outputs)}',outputs)
+        print(f'output shape:{type(outputs)}', outputs)
         outputs = self.bbox_util.decode_box(outputs)
         # results=outputs
         #   将预测框进行堆叠，然后进行非极大抑制
@@ -180,6 +180,72 @@ class Predict:
             del draw
 
         return image
+
+    def tiny_detect_image(self, image):
+        # image_shape = np.array(np.shape(image)[0:2])  # w,h
+        # #   在这里将图像转换成RGB图像，防止灰度图在预测时报错。
+        # #   代码仅仅支持RGB图像的预测，所有其它类型的图像都会转化成RGB
+        # image = img2rgb(image)
+        # #   给图像增加灰条，实现不失真的resize
+        # #   也可以直接resize进行识别
+        # image_data = resize_image(image,
+        #                           (self.conf['input_shape'][1], self.conf["input_shape"][0]),
+        #                           self.conf['letterbox_image'])
+        # #   添加上batch_size维度
+        # image_data = np.expand_dims(np.transpose(preprocess_input(np.array(image_data, dtype='float32')), (2, 0, 1)), 0)
+
+        image_data, image_shape = self.preprocess(image)
+        with torch.no_grad():
+            images = torch.from_numpy(image_data)
+            images = images.cuda() if self.CUDA else images
+
+            #   将图像输入网络当中进行预测！
+            outputs = self.net(images)
+            # outputs shape: (3,batch_size,x,y,w,h,conf,classes)
+            outputs = self.bbox_util.decode_box(outputs)
+            # results=outputs
+            #   将预测框进行堆叠，然后进行非极大抑制
+            # results shape:(len(prediction),num_anchors,4)
+            results = self.bbox_util.nms_(torch.cat(outputs, 1),
+                                          self.num_classes,
+                                          self.conf['input_shape'],
+                                          image_shape,
+                                          self.conf['letterbox_image'],
+                                          conf_thres=self.conf['confidence'],
+                                          nms_thres=self.conf['nms_iou'])
+
+            if results[0] is None:
+                return image
+
+            top_label = np.array(results[0][:, 6], dtype='int32')
+            top_conf = results[0][:, 4] * results[0][:, 5]
+            top_boxes = results[0][:, :4]
+        data = []
+        for i, c in list(enumerate(top_label)):
+            predicted_class = self.class_names[int(c)]
+            box = top_boxes[i]
+            score = top_conf[i]
+
+            # top, left, bottom, right = box
+            y0, x0, y1, x1 = box
+            # x0, y0, x1, y1 = box
+
+            y0 = max(0, np.floor(y0).astype('int32'))
+            x0 = max(0, np.floor(x0).astype('int32'))
+            y1 = min(image.size[1], np.floor(y1).astype('int32'))
+            x1 = min(image.size[0], np.floor(x1).astype('int32'))
+
+            label = '{} {:.2f}'.format(predicted_class, score)
+            label = label.encode('utf-8')
+            # print(label, x0, y0, x1, y1)
+            item = {'class': predicted_class,
+                    'score': float(score),
+                    'x0': int(x0),
+                    'y0': int(y0),
+                    'x1': int(x1),
+                    'y1': int(y1)}
+            data.append(item)
+        return data
 
     def detect_image(self, image):
         # image_shape = np.array(np.shape(image)[0:2])  # w,h

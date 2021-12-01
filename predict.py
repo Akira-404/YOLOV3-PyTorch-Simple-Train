@@ -20,7 +20,7 @@ parse.add_argument('-d', '--dir', type=str, default='/home/cv/PycharmProjects/ra
 parse.add_argument('-s', '--save_path', type=str, default='./out/person_huiyuan')
 args = parse.parse_args()
 
-predict = Predict('predict.yaml')
+predict = Predict('predict.yaml', 'person')
 conf = load_yaml_conf('predict.yaml')
 # output_path = ''
 if os.path.exists(args.save_path) is False:

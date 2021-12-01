@@ -47,6 +47,25 @@ model_path: 'model_data/head.pth'
 classes_path: 'model_data/head_classes.yaml' #数据类别文件
 anchors_path: 'model_data/head_anchors.yaml' #数据集anchors文件head
 
+det_type:
+  person:
+    dataset_root: '/home/cv/AI_Data/HardHatWorker_voc'
+    model_path: 'model_data/person.pth' #模型权重路径
+    classes_path: 'model_data/person_classes.yaml' #数据类别文件
+    anchors_path: 'model_data/person_anchors.yaml' #数据集anchors文件
+  head:
+    dataset_root: '/home/cv/AI_Data/head_datas_yolo' #数据集根目录
+    model_path: 'model_data/head.pth'
+    classes_path: 'model_data/head_classes.yaml' #数据类别文件
+    anchors_path: 'model_data/head_anchors.yaml' #数据集anchors文件head
+  helemt:
+    dataset_root: '/home/cv/AI_Data/HardHatWorker_voc'
+    model_path: 'model_data/HardHatWorker.pth' #模型权重路径
+    classes_path: 'model_data/HardHatWorker_classes.yaml' #数据类别文件
+    anchors_path: 'model_data/HardHatWorker_anchors.yaml' #数据集anchors文件
+
+
+
 anchors_mask: [ [ 6, 7, 8 ], [ 3, 4, 5 ], [ 0, 1, 2 ] ]
 
 input_shape: [ 416,416 ]
