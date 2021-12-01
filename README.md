@@ -229,7 +229,7 @@ python train.py
 
 ## 预测
 
-根据个人需求修改**predict.yaml**中的参数。
+根据个人需求修改**predict.yaml**中的参数，其中检测分类按照yaml中的dict类型进行控制
 
 **需要修改的参数**
 
@@ -239,10 +239,25 @@ python train.py
 - dataset_root：数据集根目录
 
 ```yaml
-model_path: 'logs/backbone_yolov3coco_hat_worker_voc-ep098-loss3.201-val_loss3.313.pth' #模型权重路径
-classes_path: 'model_data/my_classes.yaml' #数据类别文件
+det_type:
+  person:
+    dataset_root: '/home/cv/AI_Data/HardHatWorker_voc'
+    model_path: 'model_data/person.pth' #模型权重路径
+    classes_path: 'model_data/person_classes.yaml' #数据类别文件
+    anchors_path: 'model_data/person_anchors.yaml' #数据集anchors文件
+  head:
+    dataset_root: '/home/cv/AI_Data/head_datas_yolo' #数据集根目录
+    model_path: 'model_data/head.pth'
+    classes_path: 'model_data/head_classes.yaml' #数据类别文件
+    anchors_path: 'model_data/head_anchors.yaml' #数据集anchors文件head
+  helmet:
+    dataset_root: '/home/cv/AI_Data/HardHatWorker_voc'
+    model_path: 'model_data/HardHatWorker.pth' #模型权重路径
+    classes_path: 'model_data/HardHatWorker_classes.yaml' #数据类别文件
+    anchors_path: 'model_data/HardHatWorker_anchors.yaml' #数据集anchors文件
 
-anchors_path: 'model_data/my_anchors.yaml' #数据集anchors文件
+
+
 anchors_mask: [ [ 6, 7, 8 ], [ 3, 4, 5 ], [ 0, 1, 2 ] ]
 
 input_shape: [ 416,416 ]
@@ -254,7 +269,11 @@ letterbox_image: False #是否使用letterbox缩放
 cuda: True
 
 minoverlap: 0.5 #map计算中的iou阈值
-dataset_root: '/home/cv/AI_Data/hat_worker_voc' #数据集根目录
+
+#onnx export config
+batch_size: 1
+onnx_model: model_data/head.onnx
+trt_model: model_data/head.trt
 ```
 
 使用**predict.py**进行模型测试，测试支持图片，文件夹，视频三种方法。
@@ -265,6 +284,7 @@ dataset_root: '/home/cv/AI_Data/hat_worker_voc' #数据集根目录
 - image：图片路径
 - video：视频路径
 - dir：文件夹路径
+- Predict中的type类型为目标检测类型
 
 ```python
 parse.add_argument('-m', '--mode', type=str, choices=['image', 'video', 'dir'], default='dir',
@@ -275,11 +295,40 @@ parse.add_argument('-v', '--video', type=str, default='xxxx/xxxx/xxx.mp4',
                    help='video path')
 parse.add_argument('-d', '--dir', type=str, default='/home/cv/PycharmProjects/rabbitmq-proj/download/src/cloud/202193_1',
                    help='dir path')
+predict = Predict('predict.yaml', 'person')
 ```
 
 ```python
 python predict.py
 ```
+
+## HTTP服务
+
+项目提供了Head，Helmet，Person三种基于Flask框架的Http服务
+
+**URL**
+
+- *Helmet：http://192.168.2.165:30002/yolov3_get_helmet*
+- *Head：http://192.168.2.165:30002/yolov3_get_head*
+- *Person：http://192.168.2.165:30002/yolov3_get_person*
+
+**启动**
+
+```python
+python server_head.py
+python server_helmet.py
+python server_person.py
+```
+
+测试数据格式为 json格式，其中base64编码包含头标签。
+
+```json
+{
+    "img":["/9j/4AAQSkZ...."]
+}
+```
+
+
 
 ## 评估
 
