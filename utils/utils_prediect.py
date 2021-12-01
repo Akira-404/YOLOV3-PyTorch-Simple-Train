@@ -217,11 +217,12 @@ class Predict:
                                           nms_thres=self.conf['nms_iou'])
 
             if results[0] is None:
-                return image
+                return []
 
             top_label = np.array(results[0][:, 6], dtype='int32')
             top_conf = results[0][:, 4] * results[0][:, 5]
             top_boxes = results[0][:, :4]
+
         data = []
         for i, c in list(enumerate(top_label)):
             predicted_class = self.class_names[int(c)]
