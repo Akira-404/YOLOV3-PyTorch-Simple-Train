@@ -238,8 +238,8 @@ class Predict:
             y1 = min(image.size[1], np.floor(y1).astype('int32'))
             x1 = min(image.size[0], np.floor(x1).astype('int32'))
 
-            label = '{} {:.2f}'.format(predicted_class, score)
-            label = label.encode('utf-8')
+            # label = '{} {:.2f}'.format(predicted_class, score)
+            # label = label.encode('utf-8')
             # print(label, x0, y0, x1, y1)
             item = {
                 'label': predicted_class,
