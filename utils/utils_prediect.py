@@ -89,7 +89,7 @@ class Predict:
         # self.net.load_state_dict(torch.load(self.conf['model_path'], map_location=device))
 
         self.net = self.net.eval()
-        print(f'{self.conf["model_path"]} model,anchors,classes loaded')
+        print(f'{self.type["model_path"]} model,anchors,classes loaded')
 
         if self.CUDA:
             self.net = nn.DataParallel(self.net)
@@ -245,8 +245,8 @@ class Predict:
                 'label': predicted_class,
                 'score': float(score),
                 'height': int(y1 - y0),
-                'left': int(x1),
-                'top': int(y1),
+                'left': int(x0),
+                'top': int(y0),
                 'width': int(x1 - x0)
             }
             data.append(item)

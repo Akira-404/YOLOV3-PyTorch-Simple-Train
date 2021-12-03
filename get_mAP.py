@@ -26,7 +26,7 @@ if not os.path.exists(os.path.join(_map_out_path, 'images-optional')):
 
 class_names, _ = get_classes(_conf['classes_path'])
 print('Load model.')
-predict = Predict('predict.yaml')
+predict = Predict('predict.yaml', 'person')
 print('Load model done.')
 
 print('Get predict result.')

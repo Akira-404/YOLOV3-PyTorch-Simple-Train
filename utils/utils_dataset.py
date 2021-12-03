@@ -8,7 +8,7 @@ from tqdm import tqdm
 import cv2
 
 parser = argparse.ArgumentParser('YOLO TO VOC')
-parser.add_argument('-r', '--root', type=str, default='/home/cv/AI_Data/person_yolo',
+parser.add_argument('-r', '--root', type=str, default='/home/cv/AI_Data/reflective',
                     help='yolo dataset root')
 args = parser.parse_args()
 
@@ -23,7 +23,7 @@ if os.path.exists(_jpeg_path) is False:
 
 images_path = os.path.join(args.root, 'images')
 labels_path = os.path.join(args.root, 'labels')
-classes_path = os.path.join(args.root, 'classes.txt')
+classes_path = os.path.join(args.root, 'VOCdevkit', 'VOC2007', 'classes.txt')
 
 # 获取类别
 with open(classes_path, 'r') as f:

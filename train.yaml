@@ -18,10 +18,10 @@
 #anchors_path: 'model_data/widerface_anchors.yaml' #数据集聚类anchors
 
 #person
-dataset_root: '/home/cv/AI_Data/person_yolo'
-model_path: 'model_data/person.pt' #预加载yolov3权重文件
-classes_path: 'model_data/person_classes.yaml' #数据集类别文件
-anchors_path: 'model_data/person_anchors.yaml' #数据集聚类anchors
+#dataset_root: '/home/cv/AI_Data/person_yolo'
+#model_path: 'model_data/person.pt' #预加载yolov3权重文件
+#classes_path: 'model_data/person_classes.yaml' #数据集类别文件
+#anchors_path: 'model_data/person_anchors.yaml' #数据集聚类anchors
 
 #Helmet
 #dataset_root: '/home/cv/AI_Data/yolo_helmet_train\\anno'
@@ -47,7 +47,16 @@ anchors_path: 'model_data/person_anchors.yaml' #数据集聚类anchors
 #classes_path: 'model_data/head_classes.yaml' #数据类别文件
 #anchors_path: 'model_data/head_anchors.yaml' #数据集anchors文件head
 
+#person
+dataset_root: '/home/cv/AI_Data/reflective'
+#model_path: 'model_data/person.pth' #预加载yolov3权重文件
+model_path: 'model_data/reflective-ep124-loss4.193.pth' #预加载yolov3权重文件
+classes_path: 'model_data/reflective_classes.yaml' #数据集类别文件
+anchors_path: 'model_data/reflective_anchors.yaml' #数据集聚类anchors
+
+
 year: '2007'
+
 
 anchors_mask: [ [ 6, 7, 8 ], [ 3, 4, 5 ], [ 0, 1, 2 ] ]
 

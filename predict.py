@@ -15,12 +15,12 @@ parse.add_argument('-i', '--image', type=str, default='img.jpg',
                    help='image path')
 parse.add_argument('-v', '--video', type=str, default='',
                    help='video path')
-parse.add_argument('-d', '--dir', type=str, default='/home/cv/PycharmProjects/rabbitmq-proj/download/src/cloud/2021914',
+parse.add_argument('-d', '--dir', type=str, default='/home/cv/PycharmProjects/rabbitmq-proj/download/src/cloud/2021915',
                    help='dir path')
-parse.add_argument('-s', '--save_path', type=str, default='./out/person_huiyuan')
+parse.add_argument('-s', '--save_path', type=str, default='./out/reflective_huiyuan15')
 args = parse.parse_args()
 
-predict = Predict('predict.yaml', 'person')
+predict = Predict('predict.yaml', 'reflective')
 conf = load_yaml_conf('predict.yaml')
 # output_path = ''
 if os.path.exists(args.save_path) is False:
