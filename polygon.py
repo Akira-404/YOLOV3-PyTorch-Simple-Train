@@ -61,33 +61,33 @@ def is_left(p0: Union[List, Tuple], p1: Union[List, Tuple], p2: Union[List, Tupl
     return (p1[0] - p0[0]) * (p2[1] - p0[1]) - (p2[0] - p0[0]) * (p1[1] - p0[1])
 
 
-def winding_number(p: Union[List, Tuple], poly: List) -> bool:
+def winding_number(p: Union[List, Tuple], polys: List) -> bool:
     """
     wn=ths winging number(=0 only when p is outside)
     """
     wn = 0
-    poly_len = len(poly)
-    limit = lambda x: x % poly_len
-    for i in range(poly_len):
+    for poly in polys:
+        poly_len = len(poly)
+        limit = lambda x: x % poly_len
+        for i in range(poly_len):
 
-        start_p = poly[limit(i)]
-        end_p = poly[limit(i + 1)]
+            start_p = poly[limit(i)]
+            end_p = poly[limit(i + 1)]
 
-        if start_p[1] <= p[1]:  # start y<=p.y
-            if end_p[1] > p[1]:  # an upward crossing
-                if is_left(start_p, end_p, p) > 0:  # p left of edge
-                    wn += 1
+            if start_p[1] <= p[1]:  # start y<=p.y
+                if end_p[1] > p[1]:  # an upward crossing
+                    if is_left(start_p, end_p, p) > 0:  # p left of edge
+                        wn += 1
 
-        else:
-            if end_p[1] <= p[1]:  # a downward crossing
-                if is_left(start_p, end_p, p) < 0:  # p right of edge
-                    wn -= 1
-    print(f'wn:{wn}')
+            else:
+                if end_p[1] <= p[1]:  # a downward crossing
+                    if is_left(start_p, end_p, p) < 0:  # p right of edge
+                        wn -= 1
+
     return False if wn == 0 else True
 
 
 if __name__ == '__main__':
-
     poly = [(415, 210),
             (552, 227),
             (710, 255),
