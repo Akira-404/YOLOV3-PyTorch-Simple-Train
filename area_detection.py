@@ -1,48 +1,12 @@
+import time
+from typing import Union, List, Tuple
 import cv2
 import numpy as np
 from PIL import Image
+
 from utils.utils_prediect import Predict
 from utils.utils import load_yaml_conf
-
-
-def isRayIntersectsSegment(point, start_p, end_p):  # [x,y] [lng,lat]
-    # 输入：判断点，边起点，边终点，都是[lng,lat]格式数组
-    if start_p[1] == end_p[1]:  # 排除与射线平行、重合，线段首尾端点重合的情况
-        return False
-    if start_p[1] > point[1] and end_p[1] > point[1]:  # 线段在射线上边
-        return False
-    if start_p[1] < point[1] and end_p[1] < point[1]:  # 线段在射线下边
-        return False
-    if start_p[1] == point[1] and end_p[1] > point[1]:  # 交点为下端点，对应spoint
-        return False
-    if end_p[1] == point[1] and start_p[1] > point[1]:  # 交点为下端点，对应epoint
-        return False
-    if start_p[0] < point[0] and end_p[0] < point[0]:  # 线段在射线左边
-        return False
-
-    xseg = end_p[0] - (end_p[0] - start_p[0]) * (end_p[1] - point[1]) / (end_p[1] - start_p[1])  # 求交
-    if xseg < point[0]:  # 交点在射线起点的左侧
-        return False
-    return True  # 排除上述情况之后
-
-
-def isPoiWithinPoly(point, poly):
-    # 输入：点，多边形三维数组
-    # poly=[[[x1,y1],[x2,y2],……,[xn,yn],[x1,y1]],[[w1,t1],……[wk,tk]]] 三维数组
-
-    # 可以先判断点是否在外包矩形内
-    # if not isPoiWithinBox(point,mbr=[[0,0],[180,90]]): return False
-    # 但算最小外包矩形本身需要循环边，会造成开销，本处略去
-    sinsc = 0  # 交点个数
-    for epoly in poly:  # 循环每条边的曲线->each polygon 是二维数组[[x1,y1],…[xn,yn]]
-        for i in range(len(epoly) - 1):  # [0,len-1]
-            start_p = epoly[i]
-            end_p = epoly[i + 1]
-            if isRayIntersectsSegment(point, start_p, end_p):
-                sinsc += 1  # 有交点就加1
-
-    return True if sinsc % 2 == 1 else False
-
+from polygon import crossing_number, winding_number
 
 # bgr
 
@@ -72,7 +36,6 @@ def read_video(path: str):
 
     fps = cap.get(cv2.CAP_PROP_FPS)
     t = 0.65
-    import time
     while flag:
         image = Image.fromarray(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB))
         # image = predict.detect_image(image)
@@ -88,9 +51,15 @@ def read_video(path: str):
                 foot_y = int(item['top'] + item['height'])
 
                 cv2.circle(frame, (foot_x, foot_y), 2, (0, 0, 255), 3, -1)
-                flag = isPoiWithinPoly([foot_x, foot_y], [area_point])
+
+                # outside=0
+                # inside=1
+                # flag = crossing_number([foot_x, foot_y], [area_point])
+                flag = winding_number((foot_x, foot_y), area_point)
+                status='inside' if flag else 'outside'
 
                 box = RED if flag else GREEN
+                cv2.putText(frame,status,(item['left'],item['top']),cv2.FONT_HERSHEY_PLAIN,1,box)
                 cv2.rectangle(frame,
                               (item['left'], item['top']),
                               ((item['left'] + item['width']), (item['top'] + item['height'])), box, 2)
@@ -135,4 +104,4 @@ def draw_area(img_path: str, color: tuple = (255, 0, 0)):
 if __name__ == '__main__':
     # draw_area('img2.jpg', (255, 0, 0))
     # read_video('/home/cv/AI_Data/CUHKSquare.mpg')
-    read_video('/home/cv/AI_Data/person.avi')
+    read_video('D:/ai_data/person.avi')
