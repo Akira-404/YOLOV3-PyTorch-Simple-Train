@@ -17,3 +17,5 @@ logs/
 *.trt
 .pyc
 
+
+area_detection.yaml

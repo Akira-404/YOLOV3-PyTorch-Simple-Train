@@ -1,7 +1,10 @@
+import base64
 import time
+import json
 from typing import Union, List, Tuple
 import cv2
 import numpy as np
+import requests
 from PIL import Image
 
 from utils.utils_prediect import Predict
@@ -15,7 +18,7 @@ GREEN = (0, 255, 0)
 RED = (0, 0, 255)
 
 
-def api_test(path: str, model, polys: List):
+def api_test(path: str, model, polys: list):
     cap = cv2.VideoCapture(path)
     flag, frame = cap.read()
 
@@ -58,6 +61,53 @@ def api_test(path: str, model, polys: List):
         cv2.waitKey(int(1000 / fps))
         flag, frame = cap.read()
     cv2.destroyAllWindows()
+
+
+def image_to_base64(image_np):
+    image = cv2.imencode('.jpg', image_np)[1]
+    image_code = str(base64.b64encode(image))[2:-1]
+
+    return image_code
+
+
+def api_test_v2(path: str):
+    cap = cv2.VideoCapture(path)
+    flag, frame = cap.read()
+
+    fps = cap.get(cv2.CAP_PROP_FPS)
+    t = 0.65
+    while flag:
+        decode_image = image_to_base64(frame)
+
+        conf = load_yaml_conf('area_detection.yaml')
+        polys = conf['polys']
+        url = "http://192.168.2.165:30000/yolov3_poly"
+        payload = json.dumps({
+            "image": [decode_image],
+            "polys": polys
+        })
+        headers = {'Content-Type': 'application/json'}
+        response = requests.request("POST", url, headers=headers, data=payload)
+        local = eval(response.text)['data']
+        for poly in polys:
+            poly_len = len(poly)
+            limit = lambda x: x % poly_len
+            for i in range(poly_len):
+                start_p = tuple(poly[limit(i)])
+                end_p = tuple(poly[limit(i + 1)])
+                cv2.line(frame, start_p, end_p, BLUE, 2)
+        for item in local:
+            x0 = item['left']
+            y0 = item['top']
+            x1 = item['left'] + item['width']
+            y1 = item['top'] + item['height']
+            cv2.rectangle(frame,
+                          (x0, y0),
+                          (x1, y1), (0, 0, 255), 2)
+
+        cv2.imshow('image', frame)
+        cv2.waitKey(30)
+        flag, frame = cap.read()
 
 
 def draw_area(path: str):
@@ -118,4 +168,5 @@ def draw_area(path: str):
 
 if __name__ == '__main__':
     # read_video('/home/cv/AI_Data/CUHKSquare.mpg')
-    draw_area('D:/ai_data/person.avi')
+    # draw_area('/home/cv/AI_Data/person.avi')
+    api_test_v2('/home/cv/AI_Data/person.avi')

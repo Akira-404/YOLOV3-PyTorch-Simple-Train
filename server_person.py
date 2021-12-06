@@ -60,26 +60,28 @@ def get_person():
 @app.route('/yolov3_poly', methods=['POST'])
 def poly():
     params = request.json if request.method == "POST" else request.args
-    img = _base64_to_pil(params['image'])
+    image = _base64_to_pil(params['image'])
     polys = params['polys']
     t = 0.64
     post_data = []
+
     if poly:
-        # data = predict.tiny_detect_image(img)
-        # for item in data:
-        #     if item['score'] > t:
-        #         foot_x = int(item['left'] + item['width'] * 0.5)
-        #         foot_y = int(item['top'] + item['height'])
-        #
-        #         flag = crossing_number([foot_x, foot_y], polys)
-        # flag = winding_number((foot_x, foot_y), polys)
-        #
-        # if flag:
-        #     post_data.append(item)
+        data = predict.tiny_detect_image(image)
+        for item in data:
+            flag = False
+            if item['score'] > t:
+                foot_x = int(item['left'] + item['width'] * 0.5)
+                foot_y = int(item['top'] + item['height'])
 
-        api_test('D:/ai_data/person.avi', predict, polys)
+                # flag = crossing_number([foot_x, foot_y], polys)
+                flag = winding_number((foot_x, foot_y), polys)
 
-    # return _get_result(200,'success',post_data)
+            if flag:
+                post_data.append(item)
+
+        # api_test('/home/cv/AI_Data/person.avi', predict, polys)
+
+    return _get_result(200, 'success', post_data)
 
 
 def run():
