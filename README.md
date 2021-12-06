@@ -315,9 +315,9 @@ python predict.py
 **启动**
 
 ```python
-python server/server_head.py
-python server/server_helmet.py
-python server/server_person.py
+python server_head.py
+python server_helmet.py
+python server_person.py
 ```
 
 测试数据格式为 json格式，其中base64编码不包含头标签。
