@@ -5,7 +5,7 @@ from flask import Flask, jsonify, request
 from io import BytesIO
 from utils.polygon import winding_number
 
-predict = Predict('../predict.yaml', 'person')
+predict = Predict('predict.yaml', 'person')
 
 app = Flask(__name__)
 

@@ -11,7 +11,7 @@ from utils.utils import load_yaml_conf
 from flask import Flask, jsonify, request
 from io import BytesIO
 
-predict = Predict('../predict.yaml', 'helmet')
+predict = Predict('predict.yaml', 'helmet')
 
 app = Flask(__name__)
 
