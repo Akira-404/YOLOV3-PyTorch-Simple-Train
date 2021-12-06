@@ -60,8 +60,13 @@ def get_person():
 @app.route('/yolov3_poly', methods=['POST'])
 def poly():
     params = request.json if request.method == "POST" else request.args
-    image = _base64_to_pil(params['image'])
-    polys = params['polys']
+    try:
+        image = _base64_to_pil(params['image'])
+        polys = params['polys']
+    except Exception as e:
+        print(f'yolov3_poly:e:{e}')
+        return _get_result(500, 'Error', ["Input data error"])
+
     t = 0.64
     post_data = []
 
