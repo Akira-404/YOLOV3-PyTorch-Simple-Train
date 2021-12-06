@@ -166,5 +166,5 @@ def draw_area(path: str):
 
 if __name__ == '__main__':
     # read_video('/home/cv/AI_Data/CUHKSquare.mpg')
-    # draw_area('/home/cv/AI_Data/person.avi')
-    _api_test_v2('/home/cv/AI_Data/person.avi')
+    draw_area('/home/cv/AI_Data/person.avi')
+    # _api_test_v2('/home/cv/AI_Data/person.avi')

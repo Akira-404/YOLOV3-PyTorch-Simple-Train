@@ -304,7 +304,7 @@ python predict.py
 
 ## HTTP服务
 
-项目提供了Head，Helmet，Person三种基于Flask框架的Http服务
+项目提供了Head，Helmet，Person三种基于Flask框架的Http服务，
 
 **URL**
 
@@ -315,12 +315,12 @@ python predict.py
 **启动**
 
 ```python
-python server_head.py
-python server_helmet.py
-python server_person.py
+python server/server_head.py
+python server/server_helmet.py
+python server/server_person.py
 ```
 
-测试数据格式为 json格式，其中base64编码包含头标签。
+测试数据格式为 json格式，其中base64编码不包含头标签。
 
 ```json
 {
@@ -330,9 +330,34 @@ python server_person.py
 
 
 
+其中server_person.py中提供了人员越界检测
+
+测试数据格式：
+
+- image:进过base64编码的图片，不带头标签
+- polys:区域坐标列表
+
+```json
+{
+    "image":["/9j/4AAQSkZ...."],
+    "polys":[
+        	[[x1,y1],[x2,y2],...],
+            [[x1,y1],[x2,y2],...],...
+           ]
+}
+```
+
+在文件夹experime中的area_detection.py中可以进行实时绘制区域检测
+
+```bash
+python experiment/area_detection.py
+```
+
+
+
 ## 评估
 
-使用get_mAP.py进行模型评估，评估结果保存在map_out文件夹中
+使用get_mAP.py进行模型评估，评估结果保存在map_out文件夹中( TODO:need to fix bug)
 
 ```python
 python get_mAP.py
