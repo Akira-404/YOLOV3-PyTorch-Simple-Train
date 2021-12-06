@@ -18,4 +18,4 @@ logs/
 .pyc
 
 
-area_detection.yaml
+experiment/area_detection.yaml

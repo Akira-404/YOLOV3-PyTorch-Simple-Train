@@ -1,15 +1,12 @@
 import base64
-import time
 import json
-from typing import Union, List, Tuple
 import cv2
-import numpy as np
 import requests
 from PIL import Image
 
 from utils.utils_prediect import Predict
 from utils.utils import load_yaml_conf
-from polygon import crossing_number, winding_number
+from utils.polygon import winding_number
 
 # bgr
 
@@ -18,7 +15,7 @@ GREEN = (0, 255, 0)
 RED = (0, 0, 255)
 
 
-def api_test(path: str, model, polys: list):
+def _api_test_v1(path: str, model, polys: list):
     cap = cv2.VideoCapture(path)
     flag, frame = cap.read()
 
@@ -70,7 +67,7 @@ def image_to_base64(image_np):
     return image_code
 
 
-def api_test_v2(path: str):
+def _api_test_v2(path: str):
     cap = cv2.VideoCapture(path)
     flag, frame = cap.read()
 
@@ -81,7 +78,8 @@ def api_test_v2(path: str):
 
         conf = load_yaml_conf('area_detection.yaml')
         polys = conf['polys']
-        url = "http://192.168.2.165:30000/yolov3_poly"
+        # url = "http://192.168.2.165:30000/yolov3_poly"
+        url = "http://192.168.2.7:30000/yolov3_poly"
         payload = json.dumps({
             "image": [decode_image],
             "polys": polys
@@ -111,7 +109,7 @@ def api_test_v2(path: str):
 
 
 def draw_area(path: str):
-    predict = Predict('predict.yaml', 'person')
+    predict = Predict('../predict.yaml', 'person')
 
     poly = []
 
@@ -169,4 +167,4 @@ def draw_area(path: str):
 if __name__ == '__main__':
     # read_video('/home/cv/AI_Data/CUHKSquare.mpg')
     # draw_area('/home/cv/AI_Data/person.avi')
-    api_test_v2('/home/cv/AI_Data/person.avi')
+    _api_test_v2('/home/cv/AI_Data/person.avi')

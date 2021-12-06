@@ -5,16 +5,10 @@ Usage:
 """
 
 import os
-import argparse
-import time
 
 import torch
-import cv2
-import numpy as np
 import onnx
-import onnxruntime as rt
-from PIL import Image
-from onnx_simplifier import simplify
+from utils.onnx_simplifier import simplify
 from predict import Predict
 from utils.utils import load_yaml_conf
 

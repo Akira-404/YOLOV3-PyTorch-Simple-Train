@@ -3,7 +3,7 @@ typedef struct {int x,y} Point;
 // 0 for p2 left of the line through p1 and p1
 // 1 for p2  ont he line
 // 2 for p2 right of the line
-inline int isLeft(Point p0,Point p1,Point p2,)
+inline int IsLeft(Point p0,Point p1,Point p2,)
 {
     return ((p1.x-p0.x)*(p2.y-p0.y)-(p2.x-p0.x)*(p1.y-p0.y));
 }
@@ -12,7 +12,7 @@ inline int isLeft(Point p0,Point p1,Point p2,)
 // V[]=vertex points fo a polygon v[n+1] with v[n]=v[0]
 // Return outside=0,inside=1
 
-int cn_PnPoly(Point,p,Point* V,int n)
+int CrossingNumber(Point,p,Point* V,int n)
 {
     int cn=0;
     for(int i=0;i<n;i++)
@@ -31,7 +31,7 @@ int cn_PnPoly(Point,p,Point* V,int n)
 
 }
 
-int wn_PnPoly(Point p,Point* V,int n)
+int WindingNumber(Point p,Point* V,int n)
 {
     int wn=0;
     for(int i=0;i<n;i++)

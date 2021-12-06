@@ -1,19 +1,11 @@
 import base64
-import os
-import cv2
-import time
-from tqdm import tqdm
-import cv2
-import numpy as np
 from PIL import Image
 from utils.utils_prediect import Predict
-from utils.utils import load_yaml_conf
 from flask import Flask, jsonify, request
 from io import BytesIO
-from polygon import crossing_number, winding_number
-from area_detection import api_test
+from utils.polygon import winding_number
 
-predict = Predict('predict.yaml', 'person')
+predict = Predict('../predict.yaml', 'person')
 
 app = Flask(__name__)
 
