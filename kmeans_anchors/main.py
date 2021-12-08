@@ -14,7 +14,7 @@ parse.add_argument('-r', '--root', type=str, default='/home/cv/AI_Data/hat_worke
                    help='voc dataset rot:xxx/xxx')
 parse.add_argument('-y', '--year', type=str, default='2007',
                    help='2007 or 2012')
-parse.add_argument('-s', '--save_path', type=str, default='../model_data/my_anchors.yaml',
+parse.add_argument('-s', '--save_path', type=str, default='../data/my_anchors.yaml',
                    help='this path will save you anchors.yaml')
 args = parse.parse_args()
 

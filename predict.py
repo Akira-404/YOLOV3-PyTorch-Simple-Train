@@ -17,11 +17,12 @@ parse.add_argument('-v', '--video', type=str, default='',
                    help='video path')
 parse.add_argument('-d', '--dir', type=str, default='/home/cv/PycharmProjects/rabbitmq-proj/download/src/cloud/2021915',
                    help='dir path')
-parse.add_argument('-s', '--save_path', type=str, default='./out/reflective_huiyuan15')
+parse.add_argument('-s', '--save_path', type=str, default='./out/head_test')
 args = parse.parse_args()
 
-predict = Predict('predict.yaml', 'reflective')
+predict = Predict('predict.yaml', 'head')
 conf = load_yaml_conf('predict.yaml')
+conf = conf['det_type']['head']
 # output_path = ''
 if os.path.exists(args.save_path) is False:
     os.mkdir(args.save_path)
@@ -37,11 +38,10 @@ def run_test_image():
         line = line.strip()
         img_path = os.path.join(conf['dataset_root'], 'VOCdevkit/VOC2007/JPEGImages', line) + '.jpg'
         assert os.path.exists(img_path), f'{img_path} is error'
-        print(img_path)
+        # print(img_path)
         if img_path.lower().endswith('jpg'):
             image = Image.open(img_path)
             r_image = predict.detect_image(image)
-
             r_image.save(os.path.join(args.save_path, line) + '.jpg')
         cnt += 1
         if cnt > 100:
@@ -114,5 +114,5 @@ def main(args):
 
 
 if __name__ == '__main__':
-    # run_test_image()
-    main(args)
+    run_test_image()
+    # main(args)

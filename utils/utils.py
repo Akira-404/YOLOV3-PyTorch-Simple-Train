@@ -60,7 +60,7 @@ def img2rgb(image):
 
 
 def cv_resize_image(image, size: tuple, letterbox_image: bool = False):
-    #TODO
+    # TODO
     ih = image.shape[0]
     iw = image.shape[1]
     w, h = size
@@ -145,8 +145,9 @@ def read_xml(path: str):
 
 def check_dataset(conf: dict):
     import matplotlib.pyplot as plt
+    obj = conf['object'][conf['obj_type']]
+    annoa_root = os.path.join(obj['dataset_root'], f'VOCdevkit/VOC{conf["year"]}/Annotations')
 
-    annoa_root = os.path.join(conf['dataset_root'], f'VOCdevkit/VOC{conf["year"]}/Annotations')
     assert os.path.exists(annoa_root) is True, f'{annoa_root} is error'
     # dataset_info = {'total': 0, 'difficult': 0}
     dataset_info = {}

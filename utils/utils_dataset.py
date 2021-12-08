@@ -8,7 +8,7 @@ from tqdm import tqdm
 import cv2
 
 parser = argparse.ArgumentParser('YOLO TO VOC')
-parser.add_argument('-r', '--root', type=str, default='/home/cv/AI_Data/reflective',
+parser.add_argument('-r', '--root', type=str, default='/home/cv/AI_Data/widerperson',
                     help='yolo dataset root')
 args = parser.parse_args()
 
@@ -66,6 +66,7 @@ def write_xml(imgname: str, img_w: int, img_h: int, img_d: int, filepath: str, l
 def yolo2voc():
     for label in tqdm(os.listdir(labels_path)):
         label_path = os.path.join(labels_path, label)
+        # print(label_path)
         with open(label_path, 'r') as f:
             # 获取图片名
             img_name = os.path.splitext(label)[0]
@@ -73,7 +74,7 @@ def yolo2voc():
             # 读取图片
             img_path = os.path.join(images_path, label).replace('txt', 'jpg')
             if not os.path.exists(img_path):
-                print(img_path)
+                # print(img_path)
                 continue
             img = cv2.imread(img_path)
             img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
@@ -83,10 +84,13 @@ def yolo2voc():
             contents = f.readlines()
             labeldicts = []
             for content in contents:
+
                 # 图片的高度和宽度
                 # print(img.shape)
                 img_h, img_w, img_d = int(img.shape[0]), int(img.shape[1]), int(img.shape[2])
                 content = content.strip('\n').split()
+                if len(content)<5:
+                    continue
                 x = float(content[1]) * img_w
                 y = float(content[2]) * img_h
                 w = float(content[3]) * img_w
@@ -120,5 +124,5 @@ def check_dataset():
 
 
 if __name__ == '__main__':
-    # yolo2voc()
-    check_dataset()
+    yolo2voc()
+    # check_dataset()

@@ -4,7 +4,7 @@ import numpy as np
 import torch
 import torch.nn as nn
 
-from nets.darknet import darknet53
+from modules.darknet import darknet53
 
 
 def conv2d(in_channel: int, out_channel: int, kernel_size):
@@ -13,7 +13,7 @@ def conv2d(in_channel: int, out_channel: int, kernel_size):
     return nn.Sequential(OrderedDict([
         ('conv', nn.Conv2d(in_channel, out_channel, kernel_size=kernel_size, stride=(1, 1), padding=pad, bias=False)),
         ('bn', nn.BatchNorm2d(out_channel)),
-        ('leaky_relu', nn.LeakyReLU(0.1))
+        ('leaky_relu', nn.LeakyReLU(0.1818))
     ]))
 
 
@@ -42,11 +42,26 @@ def _make_yolo_block(channels: list, in_channel: int, out_channel: int):
     return m
 
 
+class SPP(nn.Module):
+    def __init__(self, pool_sizes=None):
+        super(SPP, self).__init__()
+
+        pool_sizes = [5, 9, 13] if pool_sizes is None else pool_sizes
+
+        self.maxpools = nn.ModuleList([nn.MaxPool2d(pool_size, 1, pool_size // 2) for pool_size in pool_sizes])
+
+    def forward(self, x):
+        features = [maxpool(x) for maxpool in self.maxpools[::-1]]
+        features = torch.cat(features + [x], dim=1)
+
+        return features
+
+
 class YOLO(nn.Module):
-    def __init__(self, anchors_mask:list, num_classes: int):
+    def __init__(self, anchors_mask: list, num_classes: int, spp: bool = False, act: str = 'leaky_relu'):
         super(YOLO, self).__init__()
 
-        self.backbone = darknet53()
+        self.backbone = darknet53(act)
 
         out_filters = self.backbone.layers_out_filters
 
@@ -54,6 +69,7 @@ class YOLO(nn.Module):
         self.big_detect_layer = _make_yolo_block([512, 1024],
                                                  out_filters[-1],
                                                  len(anchors_mask[0]) * (num_classes + 5))
+        self.spp = SPP() if spp else spp
 
         # medium object
         self.medium_detect_layer_conv = conv2d(512, 256, 1)
@@ -78,6 +94,11 @@ class YOLO(nn.Module):
         # input x0:(13,13,1024) out0_branch:(13,13,512),out0:(13,13,512)
         out0_branch = self.big_detect_layer[:5](x0)  # 上采样位置
         out0 = self.big_detect_layer[5:](out0_branch)
+        if self.spp:
+            out0 = self.spp(out0)
+
+        else:
+            out0 = out0
 
         # big+medium上采样+数据拼接
         x1_in = self.medium_detect_layer_conv(out0_branch)
@@ -103,11 +124,14 @@ class YOLO(nn.Module):
 if __name__ == '__main__':
     anchors_mask = [[6, 7, 8], [3, 4, 5], [0, 1, 2]]
 
-    net = YOLO(anchors_mask, 2)
+    net = YOLO(anchors_mask, 2, spp=True, act='mish')
+    with open('yolo.txt', 'w') as f:
+        f.write(str(net))
+    exit()
     dict = net.state_dict()
     # for k,v in dict.items():
     #     print(k,' ',np.shape(v))
 
-    yw = torch.load('../model_data/voc.pth',map_location='cpu')
+    yw = torch.load('../data/voc.pth', map_location='cpu')
     for k, v in yw.items():
         print(k, ' ', np.shape(v))

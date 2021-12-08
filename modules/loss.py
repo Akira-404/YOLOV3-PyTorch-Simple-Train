@@ -3,29 +3,7 @@ import torch.nn as nn
 import torch.cuda
 import math
 import numpy as np
-
-
-# 限制数据范围
-def clip_by_tensor(t: torch.Tensor, t_min, t_max):
-    t = t.float()
-    # _t = t_min if (t < t_min).float() else t
-    # _t = t_max if (t > t_max).float() else _t
-    # return _t
-
-    result = (t >= t_min).float() * t + (t < t_min).float() * t_min
-    result = (result <= t_max).float() * result + (result > t_max).float() * t_max
-    return result
-
-
-def MSELoss(pred: torch.Tensor, target: torch.Tensor) -> torch.Tensor:
-    return torch.pow(pred - target, 2)
-
-
-def BCELoss(pred: torch.Tensor, target: torch.Tensor) -> torch.Tensor:
-    epsilon = 1e-7
-    pred = clip_by_tensor(pred, epsilon, 1.0 - epsilon)
-    output = - target * torch.log(pred) - (1.0 - target) * torch.log(1.0 - pred)
-    return output
+from utils.utils_loss import *
 
 
 class YOLOLoss(nn.Module):
@@ -34,7 +12,8 @@ class YOLOLoss(nn.Module):
                  num_classes: int,
                  input_shape: list,
                  cuda: bool,
-                 anchors_mask: list):
+                 anchors_mask: list,
+                 label_smoothing: int = 0):
         super(YOLOLoss, self).__init__()
 
         # yolov3 anchors
@@ -44,6 +23,7 @@ class YOLOLoss(nn.Module):
         self.bbox_attrs = 5 + num_classes  # (x,y,w,h,p)+num_classes
         self.input_shape = input_shape
         self.anchors_mask = anchors_mask if not anchors_mask else [[6, 7, 8], [3, 4, 5], [0, 1, 2]]
+        self.label_smoothing = label_smoothing
 
         self.ignore_threshold = 0.5
         self.cuda = cuda
@@ -97,7 +77,7 @@ class YOLOLoss(nn.Module):
         y_true, noobj_mask, box_loss_scale = self.get_target(l, targets, scaled_anchors, in_h, in_w)
 
         # 判断预测结果和真实值的重合程度
-        noobj_mask = self.get_ignore(l, x, y, h, w, targets, scaled_anchors, in_h, in_w, noobj_mask)
+        noobj_mask, pred_boxes = self.get_ignore(l, x, y, h, w, targets, scaled_anchors, in_h, in_w, noobj_mask)
 
         if self.cuda:
             y_true = y_true.cuda()
@@ -110,18 +90,30 @@ class YOLOLoss(nn.Module):
         box_loss_scale = 2 - box_loss_scale
 
         #   计算中心偏移情况的loss，使用BCELoss效果好一些
-        loss_x = torch.sum(BCELoss(x, y_true[..., 0]) * box_loss_scale * y_true[..., 4])
-        loss_y = torch.sum(BCELoss(y, y_true[..., 1]) * box_loss_scale * y_true[..., 4])
-        #   计算宽高调整值的loss
-        loss_w = torch.sum(MSELoss(w, y_true[..., 2]) * 0.5 * box_loss_scale * y_true[..., 4])
-        loss_h = torch.sum(MSELoss(h, y_true[..., 3]) * 0.5 * box_loss_scale * y_true[..., 4])
+        # loss_x = torch.sum(BCELoss(x, y_true[..., 0]) * box_loss_scale * y_true[..., 4])
+        # loss_y = torch.sum(BCELoss(y, y_true[..., 1]) * box_loss_scale * y_true[..., 4])
+        # #   计算宽高调整值的loss
+        # loss_w = torch.sum(MSELoss(w, y_true[..., 2]) * 0.5 * box_loss_scale * y_true[..., 4])
+        # loss_h = torch.sum(MSELoss(h, y_true[..., 3]) * 0.5 * box_loss_scale * y_true[..., 4])
+
+        # This part from yolov4 loss
+        ciou = (1 - box_ciou(pred_boxes[y_true[..., 4] == 1],
+                                  y_true[..., :4][y_true[..., 4] == 1])) * \
+               box_loss_scale[y_true[..., 4] == 1]
+        loss_loc = torch.sum(ciou)
+
         #   计算置信度的loss
         loss_conf = torch.sum(BCELoss(conf, y_true[..., 4]) * y_true[..., 4]) + \
                     torch.sum(BCELoss(conf, y_true[..., 4]) * noobj_mask)
 
-        loss_cls = torch.sum(BCELoss(pred_cls[y_true[..., 4] == 1], y_true[..., 5:][y_true[..., 4] == 1]))
+        loss_cls = torch.sum(BCELoss(pred_cls[y_true[..., 4] == 1],
+                                          smooth_labels(y_true[..., 5:][y_true[..., 4] == 1], self.label_smoothing,
+                                                             self.num_classes)))
 
-        loss = loss_x + loss_y + loss_w + loss_h + loss_conf + loss_cls
+        # loss = loss_x + loss_y + loss_w + loss_h + loss_conf + loss_cls
+
+        # This part from yolov4 loss
+        loss = loss_loc + loss_conf + loss_cls
         num_pos = torch.sum(y_true[..., 4])
         num_pos = torch.max(num_pos, torch.ones_like(num_pos))
         return loss, num_pos
@@ -260,47 +252,7 @@ class YOLOLoss(nn.Module):
                 anch_ious_max, _ = torch.max(anch_ious, dim=0)
                 anch_ious_max = anch_ious_max.view(pred_boxes[b].size()[:3])
                 noobj_mask[b][anch_ious_max > self.ignore_threshold] = 0
-        return noobj_mask
-
-
-def calculate_iou(_box_a: torch.Tensor, _box_b: torch.Tensor) -> torch.Tensor:
-    """
-    _box_a:gt box shape:[num_obj,4]=[num_obj,[cx,cy,w,h]]
-    _box_h:anchors box shape:[9,4]=[num_anchors,[cx,cy,w,h]]
-    """
-    #   计算真实框的左上角和右下角
-    # x1=cx-w/2,x2=cx+w/2
-    # y1=cy-h/2,y2=cy+h/2
-
-    b1_x1, b1_x2 = _box_a[:, 0] - _box_a[:, 2] / 2, _box_a[:, 0] + _box_a[:, 2] / 2
-    b1_y1, b1_y2 = _box_a[:, 1] - _box_a[:, 3] / 2, _box_a[:, 1] + _box_a[:, 3] / 2
-    #   计算先验框获得的预测框的左上角和右下角
-    b2_x1, b2_x2 = _box_b[:, 0] - _box_b[:, 2] / 2, _box_b[:, 0] + _box_b[:, 2] / 2
-    b2_y1, b2_y2 = _box_b[:, 1] - _box_b[:, 3] / 2, _box_b[:, 1] + _box_b[:, 3] / 2
-
-    #   将真实框和预测框都转化成左上角右下角的形式
-    box_a = torch.zeros_like(_box_a)  # [num_obj,4]
-    box_b = torch.zeros_like(_box_b)  # [num_anchors,4]
-    box_a[:, 0], box_a[:, 1], box_a[:, 2], box_a[:, 3] = b1_x1, b1_y1, b1_x2, b1_y2
-    box_b[:, 0], box_b[:, 1], box_b[:, 2], box_b[:, 3] = b2_x1, b2_y1, b2_x2, b2_y2
-
-    #   A为真实框的数量，B为先验框的数量
-    A = box_a.size()[0]
-    B = box_b.size()[0]
-    # A = box_a.size(0)
-    # B = box_b.size(0)
-
-    #   计算交的面积
-    max_xy = torch.min(box_a[:, 2:].unsqueeze(1).expand(A, B, 2), box_b[:, 2:].unsqueeze(0).expand(A, B, 2))
-    min_xy = torch.max(box_a[:, :2].unsqueeze(1).expand(A, B, 2), box_b[:, :2].unsqueeze(0).expand(A, B, 2))
-    inter = torch.clamp((max_xy - min_xy), min=0)
-    inter = inter[:, :, 0] * inter[:, :, 1]
-    #   计算预测框和真实框各自的面积
-    area_a = ((box_a[:, 2] - box_a[:, 0]) * (box_a[:, 3] - box_a[:, 1])).unsqueeze(1).expand_as(inter)  # [A,B]
-    area_b = ((box_b[:, 2] - box_b[:, 0]) * (box_b[:, 3] - box_b[:, 1])).unsqueeze(0).expand_as(inter)  # [A,B]
-    #   求IOU
-    union = area_a + area_b - inter
-    return inter / union  # [A,B]
+        return noobj_mask, pred_boxes
 
 
 def weights_init(net, init_type: str = 'normal', init_gain: float = 0.02):

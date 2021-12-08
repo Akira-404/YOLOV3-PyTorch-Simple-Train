@@ -99,11 +99,11 @@ args = parser.parse_args()
 
 ```yaml
 #file:train.yaml
-classes_path: 'model_data/my_classes.yaml' #数据集类别文件
-anchors_path: 'model_data/my_anchors.yaml' #数据集聚类anchors
+classes_path: 'data/my_classes.yaml' #数据集类别文件
+anchors_path: 'data/my_anchors.yaml' #数据集聚类anchors
 
 anchors_mask: [ [ 6, 7, 8 ], [ 3, 4, 5 ], [ 0, 1, 2 ] ]
-model_path: 'model_data/voc.pth' #预加载yolov3权重文件
+model_path: 'data/voc.pth' #预加载yolov3权重文件
 input_shape: [ 416, 416 ] #模型输入图片尺度
 cuda: True
 
@@ -242,19 +242,19 @@ python train.py
 det_type:
   person:
     dataset_root: '/home/cv/AI_Data/HardHatWorker_voc'
-    model_path: 'model_data/person.pth' #模型权重路径
-    classes_path: 'model_data/person_classes.yaml' #数据类别文件
-    anchors_path: 'model_data/person_anchors.yaml' #数据集anchors文件
+    model_path: 'data/person.pth' #模型权重路径
+    classes_path: 'data/person_classes.yaml' #数据类别文件
+    anchors_path: 'data/person_anchors.yaml' #数据集anchors文件
   head:
     dataset_root: '/home/cv/AI_Data/head_datas_yolo' #数据集根目录
-    model_path: 'model_data/head.pth'
-    classes_path: 'model_data/head_classes.yaml' #数据类别文件
-    anchors_path: 'model_data/head_anchors.yaml' #数据集anchors文件head
+    model_path: 'data/head.pth'
+    classes_path: 'data/head_classes.yaml' #数据类别文件
+    anchors_path: 'data/head_anchors.yaml' #数据集anchors文件head
   helmet:
     dataset_root: '/home/cv/AI_Data/HardHatWorker_voc'
-    model_path: 'model_data/HardHatWorker.pth' #模型权重路径
-    classes_path: 'model_data/HardHatWorker_classes.yaml' #数据类别文件
-    anchors_path: 'model_data/HardHatWorker_anchors.yaml' #数据集anchors文件
+    model_path: 'data/helmet.pth' #模型权重路径
+    classes_path: 'data/helmet_classes.yaml' #数据类别文件
+    anchors_path: 'data/helmet_anchors.yaml' #数据集anchors文件
 
 
 
@@ -272,8 +272,8 @@ minoverlap: 0.5 #map计算中的iou阈值
 
 #onnx export config
 batch_size: 1
-onnx_model: model_data/head.onnx
-trt_model: model_data/head.trt
+onnx_model: data/head.onnx
+trt_model: data/head.trt
 ```
 
 使用**predict.py**进行模型测试，测试支持图片，文件夹，视频三种方法。

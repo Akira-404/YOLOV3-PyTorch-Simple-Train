@@ -1,89 +1,63 @@
-#voc 2007
-#dataset_root: '/home/cv/AI_Data/VOCtrainval2007'
-#dataset_root: '/home/cv/AI_Data/VOCtest2007'
-#model_path: 'model_data/voc.pth' #预加载yolov3权重文件
-#classes_path: 'model_data/voc_classes.yaml' #数据集类别文件
-#anchors_path: 'model_data/voc_anchors.yaml' #数据集聚类anchors
-
-#coco
-#dataset_root: '/home/cv/AI_Data/VOCtest2007'
-#model_path: 'model_data/coco.pt' #预加载yolov3权重文件
-#classes_path: 'model_data/coco_classes.yaml' #数据集类别文件
-#anchors_path: 'model_data/coco_anchors.yaml' #数据集聚类anchors
-
-#widerface
-#dataset_root: '/home/cv/AI_Data/yolo_widerface_open_train'
-#model_path: 'model_data/widerface.pt' #预加载yolov3权重文件
-#classes_path: 'model_data/widerface_classes.yaml' #数据集类别文件
-#anchors_path: 'model_data/widerface_anchors.yaml' #数据集聚类anchors
-
-#person
-#dataset_root: '/home/cv/AI_Data/person_yolo'
-#model_path: 'model_data/person.pt' #预加载yolov3权重文件
-#classes_path: 'model_data/person_classes.yaml' #数据集类别文件
-#anchors_path: 'model_data/person_anchors.yaml' #数据集聚类anchors
-
-#Helmet
-#dataset_root: '/home/cv/AI_Data/yolo_helmet_train\\anno'
-#model_path: 'model_data/helmet.pt' #预加载yolov3权重文件
-#classes_path: 'model_data/helmet_classes.yaml' #数据集类别文件
-#anchors_path: 'model_data/helmet_anchors.yaml' #数据集聚类anchors
-
-#hat_worker_voc
-#dataset_root: '/home/cv/AI_Data/HardHatWorker_voc' #数据集根目录
-#model_path: 'logs/hat_worker_voc-ep098-loss3.201-val_loss3.313.pth' #模型权重路径
-#classes_path: 'model_data/hat_worker_classes.yaml' #数据类别文件
-#anchors_path: 'model_data/hat_worker_anchors.yaml' #数据集anchors文件
-
-#HardHatWorker_voc
-#dataset_root: '/home/cv/AI_Data/HardHatWorker_voc' #数据集根目录
-#model_path: 'model_data/HardHatWorker_voc-ep099-loss3.918.pth'
-#classes_path: 'model_data/HardHatWorker_classes.yaml' #数据类别文件
-#anchors_path: 'model_data/HardHatWorker_anchors.yaml' #数据集anchors文件
-
-#head_test
-#dataset_root: '/home/cv/AI_Data/head_datas_yolo' #数据集根目录
-#model_path: 'model_data/HardHatWorker.pth'
-#classes_path: 'model_data/head_classes.yaml' #数据类别文件
-#anchors_path: 'model_data/head_anchors.yaml' #数据集anchors文件head
-
-#person
-dataset_root: '/home/cv/AI_Data/reflective'
-#model_path: 'model_data/person.pth' #预加载yolov3权重文件
-model_path: 'model_data/reflective-ep124-loss4.193.pth' #预加载yolov3权重文件
-classes_path: 'model_data/reflective_classes.yaml' #数据集类别文件
-anchors_path: 'model_data/reflective_anchors.yaml' #数据集聚类anchors
-
+object:
+  reflective:
+    dataset_root: '/home/cv/AI_Data/reflective'
+    model_path: 'weights/reflective-ep124-loss4.193.pth' #预加载yolov3权重文件
+    classes_path: 'data/reflective_classes.yaml' #数据集类别文件
+    anchors_path: 'data/reflective_anchors.yaml' #数据集聚类anchors
+  person:
+    dataset_root: '/home/cv/AI_Data/person_yolo'
+    model_path: 'weights/person.pth' #预加载yolov3权重文件
+    classes_path: 'data/person_classes.yaml' #数据集类别文件
+    anchors_path: 'data/person_anchors.yaml' #数据集聚类anchors
+  widerperson:
+    dataset_root: '/home/cv/AI_Data/widerperson'
+    model_path: 'weights/person.pth' #预加载yolov3权重文件
+    classes_path: 'data/widerperson_classes.yaml' #数据集类别文件
+    anchors_path: 'data/widerperson_anchors.yaml' #数据集聚类anchors
+  helmet:
+    dataset_root: '/home/cv/AI_Data/yolo_helmet_train\\anno'
+    model_path: 'weights/helmet.pth' #预加载yolov3权重文件
+    classes_path: 'data/helmet_classes.yaml' #数据类别文件
+    anchors_path: 'data/helmet_anchors.yaml' #数据集anchors文件
+  head:
+    dataset_root: '/home/cv/AI_Data/head_datas_yolo' #数据集根目录
+    model_path: 'weights/head.pth'
+    classes_path: 'data/head_classes.yaml' #数据类别文件
+    anchors_path: 'data/head_anchors.yaml' #数据集anchors文件head
 
 year: '2007'
+obj_type: person
 
-
-anchors_mask: [ [ 6, 7, 8 ], [ 3, 4, 5 ], [ 0, 1, 2 ] ]
-
-input_shape: [ 416, 416 ] #模型输入图片尺度
 cuda: True
+num_workers: 8
+
+spp: True
+activation: mish
+mosaic: True
+cosine_lr: True
+label_smoothing: 0
 
 Init_Epoch: 0
+input_shape: [ 416, 416 ] #模型输入图片尺度
+#input_shape: [ 608,608 ] #模型输入图片尺度
+anchors_mask: [ [ 6, 7, 8 ], [ 3, 4, 5 ], [ 0, 1, 2 ] ]
 
-#冻结训练参数设置
-Freeze_Epoch: 50
-Freeze_batch_size: 16
-Freeze_lr: 1e-3
-
-#全网络训练参数设置
-UnFreeze_Epoch: 150
-Unfreeze_batch_size: 16
-Unfreeze_lr: 1e-4
+#generate config
+train_percent: 0.9
+trainval_percent: 0.9
 
 Freeze_Train: True
-
-num_workers: 8
+#冻结训练参数设置
+Freeze_Epoch: 10
+Freeze_batch_size: 16
+Freeze_lr: 1e-3
+#全网络训练参数设置
+UnFreeze_Epoch: 50
+Unfreeze_batch_size: 16
+Unfreeze_lr: 1e-4
 
 #训练数据集路径文件
 train_annotation_path: '2007_train.txt'
 val_annotation_path: '2007_val.txt'
 
 
-#generate config
-train_percent: 0.9
-trainval_percent: 0.9

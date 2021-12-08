@@ -67,5 +67,5 @@ if __name__ == '__main__':
     print(f'Input data shape:{img.shape}')
 
     get_onnx_model(model, onnx_model, img)
-    img = predict.onnx_test('model_data/head.onnx', 'img.jpg', True)
+    img = predict.onnx_test('data/head.onnx', 'img.jpg', True)
     img.show()

@@ -1,0 +1,7 @@
+nc: 5
+classes:
+  -reders
+  -ignore
+  -crowd
+  -regions
+  -partially-visible_persons

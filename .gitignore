@@ -1,8 +1,8 @@
 .idea/
-nets/__pycache__/
+modules/__pycache__/
 __pycache__/
 kmeans_anchors/
-model_data/_test.py
+data/_test.py
 logs/
 /out/
 /map_out
@@ -19,3 +19,5 @@ logs/
 
 
 experiment/area_detection.yaml
+/test.py
+/area_detection.mp4

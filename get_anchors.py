@@ -15,11 +15,12 @@ from kmeans_anchors.yolo_kmeans import k_means, wh_iou
 #                    help='voc dataset rot:xxx/xxx')
 # parse.add_argument('-y', '--year', type=str, default='2007',
 #                    help='2007 or 2012')
-# parse.add_argument('-s', '--save_path', type=str, default='../model_data/my_anchors.yaml',
+# parse.add_argument('-s', '--save_path', type=str, default='../data/my_anchors.yaml',
 #                    help='this path will save you anchors.yaml')
 # args = parse.parse_args()
 
 conf = load_yaml_conf('train.yaml')
+obj = conf['object'][conf['obj_type']]
 
 
 def anchor_fitness(k: np.ndarray, wh: np.ndarray, thr: float):  # mutation fitness
@@ -34,7 +35,7 @@ def anchor_fitness(k: np.ndarray, wh: np.ndarray, thr: float):  # mutation fitne
 
 def main(img_size: int = 512, n: int = 9, thr: float = 0.25, gen: int = 1000):
     # 从数据集中读取所有图片的wh以及对应bboxes的wh
-    dataset = VOCDataSet(voc_root=conf['dataset_root'], year=conf['year'], txt_name="train.txt")
+    dataset = VOCDataSet(voc_root=obj['dataset_root'], year=conf['year'], txt_name="train.txt")
     im_wh, boxes_wh = dataset.get_info()
 
     # 最大边缩放到img_size
@@ -85,7 +86,7 @@ def main(img_size: int = 512, n: int = 9, thr: float = 0.25, gen: int = 1000):
     k_f = [int(i) for i in k.flatten()]
     print(k_f)
     anchors = {'anchors': k_f}
-    with open(conf['anchors_path'], 'w',encoding='UTF-8') as f:
+    with open(obj['anchors_path'], 'w', encoding='UTF-8') as f:
         yaml.dump(anchors, f)
 
 
