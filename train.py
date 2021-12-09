@@ -104,6 +104,7 @@ def unfreeze_train(model, model_train, train_lines, val_lines, num_classes, num_
     optimizer = optim.Adam(model_train.parameters(), lr, weight_decay=5e-4)
 
     if conf['cosine_lr']:
+        print('Using cosine_lr ')
         lr_scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=5, eta_min=1e-5)
     else:
         lr_scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=1, gamma=0.94)
@@ -147,13 +148,23 @@ def train():
     class_names, num_classes = get_classes(obj['classes_path'])
     anchors, num_anchors = get_anchors(obj['anchors_path'])
 
-    print(f'classes_names:{class_names}')
+    print(f'classes names:{class_names}')
     print(f'anchors:{anchors}')
     print(f'num workers:{conf["num_workers"]}')
-    print(f'SPP:{conf["spp"]}')
+    print(f'SPP args:{conf["spp"]}')
     print(f'Activation:{conf["activation"]}')
     print(f'Cosine LR:{conf["cosine_lr"]}')
     print(f'Label smoothing:{conf["label_smoothing"]}')
+
+    print(f'Freeze_Train:{conf["Freeze_Train"]}')
+    if conf['Freeze_Train']:
+        print(f'Freeze epoch:{conf["Freeze_Epoch"]}')
+        print(f'Freeze batch size:{conf["freeze_batch_size"]}')
+        print(f'Freeze_lr epoch:{conf["freeze_lr"]}')
+
+    print(f'Unfreeze epoch:{conf["UnFreeze_Epoch"]}')
+    print(f'Unfreeze batch size:{conf["Unfreeze_batch_size"]}')
+    print(f'Unfreeze_lr epoch:{conf["Unfreeze_lr"]}')
 
     model = YOLO(conf['anchors_mask'], num_classes, conf['spp'], conf['activation'])
     weights_init(model)
@@ -168,7 +179,7 @@ def train():
         # model.load_state_dict(pretrained_dict, strict=False)
         # _t = model.state_dict()
         print('loading weights done.')
-    # exit(0)
+
     model_train = model.train()
 
     if CUDA:

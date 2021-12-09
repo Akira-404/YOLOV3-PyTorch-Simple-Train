@@ -129,9 +129,9 @@ class YOLO(nn.Module):
         # big object
         if spp:
             self.big_detect_layer = _ultralytics_spp_block(spp,
-                                                          [512, 1024],
-                                                          out_filters[-1],  # 1024
-                                                          len(anchors_mask[0]) * (num_classes + 5))
+                                                           [512, 1024],
+                                                           out_filters[-1],  # 1024
+                                                           len(anchors_mask[0]) * (num_classes + 5))
         else:
             self.big_detect_layer = _prediction_block([512, 1024],
                                                       out_filters[-1],  # 1024

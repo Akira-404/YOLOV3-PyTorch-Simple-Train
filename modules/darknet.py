@@ -36,7 +36,8 @@ class BasicConv(nn.Module):
         if act == 'leaky_relu':
             self.activation = nn.LeakyReLU(0.1818)
         elif act == 'mish':
-            self.activation = Mish()
+            # self.activation = Mish()
+            self.activation = nn.Mish(inplace=True)
 
     def forward(self, x):
         out = self.conv(x)

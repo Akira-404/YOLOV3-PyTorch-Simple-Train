@@ -24,7 +24,7 @@ class YoloDataset(Dataset):
         index = index % self.length
 
         if self.mosaic:
-            if rand() < 0.5:
+            if rand() < 0.65:
                 lines = sample(self.annotation_lines, 3)
                 lines.append(self.annotation_lines[index])
                 shuffle(lines)

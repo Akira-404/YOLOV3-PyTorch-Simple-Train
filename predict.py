@@ -9,7 +9,7 @@ from utils.utils_prediect import Predict
 from utils.utils import load_yaml_conf
 
 parse = argparse.ArgumentParser('predict config')
-parse.add_argument('-m', '--mode', type=str, choices=['image', 'video', 'dir'], default='dir',
+parse.add_argument('-m', '--mode', type=str, choices=['image', 'video', 'dir', 'test'], default='dir',
                    help='predict image or video or dir')
 parse.add_argument('-i', '--image', type=str, default='img.jpg',
                    help='image path')
@@ -109,10 +109,11 @@ def main(args):
                 r_image = predict.detect_image(image)
 
                 r_image.save(os.path.join(args.save_path, image_name))
+    elif args.mode == 'test':
+        run_test_image()
     else:
         raise TypeError('args.mode must be:image,video,dir')
 
 
 if __name__ == '__main__':
-    run_test_image()
-    # main(args)
+    main(args)

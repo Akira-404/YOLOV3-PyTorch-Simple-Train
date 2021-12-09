@@ -22,12 +22,12 @@ object:
     anchors_path: 'data/helmet_anchors.yaml' #数据集anchors文件
   head:
     dataset_root: '/home/cv/AI_Data/head_datas_yolo' #数据集根目录
-    model_path: 'weights/head.pth'
+    model_path: ''
     classes_path: 'data/head_classes.yaml' #数据类别文件
     anchors_path: 'data/head_anchors.yaml' #数据集anchors文件head
 
 year: '2007'
-obj_type: person
+obj_type: head
 
 cuda: True
 num_workers: 8
@@ -35,6 +35,7 @@ num_workers: 8
 #spp: [ ] #不使用SPP 则设为[]
 spp: [ 5,9,13 ]
 activation: mish #leakyrelu or mish
+#activation: leakyrelu #leakyrelu or mish
 mosaic: True
 cosine_lr: True
 label_smoothing: 0
@@ -55,7 +56,7 @@ Freeze_batch_size: 16
 Freeze_lr: 1e-3
 #全网络训练参数设置
 UnFreeze_Epoch: 200
-Unfreeze_batch_size: 16
+Unfreeze_batch_size: 8
 Unfreeze_lr: 1e-4
 
 #训练数据集路径文件
