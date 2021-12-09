@@ -44,19 +44,19 @@ def load_weights(model, model_path: str, device, ignore_track: bool = False):
 
 
 class Predict:
-    def __init__(self, conf_path: str, type: str, ignore_track: bool = False):
+    def __init__(self, conf_path: str, ignore_track: bool = False):
         """
         :param conf_path: xxx.yaml
         """
         super(Predict, self).__init__()
         self.ignore_track = ignore_track
         self.conf = load_yaml_conf(conf_path)
-        self.type = self.conf['det_type'][type]
+        self.type = self.conf['object'][self.conf['obj_type']]
         self.CUDA = True if torch.cuda.is_available() and self.conf['cuda'] else False
 
-        assert os.path.exists(self.type['classes_path']) is True, f'{self.type["classes_path"]} is error'
-        assert os.path.exists(self.type['anchors_path']) is True, f'{self.type["anchors_path"]} is error'
-        assert os.path.exists(self.type['model_path']) is True, f'{self.type["model_path"]} is error'
+        assert os.path.exists(self.type['classes_path']) is True, self.type['classes_path']
+        assert os.path.exists(self.type['anchors_path']) is True, self.type['anchors_path'] + 'is error'
+        assert os.path.exists(self.type['model_path']) is True, self.type['model_path']
 
         self.class_names, self.num_classes = get_classes(self.type['classes_path'])
         self.anchors, self.num_anchors = get_anchors(self.type['anchors_path'])
@@ -74,7 +74,9 @@ class Predict:
         self.generate_model(self.ignore_track)
 
     def get_model(self, ignore_track: bool = False):
-        self.net = YOLO(self.conf['anchors_mask'], self.num_classes)
+        self.net = YOLO(self.conf['anchors_mask'], self.num_classes, self.conf['spp'], self.conf['activation'])
+
+        # self.net = YOLO(self.conf['anchors_mask'], self.num_classes)
         device = torch.device('cuda' if torch.cuda.is_available() and self.conf['cuda'] else 'cpu')
 
         self.net = load_weights(self.net, self.type['model_path'], device, ignore_track)

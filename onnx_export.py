@@ -49,8 +49,9 @@ def get_onnx_model(model, output_path, input_data):
 if __name__ == '__main__':
     # Load conf yaml
     conf = load_yaml_conf('predict.yaml')
+    obj = conf['object'][conf['obj_type']]
 
-    weights = conf['model_path']
+    weights = obj['model_path']
     img_size = conf['input_shape']
     batch_size = conf['batch_size']
     onnx_model = conf['onnx_model']
@@ -67,5 +68,3 @@ if __name__ == '__main__':
     print(f'Input data shape:{img.shape}')
 
     get_onnx_model(model, onnx_model, img)
-    img = predict.onnx_test('data/head.onnx', 'img.jpg', True)
-    img.show()

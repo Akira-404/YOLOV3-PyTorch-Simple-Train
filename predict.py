@@ -20,9 +20,9 @@ parse.add_argument('-d', '--dir', type=str, default='/home/cv/PycharmProjects/ra
 parse.add_argument('-s', '--save_path', type=str, default='./out/head_test')
 args = parse.parse_args()
 
-predict = Predict('predict.yaml', 'head')
+predict = Predict('predict.yaml')
 conf = load_yaml_conf('predict.yaml')
-conf = conf['det_type']['head']
+conf = conf['object'][conf['obj_type']]
 # output_path = ''
 if os.path.exists(args.save_path) is False:
     os.mkdir(args.save_path)

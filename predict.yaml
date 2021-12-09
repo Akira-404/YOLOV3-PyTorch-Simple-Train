@@ -1,89 +1,44 @@
-#helmet
-#dataset_root: '/home/cv/AI_Data/HardHatWorker_voc'
-#model_path: 'data/helmet.pt' #模型权重路径
-#classes_path: 'data/helmet_classes.yaml' #数据类别文件
-#anchors_path: 'data/helmet_anchors.yaml' #数据集anchors文件
-
-#HardHatWorker_voc
-#dataset_root: '/home/cv/AI_Data/HardHatWorker_voc'
-#model_path: 'data/helmet.pth' #模型权重路径
-#classes_path: 'data/helmet_classes.yaml' #数据类别文件
-#anchors_path: 'data/helmet_anchors.yaml' #数据集anchors文件
-
-#person
-#dataset_root: '/home/cv/AI_Data/person_yolo'
-#dataset_root: '/home/cv/AI_Data/HardHatWorker_voc'
-#model_path: 'data/person.pth' #模型权重路径
-#classes_path: 'data/person_classes.yaml' #数据类别文件
-#anchors_path: 'data/person_anchors.yaml' #数据集anchors文件
-
-#widerface
-#dataset_root: '/home/cv/AI_Data/yolo_widerface_open_train'
-#model_path: 'data/widerface.pt' #模型权重路径
-#classes_path: 'data/widerface_classes.yaml' #数据类别文件
-#anchors_path: 'data/widerface_anchors.yaml' #数据集anchors文件
-
-#coco
-#dataset_root: '/home/cv/AI_Data/yolo_widerface_open_train'
-#model_path: 'data/coco.pt' #模型权重路径
-#classes_path: 'data/coco_classes.yaml' #数据类别文件
-#anchors_path: 'data/coco_anchors.yaml' #数据集anchors文件
-
-#voc
-#dataset_root: '/home/cv/AI_Data/VOCtest2007'
-#model_path: 'data/voc.pth' #模型权重路径
-#classes_path: 'data/voc_classes.yaml' #数据类别文件
-#anchors_path: 'data/voc_anchors.yaml' #数据集anchors文件
-
-#hat_worker_voc
-#dataset_root: '/home/cv/AI_Data/hat_worker_voc' #数据集根目录
-#model_path: 'logs/hat_worker_voc-ep098-loss3.201-val_loss3.313.pth' #模型权重路径
-#classes_path: 'data/hat_worker_classes.yaml' #数据类别文件
-#anchors_path: 'data/hat_worker_anchors.yaml' #数据集anchors文件
-
-#head_test
-#dataset_root: '/home/cv/AI_Data/head_datas_yolo' #数据集根目录
-#model_path: 'data/head.pth'
-#classes_path: 'data/head_classes.yaml' #数据类别文件
-#anchors_path: 'data/head_anchors.yaml' #数据集anchors文件head
-
-det_type:
+object:
   person:
     dataset_root: '/home/cv/AI_Data/HardHatWorker_voc'
-    model_path: 'data/person.pth' #模型权重路径
+    model_path: 'weights/person.pth' #模型权重路径
     classes_path: 'data/person_classes.yaml' #数据类别文件
     anchors_path: 'data/person_anchors.yaml' #数据集anchors文件
   head:
     dataset_root: '/home/cv/AI_Data/head_datas_yolo' #数据集根目录
-    model_path: 'data/head.pth'
+    model_path: 'weights/head.pth'
     classes_path: 'data/head_classes.yaml' #数据类别文件
     anchors_path: 'data/head_anchors.yaml' #数据集anchors文件head
   helmet:
     dataset_root: '/home/cv/AI_Data/HardHatWorker_voc'
-    model_path: 'data/helmet.pth' #模型权重路径
+    model_path: 'weights/helmet.pth' #模型权重路径
     classes_path: 'data/helmet_classes.yaml' #数据类别文件
     anchors_path: 'data/helmet_anchors.yaml' #数据集anchors文件
   reflective:
     dataset_root: '/home/cv/AI_Data/reflective'
-    model_path: 'data/reflective.pth' #预加载yolov3权重文件
+    model_path: 'weights/reflective.pth' #预加载yolov3权重文件
     classes_path: 'data/reflective_classes.yaml' #数据集类别文件
     anchors_path: 'data/reflective_anchors.yaml' #数据集聚类anchors
 
 
+cuda: True
+obj_type: person
 
+#spp: [ ] #不使用SPP 则设为[]
+spp: [ 5,9,13 ]
+activation: mish #leakyrelu or mish
 anchors_mask: [ [ 6, 7, 8 ], [ 3, 4, 5 ], [ 0, 1, 2 ] ]
 
-input_shape: [ 416,416 ]
+#input_shape: [ 416,416 ]
+input_shape: [ 608,608 ]
+
+batch_size: 1
 
 confidence: 0.5 #置信度
 nms_iou: 0.3 #nms iou阈值
 letterbox_image: False #是否使用letterbox缩放
 
-cuda: True
-
 minoverlap: 0.5 #map计算中的iou阈值
 
-#onnx export config
-batch_size: 1
-onnx_model: data/head.onnx
+onnx_model: data/yolov3_new_spp.onnx
 trt_model: data/head.trt

@@ -164,11 +164,10 @@ def train():
         print(f'loading weights:{obj["model_path"]}')
 
         load_weights(model, obj['model_path'])
-        pretrained_dict = torch.load(obj['model_path'], map_location=device)
-        model.load_state_dict(pretrained_dict, strict=False)
-        _t = model.state_dict()
-
-    print('loading weights done.')
+        # pretrained_dict = torch.load(obj['model_path'], map_location=device)
+        # model.load_state_dict(pretrained_dict, strict=False)
+        # _t = model.state_dict()
+        print('loading weights done.')
     # exit(0)
     model_train = model.train()
 
@@ -183,6 +182,7 @@ def train():
                          CUDA,
                          conf['anchors_mask'],
                          label_smoothing=conf['label_smoothing'])
+
     loss_history = LossHistory("logs/")
 
     # load train val dataset txt

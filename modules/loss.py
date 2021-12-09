@@ -98,8 +98,7 @@ class YOLOLoss(nn.Module):
 
         # This part from yolov4 loss
         ciou = (1 - box_ciou(pred_boxes[y_true[..., 4] == 1],
-                                  y_true[..., :4][y_true[..., 4] == 1])) * \
-               box_loss_scale[y_true[..., 4] == 1]
+                             y_true[..., :4][y_true[..., 4] == 1])) * box_loss_scale[y_true[..., 4] == 1]
         loss_loc = torch.sum(ciou)
 
         #   计算置信度的loss
@@ -107,8 +106,8 @@ class YOLOLoss(nn.Module):
                     torch.sum(BCELoss(conf, y_true[..., 4]) * noobj_mask)
 
         loss_cls = torch.sum(BCELoss(pred_cls[y_true[..., 4] == 1],
-                                          smooth_labels(y_true[..., 5:][y_true[..., 4] == 1], self.label_smoothing,
-                                                             self.num_classes)))
+                                     smooth_labels(y_true[..., 5:][y_true[..., 4] == 1], self.label_smoothing,
+                                                   self.num_classes)))
 
         # loss = loss_x + loss_y + loss_w + loss_h + loss_conf + loss_cls
 

@@ -6,7 +6,8 @@ object:
     anchors_path: 'data/reflective_anchors.yaml' #数据集聚类anchors
   person:
     dataset_root: '/home/cv/AI_Data/person_yolo'
-    model_path: 'weights/person.pth' #预加载yolov3权重文件
+    #    model_path: 'weights/person.pth' #预加载yolov3权重文件
+    model_path: '' #预加载yolov3权重文件
     classes_path: 'data/person_classes.yaml' #数据集类别文件
     anchors_path: 'data/person_anchors.yaml' #数据集聚类anchors
   widerperson:
@@ -31,28 +32,29 @@ obj_type: person
 cuda: True
 num_workers: 8
 
-spp: True
-activation: mish
+#spp: [ ] #不使用SPP 则设为[]
+spp: [ 5,9,13 ]
+activation: mish #leakyrelu or mish
 mosaic: True
 cosine_lr: True
 label_smoothing: 0
 
 Init_Epoch: 0
-input_shape: [ 416, 416 ] #模型输入图片尺度
-#input_shape: [ 608,608 ] #模型输入图片尺度
+#input_shape: [ 416, 416 ] #模型输入图片尺度
+input_shape: [ 608,608 ] #模型输入图片尺度
 anchors_mask: [ [ 6, 7, 8 ], [ 3, 4, 5 ], [ 0, 1, 2 ] ]
 
 #generate config
 train_percent: 0.9
 trainval_percent: 0.9
 
-Freeze_Train: True
+Freeze_Train: False
 #冻结训练参数设置
 Freeze_Epoch: 10
 Freeze_batch_size: 16
 Freeze_lr: 1e-3
 #全网络训练参数设置
-UnFreeze_Epoch: 50
+UnFreeze_Epoch: 200
 Unfreeze_batch_size: 16
 Unfreeze_lr: 1e-4
 
