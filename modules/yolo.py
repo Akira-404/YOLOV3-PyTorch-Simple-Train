@@ -14,7 +14,8 @@ def conv2d(in_channel: int, out_channel: int, kernel_size):
     return nn.Sequential(OrderedDict([
         ('conv', nn.Conv2d(in_channel, out_channel, kernel_size=kernel_size, stride=(1, 1), padding=pad, bias=False)),
         ('bn', nn.BatchNorm2d(out_channel)),
-        ('leaky_relu', nn.LeakyReLU(0.1818))
+        # ('leaky_relu', nn.LeakyReLU(0.1818))
+        ('leaky_relu', nn.LeakyReLU(0.1))
     ]))
 
 

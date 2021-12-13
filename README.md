@@ -141,7 +141,7 @@ object:
     anchors_path: 'data/helmet_anchors.yaml' #数据集anchors文件
   head:
     dataset_root: '/home/cv/AI_Data/head_datas_yolo' #数据集根目录
-    model_path: 'weights/head.pth'
+    model_path: 'weights/head_spp.pth'
     classes_path: 'data/head_classes.yaml' #数据类别文件
     anchors_path: 'data/head_anchors.yaml' #数据集anchors文件head
 
@@ -289,7 +289,7 @@ object:
     anchors_path: 'data/person_anchors.yaml' #数据集anchors文件
   head:
     dataset_root: '/home/cv/AI_Data/head_datas_yolo' #数据集根目录
-    model_path: 'weights/head.pth'
+    model_path: 'weights/head_spp.pth'
     classes_path: 'data/head_classes.yaml' #数据类别文件
     anchors_path: 'data/head_anchors.yaml' #数据集anchors文件head
   helmet:

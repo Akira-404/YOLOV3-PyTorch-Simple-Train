@@ -114,7 +114,7 @@ def _api_test_v2(path: str):
 
 
 def draw_area(path: str):
-    predict = Predict(os.path.join(os.getcwd(), 'predict.yaml'), 'person')
+    predict = Predict('predict.yaml')
 
     poly = []
     # def click_event(event, x, y, flags, param):
@@ -133,9 +133,9 @@ def draw_area(path: str):
     # cv2.waitKey(0)
     # cv2.destroyWindow('area')
 
-    print(poly)
     polys = [poly]
 
+    print(polys)
     with open('experiment/area_detection.yaml', 'r', encoding='UTF-8') as f:
         conf = yaml.safe_load(f)
 
@@ -177,7 +177,7 @@ def draw_area(path: str):
                 end_p = tuple(poly[limit(i + 1)])
                 cv2.line(frame, start_p, end_p, BLUE, 2)
 
-        out_cat.write(frame)  # 保存视频
+        # out_cat.write(frame)  # 保存视频
 
         cv2.imshow('video', frame)
         cv2.waitKey(int(1000 / fps))

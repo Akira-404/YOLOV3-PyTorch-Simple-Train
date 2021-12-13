@@ -9,7 +9,7 @@ from utils.utils_prediect import Predict
 from utils.utils import load_yaml_conf
 
 parse = argparse.ArgumentParser('predict config')
-parse.add_argument('-m', '--mode', type=str, choices=['image', 'video', 'dir', 'test'], default='dir',
+parse.add_argument('-m', '--mode', type=str, choices=['image', 'video', 'dir', 'test'], default='test',
                    help='predict image or video or dir')
 parse.add_argument('-i', '--image', type=str, default='img.jpg',
                    help='image path')
@@ -17,7 +17,7 @@ parse.add_argument('-v', '--video', type=str, default='',
                    help='video path')
 parse.add_argument('-d', '--dir', type=str, default='/home/cv/PycharmProjects/rabbitmq-proj/download/src/cloud/2021915',
                    help='dir path')
-parse.add_argument('-s', '--save_path', type=str, default='./out/head_test')
+parse.add_argument('-s', '--save_path', type=str, default='./out/person_spp')
 args = parse.parse_args()
 
 predict = Predict('predict.yaml')

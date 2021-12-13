@@ -152,6 +152,7 @@ def train():
     print(f'anchors:{anchors}')
     print(f'num workers:{conf["num_workers"]}')
     print(f'SPP args:{conf["spp"]}')
+    print(f'Mosaic:{conf["mosaic"]}')
     print(f'Activation:{conf["activation"]}')
     print(f'Cosine LR:{conf["cosine_lr"]}')
     print(f'Label smoothing:{conf["label_smoothing"]}')

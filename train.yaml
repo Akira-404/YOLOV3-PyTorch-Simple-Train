@@ -27,7 +27,7 @@ object:
     anchors_path: 'data/head_anchors.yaml' #数据集anchors文件head
 
 year: '2007'
-obj_type: head
+obj_type: person
 
 cuda: True
 num_workers: 8
@@ -36,7 +36,7 @@ num_workers: 8
 spp: [ 5,9,13 ]
 activation: mish #leakyrelu or mish
 #activation: leakyrelu #leakyrelu or mish
-mosaic: True
+mosaic: False
 cosine_lr: True
 label_smoothing: 0
 
@@ -55,7 +55,7 @@ Freeze_Epoch: 10
 Freeze_batch_size: 16
 Freeze_lr: 1e-3
 #全网络训练参数设置
-UnFreeze_Epoch: 200
+UnFreeze_Epoch: 120
 Unfreeze_batch_size: 8
 Unfreeze_lr: 1e-4
 
