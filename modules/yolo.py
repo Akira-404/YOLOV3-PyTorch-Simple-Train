@@ -8,6 +8,20 @@ import torch.nn.functional as F
 from modules.darknet import darknet53
 
 
+class SPP(nn.Module):
+    def __init__(self, pool_sizes: list):
+        super(SPP, self).__init__()
+
+        # kernel stride padding
+        self.maxpools = nn.ModuleList([nn.MaxPool2d(pool_size, 1, pool_size // 2) for pool_size in pool_sizes])
+
+    def forward(self, x):
+        features = [maxpool(x) for maxpool in self.maxpools[::-1]]
+        features = torch.cat(features + [x], dim=1)
+
+        return features
+
+
 def conv2d(in_channel: int, out_channel: int, kernel_size):
     pad = (kernel_size - 1) // 2 if kernel_size else 0
 
@@ -44,59 +58,6 @@ def _prediction_block(channels: list, in_channel: int, out_channel: int):
     return m
 
 
-class SPPLayer(torch.nn.Module):
-
-    def __init__(self, num_levels, pool_type: str = 'max_pool'):
-        super(SPPLayer, self).__init__()
-        # [5, 9, 13]
-        self.num_levels = num_levels
-        self.pool_type = pool_type
-
-    def forward(self, x):
-        num, c, h, w = x.size()  # num:样本数量 c:通道数 h:高 w:宽
-        for i in range(self.num_levels):
-            level = i + 1
-
-            kernel_size = (math.ceil(h / level), math.ceil(w / level))
-            stride = (math.ceil(h / level), math.ceil(w / level))
-            pooling = (math.floor((kernel_size[0] * level - h + 1) / 2),
-                       math.floor((kernel_size[1] * level - w + 1) / 2))
-
-            # 选择池化方式 
-            if self.pool_type == 'max_pool':
-                tensor = F.max_pool2d(x, kernel_size=kernel_size, stride=stride, padding=pooling).view(num, -1)
-            else:
-                tensor = F.avg_pool2d(x, kernel_size=kernel_size, stride=stride, padding=pooling).view(num, -1)
-
-            # 展开、拼接
-            if i == 0:
-                x_flatten = tensor.view(num, -1)
-            else:
-                x_flatten = torch.cat((x_flatten, tensor.view(num, -1)), 1)
-
-        return x_flatten
-
-
-class SPP(nn.Module):
-    def __init__(self, pool_sizes: list):
-        super(SPP, self).__init__()
-
-        # kernel stride padding
-        self.maxpools = nn.ModuleList([nn.MaxPool2d(pool_size, 1, pool_size // 2) for pool_size in pool_sizes])
-
-    def forward(self, x):
-        features = [maxpool(x) for maxpool in self.maxpools[::-1]]
-        features = torch.cat(features + [x], dim=1)
-
-        return features
-
-
-def spp_layer(pool_sizes, in_channel, out_channel):
-    m = nn.Sequential(SPP(pool_sizes),
-                      conv2d(in_channel, out_channel, kernel_size=1))
-    return m
-
-
 def _ultralytics_spp_block(spp_args, channels: list, in_channel: int, out_channel: int):
     m = nn.Sequential(
         # conv set
@@ -128,15 +89,16 @@ class YOLO(nn.Module):
         out_filters = self.backbone.layers_out_filters  # [64, 128, 256, 512, 1024]
 
         # big object
-        if spp:
-            self.big_detect_layer = _ultralytics_spp_block(spp,
-                                                           [512, 1024],
-                                                           out_filters[-1],  # 1024
-                                                           len(anchors_mask[0]) * (num_classes + 5))
-        else:
+        if not spp:
             self.big_detect_layer = _prediction_block([512, 1024],
                                                       out_filters[-1],  # 1024
                                                       len(anchors_mask[0]) * (num_classes + 5))
+
+        else:
+            self.big_detect_layer = _ultralytics_spp_block(spp,
+                                                           [512, 1024],
+                                                           out_filters[-1],  # 1024
+                                                           len(anchors_mask[0]))
 
         # medium object
         self.medium_detect_layer_conv = conv2d(512, 256, 1)
