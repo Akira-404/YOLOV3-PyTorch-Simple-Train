@@ -1,69 +1,69 @@
-#TODO
-import torch
+# --------------------------------------------------------
+# Fast R-CNN
+# Copyright (c) 2015 Microsoft
+# Licensed under The MIT License [see LICENSE for details]
+# Written by Ross Girshick
+# --------------------------------------------------------
 
+import numpy as np
+cimport numpy as np
 
-def box_area(boxes: torch.Tensor) -> torch.Tensor:
-    """
-    Computes the area of a set of bounding boxes, which are specified by its
-    (x1, y1, x2, y2) coordinates.
+cdef inline np.float32_t max(np.float32_t a, np.float32_t b):
+    return a if a >= b else b
 
-    Arguments:
-        boxes (Tensor[N, 4]): boxes for which the area will be computed. They
-            are expected to be in (x1, y1, x2, y2) format
+cdef inline np.float32_t min(np.float32_t a, np.float32_t b):
+    return a if a <= b else b
 
-    Returns:
-        area (Tensor[N]): area for each box
-    """
-    return (boxes[:, 2] - boxes[:, 0]) * (boxes[:, 3] - boxes[:, 1])
+def cpu_nms(np.ndarray[np.float32_t, ndim=2] dets, np.float thresh):
 
+    cdef np.ndarray[np.float32_t, ndim=1] x1 = dets[:, 0]
+    cdef np.ndarray[np.float32_t, ndim=1] y1 = dets[:, 1]
+    cdef np.ndarray[np.float32_t, ndim=1] x2 = dets[:, 2]
+    cdef np.ndarray[np.float32_t, ndim=1] y2 = dets[:, 3]
+    cdef np.ndarray[np.float32_t, ndim=1] scores = dets[:, 4]
 
-def box_iou(boxes1: torch.Tensor, boxes2: torch.Tensor) -> torch.Tensor:
-    """
-    Return intersection-over-union (Jaccard index) of boxes.
+    cdef np.ndarray[np.float32_t, ndim=1] areas = (x2 - x1 + 1) * (y2 - y1 + 1)#计算面积
+    cdef np.ndarray[np.int_t, ndim=1] order = scores.argsort()[::-1]#scores从大到小获取下标
 
-    Both sets of boxes are expected to be in (x1, y1, x2, y2) format.
+    cdef int ndets = dets.shape[0] #dets.size()
+    cdef np.ndarray[np.int_t, ndim=1] suppressed = np.zeros((ndets), dtype=np.int) #flag array
 
-    Arguments:
-        boxes1 (Tensor[N, 4])
-        boxes2 (Tensor[M, 4])
+    # nominal indices
+    cdef int _i, _j
+    # sorted indices
+    cdef int i, j
+    # temp variables for box i's (the box currently under consideration)
+    cdef np.float32_t ix1, iy1, ix2, iy2, iarea
+    # variables for computing overlap with box j (lower scoring box)
+    cdef np.float32_t xx1, yy1, xx2, yy2
+    cdef np.float32_t w, h
+    cdef np.float32_t inter, ovr
 
-    Returns:
-        iou (Tensor[N, M]): the NxM matrix containing the pairwise IoU values for every element in boxes1 and boxes2
-    """
-    area1 = box_area(boxes1)  # 每个框的面积 (N,)
-    area2 = box_area(boxes2)  # (M,)
+    keep = []
+    for _i in range(ndets):
+        i = order[_i]
+        if suppressed[i] == 1:
+            continue
+        keep.append(i)
+        ix1 = x1[i]
+        iy1 = y1[i]
+        ix2 = x2[i]
+        iy2 = y2[i]
+        iarea = areas[i]
+        for _j in range(_i + 1, ndets):
+            j = order[_j]
+            if suppressed[j] == 1:
+                continue
+            xx1 = max(ix1, x1[j])
+            yy1 = max(iy1, y1[j])
+            xx2 = min(ix2, x2[j])
+            yy2 = min(iy2, y2[j])
+            w = max(0.0, xx2 - xx1 + 1)
+            h = max(0.0, yy2 - yy1 + 1)
+            inter = w * h
+            iou = inter / (iarea + areas[j] - inter)
+            if iou >= thresh:
+                suppressed[j] = 1
 
-    lt = torch.max(boxes1[:, None, :2], boxes2[:, :2])  # [N,M,2] # N中一个和M个比较； 所以由N，M 个
-    rb = torch.min(boxes1[:, None, 2:], boxes2[:, 2:])  # [N,M,2]
-
-    wh = (rb - lt).clamp(min=0)  # [N,M,2]  #小于0的为0  clamp 钳；夹钳；
-    inter = wh[:, :, 0] * wh[:, :, 1]  # [N,M]
-
-    iou = inter / (area1[:, None] + area2 - inter)
-    return iou  # NxM， boxes1中每个框和boxes2中每个框的IoU值；
-
-
-def nms(boxes: torch.Tensor, scores: torch.Tensor, iou_threshold: float):
-    """
-    :param boxes: [N, 4]， 此处传进来的框，是经过筛选（NMS之前选取过得分TopK）之后， 在传入之前处理好的；
-    :param scores: [N]
-    :param iou_threshold: 0.7
-    :return:
-    """
-    keep = []  # 最终保留的结果， 在boxes中对应的索引；
-    idxs = scores.argsort()  # 值从小到大的 索引
-
-    while idxs.numel() > 0:  # 循环直到null； numel()： 数组元素个数
-        # 得分最大框对应的索引, 以及对应的坐标
-        max_score_index = idxs[-1]
-        max_score_box = boxes[max_score_index][None, :]  # [1, 4]
-        keep.append(max_score_index)
-        if idxs.size(0) == 1:  # 就剩余一个框了；
-            break
-        idxs = idxs[:-1]  # 将得分最大框 从索引中删除； 剩余索引对应的框 和 得分最大框 计算IoU；
-        other_boxes = boxes[idxs]  # [?, 4]
-        ious = box_iou(max_score_box, other_boxes)  # 一个框和其余框比较 1XM
-        idxs = idxs[ious[0] <= iou_threshold]
-
-    keep = idxs.new(keep)  # Tensor
     return keep
+
