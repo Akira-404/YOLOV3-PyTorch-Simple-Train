@@ -44,11 +44,16 @@ def load_weights(model, model_path: str, device: str):
         else:
             _model_dict[k] = v
     load_dict = {}
+    cnt = 0
+
+    pretrained_dict = pretrained_dict['model'] if 'model' in pretrained_dict.keys() else pretrained_dict
     for kv1, kv2 in zip(_model_dict.items(), pretrained_dict.items()):
         if np.shape(kv1[1]) == np.shape(kv2[1]):
             load_dict[kv1[0]] = kv2[1]
+            cnt += 1
     model_dict.update(load_dict)
     model.load_state_dict(model_dict)
+    print(f'Load weight data:{cnt}/{len(pretrained_dict)}')
 
 
 def img2rgb(image):

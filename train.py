@@ -35,6 +35,7 @@ def load_weights(model, model_path: str, ignore_track: bool = False):
 
     load_dict = {}
     cnt = 0
+    pretrained_dict = pretrained_dict['model'] if 'model' in pretrained_dict.keys() else pretrained_dict
     for kv1, kv2 in zip(_model_dict.items(), pretrained_dict.items()):
         if np.shape(kv1[1]) == np.shape(kv2[1]):
             load_dict[kv1[0]] = kv2[1]
@@ -168,6 +169,7 @@ def train():
     print(f'Unfreeze_lr epoch:{conf["Unfreeze_lr"]}')
 
     model = YOLO(conf['anchors_mask'], num_classes, conf['spp'], conf['activation'])
+
     weights_init(model)
     print('YOLOV3 Weights Init Done.')
 

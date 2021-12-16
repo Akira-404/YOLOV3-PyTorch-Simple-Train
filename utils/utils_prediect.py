@@ -8,6 +8,7 @@ import torch.nn as nn
 from PIL import ImageDraw, ImageFont, Image
 
 from modules.yolo import YOLO
+from modules.yolo_spp import YOLOSPP
 from utils.utils import (img2rgb, get_anchors, get_classes, preprocess_input, resize_image, load_yaml_conf)
 
 from utils.utils_bbox import DecodeBox
@@ -49,14 +50,19 @@ def load_weights(model, model_path: str, device, ignore_track: bool = False):
 
 
 class Predict:
-    def __init__(self, conf_path: str, ignore_track: bool = False):
+    def __init__(self, conf_path: str, ignore_track: bool = False, obj_type: str = None):
         """
         :param conf_path: xxx.yaml
         """
         super(Predict, self).__init__()
         self.ignore_track = ignore_track
         self.conf = load_yaml_conf(conf_path)
+
+        if obj_type is not None:
+            self.conf['obj_type'] = obj_type
+
         self.type = self.conf['object'][self.conf['obj_type']]
+
         self.CUDA = True if torch.cuda.is_available() and self.conf['cuda'] else False
 
         assert os.path.exists(self.type['classes_path']) is True, self.type['classes_path']
