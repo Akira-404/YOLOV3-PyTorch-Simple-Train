@@ -90,34 +90,33 @@ class YOLOLoss(nn.Module):
         box_loss_scale = 2 - box_loss_scale
 
         #   计算中心偏移情况的loss，使用BCELoss效果好一些
-        # loss_x = torch.sum(BCELoss(x, y_true[..., 0]) * box_loss_scale * y_true[..., 4])
-        # loss_y = torch.sum(BCELoss(y, y_true[..., 1]) * box_loss_scale * y_true[..., 4])
-        # #   计算宽高调整值的loss
-        # loss_w = torch.sum(MSELoss(w, y_true[..., 2]) * 0.5 * box_loss_scale * y_true[..., 4])
-        # loss_h = torch.sum(MSELoss(h, y_true[..., 3]) * 0.5 * box_loss_scale * y_true[..., 4])
+        loss_x = torch.sum(BCELoss(x, y_true[..., 0]) * box_loss_scale * y_true[..., 4])
+        loss_y = torch.sum(BCELoss(y, y_true[..., 1]) * box_loss_scale * y_true[..., 4])
+        #   计算宽高调整值的loss
+        loss_w = torch.sum(MSELoss(w, y_true[..., 2]) * 0.5 * box_loss_scale * y_true[..., 4])
+        loss_h = torch.sum(MSELoss(h, y_true[..., 3]) * 0.5 * box_loss_scale * y_true[..., 4])
+        loss_loc = loss_x + loss_y + loss_w + loss_h
 
         # ==This part from yolov4 loss
-        ciou = (1 - box_ciou(pred_boxes[y_true[..., 4] == 1],
-                             y_true[..., :4][y_true[..., 4] == 1])) * box_loss_scale[y_true[..., 4] == 1]
-        loss_loc = torch.sum(ciou)
+        # ciou = (1 - box_ciou(pred_boxes[y_true[..., 4] == 1],
+        #                      y_true[..., :4][y_true[..., 4] == 1])) * box_loss_scale[y_true[..., 4] == 1]
+        #
+        # loss_loc = torch.sum(ciou)
         # ==This part from yolov4 loss
 
         #   计算置信度的loss
         loss_conf = torch.sum(BCELoss(conf, y_true[..., 4]) * y_true[..., 4]) + \
                     torch.sum(BCELoss(conf, y_true[..., 4]) * noobj_mask)
 
-        # ==This part from yolov4 loss
+        # smooth_labels
         loss_cls = torch.sum(BCELoss(pred_cls[y_true[..., 4] == 1],
                                      smooth_labels(y_true[..., 5:][y_true[..., 4] == 1], self.label_smoothing,
                                                    self.num_classes)))
-        # ==This part from yolov4 loss
+        # smooth_labels
 
         # loss_cls = torch.sum(BCELoss(pred_cls[y_true[..., 4] == 1], y_true[..., 5:][y_true[..., 4] == 1]))
-        # loss = loss_x + loss_y + loss_w + loss_h + loss_conf + loss_cls
 
-        # This part from yolov4 loss
         loss = loss_loc + loss_conf + loss_cls
-        # This part from yolov4 loss
 
         num_pos = torch.sum(y_true[..., 4])
         num_pos = torch.max(num_pos, torch.ones_like(num_pos))
