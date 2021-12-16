@@ -38,7 +38,7 @@ activation: mish #leakyrelu or mish
 #activation: leakyrelu #leakyrelu or mish
 mosaic: False
 cosine_lr: True
-label_smoothing: 0
+label_smoothing: 0 #if label_smoothing=0:不适用平滑标签
 
 Init_Epoch: 0
 #input_shape: [ 416, 416 ] #模型输入图片尺度
