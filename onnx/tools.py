@@ -1,3 +1,6 @@
+import onnxruntime
+
+
 class ONNXModel():
     def __init__(self, onnx_path):
         """
@@ -61,28 +64,4 @@ class ONNXModel():
 
 def to_numpy(tensor):
     # print(tensor.device)
-
     return tensor.detach().cpu().numpy() if tensor.requires_grad else tensor.cpu().numpy()
-
-
-def interface_model():
-    r_model_path = "./mnist.onnx"
-    time_start1 = time.time()
-    rnet1 = ONNXModel(r_model_path)
-    time_end2 = time.time()
-    print('load model cost', time_end2 - time_start1)
-    # 测时间
-    test_correct = 0
-    time_start = time.time()
-    for img, label in test_loader:
-        img, lable = Variable(img), Variable(label)
-        out = rnet1.forward(to_numpy(img))
-        pred = np.argmax(out[0][0])
-        correct = 0
-        if label.item() == pred:
-            correct += 1
-        test_correct += correct
-    time_end = time.time()
-    print("[{}/{}]".format(test_correct, len(test_datasets)))
-    print('infer cost', time_end - time_start)
-
