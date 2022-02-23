@@ -1,30 +1,30 @@
 object:
   reflective:
     dataset_root: '/home/cv/AI_Data/reflective'
-    model_path: 'weights/reflective-ep124-loss4.193.pth' #预加载yolov3权重文件
-    classes_path: 'data/reflective_classes.yaml' #数据集类别文件
-    anchors_path: 'data/reflective_anchors.yaml' #数据集聚类anchors
+    model_path: 'home/ubuntu/PycharmProjects/YOLOV3-PyTorch-Simlple-Train/weights/reflective-ep124-loss4.193.pth' #预加载yolov3权重文件
+    classes_path: 'home/ubuntu/PycharmProjects/YOLOV3-PyTorch-Simlple-Train/data/reflective_classes.yaml' #数据集类别文件
+    anchors_path: 'home/ubuntu/PycharmProjects/YOLOV3-PyTorch-Simlple-Train/data/reflective_anchors.yaml' #数据集聚类anchors
   person:
     dataset_root: '/home/cv/AI_Data/person_yolo'
-    #    model_path: 'weights/person.pth' #预加载yolov3权重文件
+    #    model_path: 'home/ubuntu/PycharmProjects/YOLOV3-PyTorch-Simlple-Train/weights/person.pth' #预加载yolov3权重文件
     model_path: '' #预加载yolov3权重文件
-    classes_path: 'data/person_classes.yaml' #数据集类别文件
-    anchors_path: 'data/person_anchors.yaml' #数据集聚类anchors
+    classes_path: 'home/ubuntu/PycharmProjects/YOLOV3-PyTorch-Simlple-Train/data/person_classes.yaml' #数据集类别文件
+    anchors_path: 'home/ubuntu/PycharmProjects/YOLOV3-PyTorch-Simlple-Train/data/person_anchors.yaml' #数据集聚类anchors
   widerperson:
     dataset_root: '/home/cv/AI_Data/widerperson'
-    model_path: 'weights/person.pth' #预加载yolov3权重文件
-    classes_path: 'data/widerperson_classes.yaml' #数据集类别文件
-    anchors_path: 'data/widerperson_anchors.yaml' #数据集聚类anchors
+    model_path: 'home/ubuntu/PycharmProjects/YOLOV3-PyTorch-Simlple-Train/weights/person.pth' #预加载yolov3权重文件
+    classes_path: 'home/ubuntu/PycharmProjects/YOLOV3-PyTorch-Simlple-Train/data/widerperson_classes.yaml' #数据集类别文件
+    anchors_path: 'home/ubuntu/PycharmProjects/YOLOV3-PyTorch-Simlple-Train/data/widerperson_anchors.yaml' #数据集聚类anchors
   helmet:
     dataset_root: '/home/cv/AI_Data/yolo_helmet_train\\anno'
-    model_path: 'weights/helmet.pth' #预加载yolov3权重文件
-    classes_path: 'data/helmet_classes.yaml' #数据类别文件
-    anchors_path: 'data/helmet_anchors.yaml' #数据集anchors文件
+    model_path: 'home/ubuntu/PycharmProjects/YOLOV3-PyTorch-Simlple-Train/weights/helmet.pth' #预加载yolov3权重文件
+    classes_path: 'home/ubuntu/PycharmProjects/YOLOV3-PyTorch-Simlple-Train/data/helmet_classes.yaml' #数据类别文件
+    anchors_path: 'home/ubuntu/PycharmProjects/YOLOV3-PyTorch-Simlple-Train/data/helmet_anchors.yaml' #数据集anchors文件
   head:
     dataset_root: '/home/cv/AI_Data/head_datas_yolo' #数据集根目录
     model_path: ''
-    classes_path: 'data/head_classes.yaml' #数据类别文件
-    anchors_path: 'data/head_anchors.yaml' #数据集anchors文件head
+    classes_path: 'home/ubuntu/PycharmProjects/YOLOV3-PyTorch-Simlple-Train/data/head_classes.yaml' #数据类别文件
+    anchors_path: 'home/ubuntu/PycharmProjects/YOLOV3-PyTorch-Simlple-Train/data/head_anchors.yaml' #数据集anchors文件head
 
 year: '2007'
 obj_type: person

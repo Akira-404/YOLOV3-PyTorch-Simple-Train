@@ -21,3 +21,6 @@ logs/
 experiment/area_detection.yaml
 /test.py
 /area_detection.mp4
+/person.jpeg
+
+docs/YOLOv3.pdf

@@ -50,7 +50,7 @@ def load_weights(model, model_path: str, device, ignore_track: bool = False):
 
 
 class Predict:
-    def __init__(self, conf_path: str, ignore_track: bool = False, obj_type: str = None):
+    def __init__(self, conf_path: str, ignore_track: bool = False, obj_type: str = None, load_weights: bool = True):
         """
         :param conf_path: xxx.yaml
         """
@@ -81,8 +81,8 @@ class Predict:
         hsv_tuples = [(x / self.num_classes, 1., 1.) for x in range(self.num_classes)]
         self.colors = list(map(lambda x: colorsys.hsv_to_rgb(*x), hsv_tuples))
         self.colors = list(map(lambda x: (int(x[0] * 255), int(x[1] * 255), int(x[2] * 255)), self.colors))
-
-        self.generate_model(self.ignore_track)
+        if load_weights:
+            self.generate_model(self.ignore_track)
 
     def get_model(self, ignore_track: bool = False):
         self.net = YOLO(self.conf['anchors_mask'], self.num_classes, self.conf['spp'], self.conf['activation'])
@@ -195,6 +195,106 @@ class Predict:
     #         del draw
     #
     #     return image
+
+    def decode(self, outputs, image, image_shape):
+
+        # outputs = net_output_data
+
+        # image_data, image_shape = self.preprocess(image)
+        with torch.no_grad():
+            # images = torch.from_numpy(image_data)
+            # images = images.cuda() if self.CUDA else images
+
+            #   将图像输入网络当中进行预测！
+            # outputs = self.net(images)
+            # outputs shape: (3,batch_size,x,y,w,h,conf,classes)
+            outputs = self.bbox_util.decode_box(outputs)
+            # results=outputs
+
+            #   将预测框进行堆叠，然后进行非极大抑制
+            # results shape:(len(prediction),num_anchors,4)
+            results = self.bbox_util.nms_(torch.cat(outputs, 1),
+                                          self.num_classes,
+                                          self.conf['input_shape'],
+                                          image_shape,
+                                          self.conf['letterbox_image'],
+                                          conf_thres=self.conf['confidence'],
+                                          nms_thres=self.conf['nms_iou'])
+
+            if results[0] is None:
+                return []
+
+            top_label = np.array(results[0][:, 6], dtype='int32')
+            top_conf = results[0][:, 4] * results[0][:, 5]
+            top_boxes = results[0][:, :4]
+
+            #   设置字体与边框厚度
+
+            font = ImageFont.truetype(font='data/simhei.ttf',
+                                      size=np.floor(3e-2 * image.size[1] + 0.5).astype('int32'))
+            thickness = int(max((image.size[0] + image.size[1]) // np.mean(self.conf['input_shape']), 1))
+
+            #   图像绘制
+            for i, c in list(enumerate(top_label)):
+                predicted_class = self.class_names[int(c)]
+                box = top_boxes[i]
+                score = top_conf[i]
+
+                # top, left, bottom, right = box
+                y0, x0, y1, x1 = box
+                # x0, y0, x1, y1 = box
+
+                y0 = max(0, np.floor(y0).astype('int32'))
+                x0 = max(0, np.floor(x0).astype('int32'))
+                y1 = min(image.size[1], np.floor(y1).astype('int32'))
+                x1 = min(image.size[0], np.floor(x1).astype('int32'))
+
+                label = '{} {:.2f}'.format(predicted_class, score)
+                draw = ImageDraw.Draw(image)
+                label_size = draw.textsize(label, font)
+                label = label.encode('utf-8')
+                # print(label, x0, y0, x1, y1)
+
+                if y0 - label_size[1] >= 0:
+                    text_origin = np.array([x0, y0 - label_size[1]])
+                else:
+                    text_origin = np.array([x0, y0 + 1])
+
+                for i in range(thickness):
+                    # rectangle param:xy:[x0,y0,x1,y1]
+                    draw.rectangle([x0 + i, y0 + i, x1 - i, y1 - i], outline=self.colors[c])
+                draw.rectangle([tuple(text_origin), tuple(text_origin + label_size)], fill=self.colors[c])
+                draw.text(text_origin, str(label, 'UTF-8'), fill=(0, 0, 0), font=font)
+                del draw
+
+        data = []
+        for i, c in list(enumerate(top_label)):
+            predicted_class = self.class_names[int(c)]
+            box = top_boxes[i]
+            score = top_conf[i]
+
+            # top, left, bottom, right = box
+            y0, x0, y1, x1 = box
+            # x0, y0, x1, y1 = box
+
+            y0 = max(0, np.floor(y0).astype('int32'))
+            x0 = max(0, np.floor(x0).astype('int32'))
+            y1 = min(image.size[1], np.floor(y1).astype('int32'))
+            x1 = min(image.size[0], np.floor(x1).astype('int32'))
+
+            # label = '{} {:.2f}'.format(predicted_class, score)
+            # label = label.encode('utf-8')
+            # print(label, x0, y0, x1, y1)
+            item = {
+                'label': predicted_class,
+                'score': float(score),
+                'height': int(y1 - y0),
+                'left': int(x0),
+                'top': int(y0),
+                'width': int(x1 - x0)
+            }
+            data.append(item)
+        return data, image
 
     def tiny_detect_image(self, image):
         # image_shape = np.array(np.shape(image)[0:2])  # w,h

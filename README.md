@@ -344,7 +344,7 @@ parse.add_argument('-i', '--image', type=str, default='img.jpg',
                    help='image path')
 parse.add_argument('-v', '--video', type=str, default='xxxx/xxxx/xxx.mp4',
                    help='video path')
-parse.add_argument('-d', '--dir', type=str, default='/home/cv/PycharmProjects/rabbitmq-proj/download/src/cloud/202193_1',
+parse.add_argument('-d', '--dir', type=str, default='/home/cv/PycharmProjects/rabbitmq-proj/download/onnxsim/cloud/202193_1',
                    help='dir path')
 predict = Predict('predict.yaml', 'person')
 ```
