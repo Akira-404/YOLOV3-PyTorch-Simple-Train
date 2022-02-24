@@ -59,7 +59,6 @@ _C.object.helmet.model_path = _C.default.root + 'weights/helmet.pth'
 _C.object.helmet.classes_path = _C.default.root + 'data/helmet_classes.yaml'
 _C.object.helmet.anchors_path = _C.default.root + 'data/helmet_anchors.yaml'
 
-_C.freeze()
 
 
 def get_config_defaults():
