@@ -24,10 +24,10 @@ dynamic = False
 dynamic_params = {
     'input': {0: 'batch', 2: 'height', 3: 'width'},  # shape(1,3,640,640)
     'output': {0: 'batch', 1: 'anchors'}  # shape(1,25200,85)
-}
-dynamic_params = dynamic_params if dynamic else None
+} if dynamic else None
 
-torch_model = torch_model.eval().cuda() if torch.cuda.is_available() else torch_model
+torch_model = torch_model.eval()
+torch_model = torch_model.cuda() if torch.cuda.is_available() else torch_model
 input_args = torch.randn(batch_size, *input_shape)
 input_args = input_args.cuda() if torch.cuda.is_available() else input_args
 
