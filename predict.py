@@ -15,12 +15,14 @@ parse.add_argument('-i', '--image', type=str, default='person.jpeg',
                    help='image path')
 parse.add_argument('-v', '--video', type=str, default='',
                    help='video path')
-parse.add_argument('-d', '--dir', type=str, default='/home/cv/PycharmProjects/rabbitmq-proj/download/onnxsim/cloud/2021915',
+parse.add_argument('-d', '--dir', type=str,
+                   default='/home/cv/PycharmProjects/rabbitmq-proj/download/onnxsim/cloud/2021915',
                    help='dir path')
 parse.add_argument('-s', '--save_path', type=str, default='./out/person_spp')
 args = parse.parse_args()
 
 predict = Predict('predict.yaml')
+predict.load_weights()
 conf = load_yaml_conf('predict.yaml')
 conf = conf['object'][conf['obj_type']]
 # output_path = ''
@@ -53,10 +55,8 @@ def main(args):
         if args.image != "":
             if os.path.exists(args.image) is True:
                 image = Image.open(args.image)
-                ret_image = predict.detect_image(image)
-                out_model=predict.get_model()
+                ret_image,_ = predict.detect_image(image)
                 ret_image.show()
-                print(out_model)
             else:
                 print(f'{args.image} is error')
     elif args.mode == 'video':
@@ -78,7 +78,7 @@ def main(args):
             frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
             # 转变成Image
             frame = Image.fromarray(np.uint8(frame))
-            frame = np.array(predict.detect_image(frame))
+            frame,_ = np.array(predict.detect_image(frame))
             # RGBtoBGR满足opencv显示格式
             frame = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
 
@@ -108,7 +108,7 @@ def main(args):
             if image_name.lower().endswith('jpg'):
                 image_path = os.path.join(args.dir, image_name)
                 image = Image.open(image_path)
-                r_image = predict.detect_image(image)
+                r_image,_ = predict.detect_image(image)
 
                 r_image.save(os.path.join(args.save_path, image_name))
     elif args.mode == 'test':

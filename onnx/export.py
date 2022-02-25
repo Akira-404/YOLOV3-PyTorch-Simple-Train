@@ -15,11 +15,6 @@ output_names = ['output']
 
 onnx_simplify = True
 
-# dynamic_params = {
-#     'input': [2, 3],
-#     'output': [2, 3]
-# }
-
 dynamic = False
 dynamic_params = {
     'input': {0: 'batch', 2: 'height', 3: 'width'},  # shape(1,3,640,640)

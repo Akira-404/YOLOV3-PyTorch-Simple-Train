@@ -25,59 +25,33 @@ def load_yaml_conf(conf_path: str) -> dict:
 
 
 # 加载权重
-def load_weights(model, model_path: str, device: str):
-    """
-    :param model: net model
-    :param model_path: xxx/xxx/xxx.pth
-    :param device: cpu or gpu
-    :return: None
-    """
+def load_weights(model, model_path: str, device, ignore_track: bool = False):
     print(f'Load weights {model_path}')
     model_dict = model.state_dict()
     _model_dict = {}
     pretrained_dict = torch.load(model_path, map_location=device)
 
     for k, v in model_dict.items():
+
         # pytorch 0.4.0后BN layer新增 num_batches_tracked 参数
-        if 'num_batches_tracked' in k:
+        # ignore_track=False:加载net中的 num_batches_tracked参数
+        # ignore_track=True:忽略加载net中的 num_batches_tracked参数
+        if 'num_batches_tracked' in k and ignore_track:
             print('pass->', k)
         else:
             _model_dict[k] = v
-    load_dict = {}
     cnt = 0
-
+    load_dict = {}
     pretrained_dict = pretrained_dict['model'] if 'model' in pretrained_dict.keys() else pretrained_dict
+
     for kv1, kv2 in zip(_model_dict.items(), pretrained_dict.items()):
         if np.shape(kv1[1]) == np.shape(kv2[1]):
             load_dict[kv1[0]] = kv2[1]
             cnt += 1
+
     model_dict.update(load_dict)
     model.load_state_dict(model_dict)
-    print(f'Load weight data:{cnt}/{len(pretrained_dict)}')
-
-
-# def img2rgb(image):
-#     if len(np.shape(image)) == 3 and np.shape(image)[2] == 3:
-#         return image
-#     else:
-#         image = image.convert('RGB')
-#         return image
-
-
-# def resize_image(image, size: tuple, letterbox_image: bool = False):
-#     iw, ih = image.size
-#     w, h = size
-#     if letterbox_image:
-#         scale = min(w / iw, h / ih)
-#         nw = int(iw * scale)
-#         nh = int(ih * scale)
-#         image = image.resize((nw, nh), Image.BICUBIC)
-#         new_image = Image.new('RGB', size, (128, 128, 128))
-#         new_image.paste(image, ((w - nw) // 2, (h - nh) // 2))
-#
-#     else:
-#         new_image = image.resize((w, h), Image.BICUBIC)
-#     return new_image
+    print(f'loaded:{cnt}/{len(pretrained_dict)}')
 
 
 def get_classes(classes_path: str):
@@ -188,6 +162,39 @@ def check_pretrained_weight(model_path: str, save_name: str, device: str):
         f.write('\n')
     f.close()
     print(f'write:{save_name}')
+
+
+def package_data(image_shape, top_label, top_conf, top_boxes, class_names):
+    data = []
+    for i, c in list(enumerate(top_label)):
+        predicted_class = class_names[int(c)]
+        box = top_boxes[i]
+        score = top_conf[i]
+
+        # top, left, bottom, right = box
+        y0, x0, y1, x1 = box
+        # x0, y0, x1, y1 = box
+
+        y0 = max(0, np.floor(y0).astype('int32'))
+        x0 = max(0, np.floor(x0).astype('int32'))
+        y1 = min(image_shape[1], np.floor(y1).astype('int32'))
+        x1 = min(image_shape[0], np.floor(x1).astype('int32'))
+        # y1 = min(image.size[1], np.floor(y1).astype('int32'))
+        # x1 = min(image.size[0], np.floor(x1).astype('int32'))
+
+        # label = '{} {:.2f}'.format(predicted_class, score)
+        # label = label.encode('utf-8')
+        # print(label, x0, y0, x1, y1)
+        item = {
+            'label': predicted_class,
+            'score': float(score),
+            'height': int(y1 - y0),
+            'left': int(x0),
+            'top': int(y0),
+            'width': int(x1 - x0)
+        }
+        data.append(item)
+    return data
 
 
 if __name__ == '__main__':

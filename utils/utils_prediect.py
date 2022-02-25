@@ -5,52 +5,15 @@ import time
 import numpy as np
 import torch
 import torch.nn as nn
-from PIL import ImageDraw, ImageFont, Image
 
 from modules.yolo import YOLO
-from modules.yolo_spp import YOLOSPP
-from utils.utils import get_anchors, get_classes, load_yaml_conf
+from utils.utils import get_anchors, get_classes, load_yaml_conf, load_weights
 from utils.utils_bbox import DecodeBox
-from utils.utils_image import img2rgb, preprocess_input, resize_image, preprocess
-
-
-# import onnx
-# import onnxruntime as ort
-
-
-# 加载权重
-def load_weights(model, model_path: str, device, ignore_track: bool = False):
-    print(f'Load weights {model_path}')
-    model_dict = model.state_dict()
-    _model_dict = {}
-    pretrained_dict = torch.load(model_path, map_location=device)
-
-    for k, v in model_dict.items():
-
-        # pytorch 0.4.0后BN layer新增 num_batches_tracked 参数
-        # ignore_track=False:加载net中的 num_batches_tracked参数
-        # ignore_track=True:忽略加载net中的 num_batches_tracked参数
-        if 'num_batches_tracked' in k and ignore_track:
-            print('pass->', k)
-        else:
-            _model_dict[k] = v
-    cnt = 0
-    load_dict = {}
-    pretrained_dict = pretrained_dict['model'] if 'model' in pretrained_dict.keys() else pretrained_dict
-
-    for kv1, kv2 in zip(_model_dict.items(), pretrained_dict.items()):
-        if np.shape(kv1[1]) == np.shape(kv2[1]):
-            load_dict[kv1[0]] = kv2[1]
-            cnt += 1
-
-    model_dict.update(load_dict)
-    model.load_state_dict(model_dict)
-    print(f'loaded:{cnt}/{len(pretrained_dict)}')
-    return model
+from utils.utils_image import img2rgb, preprocess_input, resize_image, preprocess, draw_box
 
 
 class Predict:
-    def __init__(self, conf_path: str, ignore_track: bool = False, obj_type: str = None, load_weights: bool = True):
+    def __init__(self, conf_path: str, ignore_track: bool = False, obj_type: str = None):
         """
         :param conf_path: xxx.yaml
         """
@@ -64,6 +27,8 @@ class Predict:
         self.type = self.conf['object'][self.conf['obj_type']]
 
         self.CUDA = True if torch.cuda.is_available() and self.conf['cuda'] else False
+        self.device = torch.device('cuda' if self.CUDA else 'cpu')
+        self.ignore_track = ignore_track
 
         assert os.path.exists(self.type['classes_path']) is True, self.type['classes_path']
         assert os.path.exists(self.type['anchors_path']) is True, self.type['anchors_path'] + 'is error'
@@ -77,36 +42,27 @@ class Predict:
                                    (self.conf['input_shape'][0], self.conf['input_shape'][1]),
                                    self.conf['anchors_mask'])
 
-        #   画框设置不同的颜色
-        hsv_tuples = [(x / self.num_classes, 1., 1.) for x in range(self.num_classes)]
-        self.colors = list(map(lambda x: colorsys.hsv_to_rgb(*x), hsv_tuples))
-        self.colors = list(map(lambda x: (int(x[0] * 255), int(x[1] * 255), int(x[2] * 255)), self.colors))
-        if load_weights:
-            self.generate_model(self.ignore_track)
-
-    def get_model(self, ignore_track: bool = False):
         self.net = YOLO(self.conf['anchors_mask'], self.num_classes, self.conf['spp'], self.conf['activation'])
+        self.prepare_flag = False
 
-        # self.net = YOLO(self.conf['anchors_mask'], self.num_classes)
-        device = torch.device('cuda' if torch.cuda.is_available() and self.conf['cuda'] else 'cpu')
-
-        self.net = load_weights(self.net, self.type['model_path'], device, ignore_track)
+    # get the model and load weights
+    def get_model_with_weights(self, ignore_track: bool = False):
+        load_weights(self.net, self.type['model_path'], self.device, ignore_track)
         return self.net
 
-    def generate_model(self, ignore_track: bool = False):
-        # self.net = YOLO(self.conf['anchors_mask'], self.num_classes)
-        # device = torch.device('cuda' if torch.cuda.is_available() and self.conf['cuda'] else 'cpu')
-        #
-        # self.net = load_weights(self.net, self.conf['model_path'], device, ignore_track=False)
-        self.net = self.get_model(ignore_track)
-        # self.net.load_state_dict(torch.load(self.conf['model_path'], map_location=device))
+    # get the model without weights
+    def get_model(self):
+        return self.net
 
+    def load_weights(self, ignore_track: bool = False):
+        self.net = self.get_model_with_weights(ignore_track)
         self.net = self.net.eval()
         print(f'{self.type["model_path"]} model,anchors,classes loaded')
 
         if self.CUDA:
             self.net = nn.DataParallel(self.net)
             self.net = self.net.cuda()
+        self.prepare_flag = True
 
     def tiny_detect_image(self, image):
         # image_shape = np.array(np.shape(image)[0:2])  # w,h
@@ -120,6 +76,9 @@ class Predict:
         #                           self.conf['letterbox_image'])
         # #   添加上batch_size维度
         # image_data = np.expand_dims(np.transpose(preprocess_input(np.array(image_data, dtype='float32')), (2, 0, 1)), 0)
+        if not self.prepare_flag:
+            print('this model is not load weights,please use Predict.load_weights()')
+            exit()
 
         image_data, image_shape = preprocess(image, (self.conf['input_shape'][0], self.conf['input_shape'][1]))
         with torch.no_grad():
@@ -177,7 +136,7 @@ class Predict:
             data.append(item)
         return data
 
-    def detect_image(self, image):
+    def detect_image(self, image, draw: bool = True):
         # image_shape = np.array(np.shape(image)[0:2])  # w,h
         # #   在这里将图像转换成RGB图像，防止灰度图在预测时报错。
         # #   代码仅仅支持RGB图像的预测，所有其它类型的图像都会转化成RGB
@@ -189,6 +148,9 @@ class Predict:
         #                           self.conf['letterbox_image'])
         # #   添加上batch_size维度
         # image_data = np.expand_dims(np.transpose(preprocess_input(np.array(image_data, dtype='float32')), (2, 0, 1)), 0)
+        if not self.prepare_flag:
+            print('this model is not load weights,please use Predict.load_weights()')
+            exit()
 
         image_data, image_shape = preprocess(image, (self.conf['input_shape'][0], self.conf['input_shape'][1]))
         with torch.no_grad():
@@ -216,47 +178,10 @@ class Predict:
             top_label = np.array(results[0][:, 6], dtype='int32')
             top_conf = results[0][:, 4] * results[0][:, 5]
             top_boxes = results[0][:, :4]
-
-        #   设置字体与边框厚度
-
-        font = ImageFont.truetype(font='data/simhei.ttf',
-                                  size=np.floor(3e-2 * image.size[1] + 0.5).astype('int32'))
-        thickness = int(max((image.size[0] + image.size[1]) // np.mean(self.conf['input_shape']), 1))
-
-        #   图像绘制
-        for i, c in list(enumerate(top_label)):
-            predicted_class = self.class_names[int(c)]
-            box = top_boxes[i]
-            score = top_conf[i]
-
-            # top, left, bottom, right = box
-            y0, x0, y1, x1 = box
-            # x0, y0, x1, y1 = box
-
-            y0 = max(0, np.floor(y0).astype('int32'))
-            x0 = max(0, np.floor(x0).astype('int32'))
-            y1 = min(image.size[1], np.floor(y1).astype('int32'))
-            x1 = min(image.size[0], np.floor(x1).astype('int32'))
-
-            label = '{} {:.2f}'.format(predicted_class, score)
-            draw = ImageDraw.Draw(image)
-            label_size = draw.textsize(label, font)
-            label = label.encode('utf-8')
-            # print(label, x0, y0, x1, y1)
-
-            if y0 - label_size[1] >= 0:
-                text_origin = np.array([x0, y0 - label_size[1]])
-            else:
-                text_origin = np.array([x0, y0 + 1])
-
-            for i in range(thickness):
-                # rectangle param:xy:[x0,y0,x1,y1]
-                draw.rectangle([x0 + i, y0 + i, x1 - i, y1 - i], outline=self.colors[c])
-            draw.rectangle([tuple(text_origin), tuple(text_origin + label_size)], fill=self.colors[c])
-            draw.text(text_origin, str(label, 'UTF-8'), fill=(0, 0, 0), font=font)
-            del draw
-
-        return image
+        if draw:
+            draw_box(self.num_classes, image, top_label, top_conf, top_boxes, self.class_names,
+                     self.conf['input_shape'])
+        return image, [top_label, top_conf, top_boxes]
 
     def get_FPS(self, image, test_interval):
         image_shape = np.array(np.shape(image)[0:2])
