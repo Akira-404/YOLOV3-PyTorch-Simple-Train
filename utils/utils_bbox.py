@@ -1,4 +1,4 @@
-from typing import Union, Optional
+from typing import Union, Optional, List
 import torch
 import torch.nn as nn
 # from torchvision.ops import nms
@@ -19,7 +19,7 @@ class DecodeBox:
         self.input_shape = input_shape
         self.anchors_mask: list = [[6, 7, 8], [3, 4, 5], [0, 1, 2]] if anchors_mask is None else anchors_mask
 
-    def decode_box(self, inputs: torch.Tensor) -> list:
+    def decode_box(self, inputs: Union[List, torch.Tensor]) -> list:
         """
         :param inputs: net output shape:(out1,out2,out3):(small,medium,big)
         :return: result shape: (3,batch_size,x,y,w,h,conf,classes)
