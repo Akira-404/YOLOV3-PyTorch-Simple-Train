@@ -25,9 +25,11 @@ predict = Predict('predict.yaml')
 predict.load_weights()
 conf = load_yaml_conf('predict.yaml')
 conf = conf['object'][conf['obj_type']]
+
+
 # output_path = ''
-if os.path.exists(args.save_path) is False:
-    os.mkdir(args.save_path)
+# if os.path.exists(args.save_path) is False:
+#     os.mkdir(args.save_path)
 
 
 def run_test_image():
@@ -55,7 +57,7 @@ def main(args):
         if args.image != "":
             if os.path.exists(args.image) is True:
                 image = Image.open(args.image)
-                ret_image,_ = predict.detect_image(image)
+                ret_image, _ = predict.detect_image(image)
                 ret_image.show()
             else:
                 print(f'{args.image} is error')
@@ -78,7 +80,7 @@ def main(args):
             frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
             # 转变成Image
             frame = Image.fromarray(np.uint8(frame))
-            frame,_ = np.array(predict.detect_image(frame))
+            frame, _ = np.array(predict.detect_image(frame))
             # RGBtoBGR满足opencv显示格式
             frame = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
 
@@ -108,7 +110,7 @@ def main(args):
             if image_name.lower().endswith('jpg'):
                 image_path = os.path.join(args.dir, image_name)
                 image = Image.open(image_path)
-                r_image,_ = predict.detect_image(image)
+                r_image, _ = predict.detect_image(image)
 
                 r_image.save(os.path.join(args.save_path, image_name))
     elif args.mode == 'test':

@@ -3,7 +3,7 @@ import numpy as np
 from PIL import Image
 import torch
 from utils.utils_bbox import DecodeBox
-from utils.utils_image import preprocess
+from utils.utils_image import image_preprocess
 from utils.utils import load_yaml_conf, get_classes, get_anchors
 
 # load config file
@@ -18,31 +18,33 @@ session = onnxruntime.InferenceSession(onnx_path)
 
 # read the image
 image = Image.open('../person.jpeg')
-image_data, image_shape = preprocess(image, (conf['input_shape'][0], conf['input_shape'][1]))
+w, h = image.size
+image_shape = np.array(h, w)
+image_data = image_preprocess(image, (conf['input_shape'][0], conf['input_shape'][1]))
 
 # run onnx model
 outputs = session.run(None, {'input': image_data})
 outputs = list([torch.tensor(item) for item in outputs])
 
 # decode result data
-decode = DecodeBox(anchors,
-                   num_classes,
-                   input_shape=(conf['input_shape'][0], conf['input_shape'][1]),
-                   anchors_mask=conf['anchors_mask'])
+decodebox = DecodeBox(anchors,
+                      num_classes,
+                      input_shape=(conf['input_shape'][0], conf['input_shape'][1]),
+                      anchors_mask=conf['anchors_mask'])
 
 with torch.no_grad():
     # outputs shape: (3,batch_size,x,y,w,h,conf,classes)
-    outputs = decode.decode_box(outputs)
+    outputs = decodebox.decode_box(outputs)
 
     #   将预测框进行堆叠，然后进行非极大抑制
     # results shape:(len(prediction),num_anchors,4)
-    results = decode.nms_(torch.cat(outputs, 1),
-                          num_classes,
-                          conf['input_shape'],
-                          image_shape,
-                          conf['letterbox_image'],
-                          conf_thres=conf['confidence'],
-                          nms_thres=conf['nms_iou'])
+    results = decodebox.nms_(torch.cat(outputs, 1),
+                             num_classes,
+                             conf['input_shape'],
+                             image_shape,
+                             conf['letterbox_image'],
+                             conf_thres=conf['confidence'],
+                             nms_thres=conf['nms_iou'])
 
     if results[0] is None:
         exit()
