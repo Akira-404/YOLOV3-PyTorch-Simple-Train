@@ -50,8 +50,20 @@ def get_person():
     return _get_result(200, 'success', post_data)
 
 
+# TODO:need to debug
 @app.route('/yolov3_get_person2', methods=['POST'])
 def get_person2():
+    params = request.json if request.method == "POST" else request.args
+    img = _base64_to_pil(params['img'])
+    image, data = predict.detect_image(img, draw=False)
+    t = 0.65
+    post_data = [item for item in data if item['score'] > t]
+    return _get_result(200, 'success', post_data)
+
+
+# TODO:need to debug
+@app.route('/yolov3_get_person_onnx', methods=['POST'])
+def get_person_onnx():
     params = request.json if request.method == "POST" else request.args
     img = _base64_to_pil(params['img'])
     image, data = predict.detect_image(img, draw=False)
