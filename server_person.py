@@ -4,6 +4,7 @@ from utils.utils_prediect import Predict
 from flask import Flask, jsonify, request
 from io import BytesIO
 from utils.polygon import winding_number
+import numpy as np
 
 predict = Predict('predict.yaml', obj_type='person')
 
@@ -44,6 +45,28 @@ def get_person():
     params = request.json if request.method == "POST" else request.args
     img = _base64_to_pil(params['img'])
     data = predict.tiny_detect_image(img)
+    t = 0.65
+    post_data = [item for item in data if item['score'] > t]
+    return _get_result(200, 'success', post_data)
+
+
+# TODO:need to debug
+@app.route('/yolov3_get_person2', methods=['POST'])
+def get_person2():
+    params = request.json if request.method == "POST" else request.args
+    img = _base64_to_pil(params['img'])
+    image, data = predict.detect_image(img, draw=False)
+    t = 0.65
+    post_data = [item for item in data if item['score'] > t]
+    return _get_result(200, 'success', post_data)
+
+
+# TODO:need to debug
+@app.route('/yolov3_get_person_onnx', methods=['POST'])
+def get_person_onnx():
+    params = request.json if request.method == "POST" else request.args
+    img = _base64_to_pil(params['img'])
+    image, data = predict.detect_image(img, draw=False)
     t = 0.65
     post_data = [item for item in data if item['score'] > t]
     return _get_result(200, 'success', post_data)

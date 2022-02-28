@@ -25,9 +25,11 @@ predict = Predict('predict.yaml')
 predict.load_weights()
 conf = load_yaml_conf('predict.yaml')
 conf = conf['object'][conf['obj_type']]
+
+
 # output_path = ''
-if os.path.exists(args.save_path) is False:
-    os.mkdir(args.save_path)
+# if os.path.exists(args.save_path) is False:
+#     os.mkdir(args.save_path)
 
 
 # def run_test_image():
