@@ -30,24 +30,24 @@ if os.path.exists(args.save_path) is False:
     os.mkdir(args.save_path)
 
 
-def run_test_image():
-    test_file = os.path.join(conf['dataset_root'], 'VOCdevkit/VOC2007/ImageSets/Main/test.txt')
-    with open(test_file, 'r') as f:
-        lines = f.readlines()
-    # for i, line in enumerate(lines):
-    cnt = 0
-    for line in tqdm(lines):
-        line = line.strip()
-        img_path = os.path.join(conf['dataset_root'], 'VOCdevkit/VOC2007/JPEGImages', line) + '.jpg'
-        assert os.path.exists(img_path), f'{img_path} is error'
-        # print(img_path)
-        if img_path.lower().endswith('jpg'):
-            image = Image.open(img_path)
-            r_image = predict.detect_image(image)
-            r_image.save(os.path.join(args.save_path, line) + '.jpg')
-        cnt += 1
-        if cnt > 100:
-            break
+# def run_test_image():
+#     test_file = os.path.join(conf['dataset_root'], 'VOCdevkit/VOC2007/ImageSets/Main/test.txt')
+#     with open(test_file, 'r') as f:
+#         lines = f.readlines()
+#     # for i, line in enumerate(lines):
+#     cnt = 0
+#     for line in tqdm(lines):
+#         line = line.strip()
+#         img_path = os.path.join(conf['dataset_root'], 'VOCdevkit/VOC2007/JPEGImages', line) + '.jpg'
+#         assert os.path.exists(img_path), f'{img_path} is error'
+#         # print(img_path)
+#         if img_path.lower().endswith('jpg'):
+#             image = Image.open(img_path)
+#             r_image = predict.detect_image(image)
+#             r_image.save(os.path.join(args.save_path, line) + '.jpg')
+#         cnt += 1
+#         if cnt > 100:
+#             break
 
 
 def main(args):
@@ -55,10 +55,11 @@ def main(args):
         if args.image != "":
             if os.path.exists(args.image) is True:
                 image = Image.open(args.image)
-                ret_image,_ = predict.detect_image(image)
+                ret_image, _ = predict.detect_image(image)
                 ret_image.show()
             else:
                 print(f'{args.image} is error')
+
     elif args.mode == 'video':
 
         assert os.path.exists(args.video) is True, f'{args.video} is error'
@@ -78,7 +79,7 @@ def main(args):
             frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
             # 转变成Image
             frame = Image.fromarray(np.uint8(frame))
-            frame,_ = np.array(predict.detect_image(frame))
+            frame, _ = np.array(predict.detect_image(frame))
             # RGBtoBGR满足opencv显示格式
             frame = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
 
@@ -97,6 +98,7 @@ def main(args):
         capture.release()
         out.release()
         cv2.destroyAllWindows()
+
     elif args.mode == 'dir':
         assert os.path.exists(args.dir) is True, f'{args.dir} is error'
         _support_img_type = ['.bmp', '.dib', '.png', '.jpg', '.jpeg', '.pbm', '.pgm', '.ppm', '.tif', '.tiff']
@@ -108,11 +110,12 @@ def main(args):
             if image_name.lower().endswith('jpg'):
                 image_path = os.path.join(args.dir, image_name)
                 image = Image.open(image_path)
-                r_image,_ = predict.detect_image(image)
+                r_image, _ = predict.detect_image(image)
 
                 r_image.save(os.path.join(args.save_path, image_name))
     elif args.mode == 'test':
-        run_test_image()
+        # run_test_image()
+        ...
     else:
         raise TypeError('args.mode must be:image,video,dir')
 
