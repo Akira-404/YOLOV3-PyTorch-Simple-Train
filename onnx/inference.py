@@ -19,7 +19,7 @@ session = onnxruntime.InferenceSession(onnx_path)
 # read the image
 image = Image.open('../person.jpeg')
 w, h = image.size
-image_shape = np.array(h, w)
+image_shape = np.array((h, w))
 image_data = image_preprocess(image, (conf['input_shape'][0], conf['input_shape'][1]))
 
 # run onnx model
