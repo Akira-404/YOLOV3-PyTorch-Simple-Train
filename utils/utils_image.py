@@ -1,7 +1,10 @@
+import base64
+
 import numpy as np
 from PIL import Image
 from PIL import ImageDraw, ImageFont, Image
 import colorsys
+from io import BytesIO
 
 
 def image_normalization(image):
@@ -93,3 +96,21 @@ def draw_box(nc: int, image, top_label, top_conf, top_boxes, class_names, input_
         draw.rectangle([tuple(text_origin), tuple(text_origin + label_size)], fill=colors[c])
         draw.text(text_origin, str(label, 'UTF-8'), fill=(0, 0, 0), font=font)
         del draw
+
+
+def pil_to_base64(img):
+    output_buffer = BytesIO()
+    img.save(output_buffer, format='JPEG')
+    byte_data = output_buffer.getvalue()
+    base64_str = base64.b64encode(byte_data)
+    return base64_str
+
+
+def base64_to_pil(base64_data):
+    img = None
+    for i, data in enumerate(base64_data):
+        decode_data = base64.b64decode(data)
+        img_data = BytesIO(decode_data)
+        img = Image.open(img_data)
+        # data.append(img)
+    return img

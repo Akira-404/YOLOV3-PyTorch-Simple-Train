@@ -139,7 +139,8 @@ class Predict:
         # image_shape = np.array(np.shape(image)[0:2])  # h,w
         w, h = image.size
         image_shape = np.array((h, w))  # h,w
-        image_data = image_preprocess(image, (self.conf['input_shape'][0], self.conf['input_shape'][1]))
+        image_data = image_preprocess(image, (self.conf['input_shape'][0],
+                                              self.conf['input_shape'][1]))
 
         with torch.no_grad():
             images = torch.from_numpy(image_data)
@@ -161,7 +162,7 @@ class Predict:
                                           nms_thres=self.conf['nms_iou'])
 
             if results[0] is None:
-                return image
+                return []
 
             top_label = np.array(results[0][:, 6], dtype='int32')
             top_conf = results[0][:, 4] * results[0][:, 5]
@@ -197,7 +198,7 @@ class Predict:
             }
             data.append(item)
 
-        return image, data
+        return data
 
     def get_FPS(self, image, test_interval):
         image_shape = np.array(np.shape(image)[0:2])

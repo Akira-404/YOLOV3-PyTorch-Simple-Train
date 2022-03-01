@@ -3,10 +3,10 @@ import onnx
 from utils.utils_prediect import Predict
 
 predict = Predict('../predict.yaml')
-torch_model = predict.get_model()
+torch_model = predict.get_model_with_weights()
 
 # export params:
-onnx_path = './person.onnx'
+onnx_path = './head.onnx'
 batch_size = 1
 input_shape = (3, 416, 416)
 
@@ -54,6 +54,6 @@ if onnx_simplify:
         print(e)
 
 print('torch2onnx finish.')
-print(f'input torch model:{torch_model}')
-print(f'output onnx model:{onnx_model}')
+# print(f'input torch model:{torch_model}')
+# print(f'output onnx model:{onnx_model}')
 print(f'model input shape:{input_shape}')

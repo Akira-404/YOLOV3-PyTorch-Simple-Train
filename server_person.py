@@ -1,40 +1,29 @@
-import base64
-from PIL import Image
-
-import onnxruntime
 import torch
+import numpy as np
+import onnxruntime
+from loguru import logger
+from flask import Flask, jsonify, request
 
 from utils.utils import load_yaml_conf, get_classes, get_anchors
 from utils.utils_bbox import DecodeBox
 from utils.utils_image import image_preprocess
 from utils.utils_prediect import Predict
-from flask import Flask, jsonify, request
-from io import BytesIO
 from utils.polygon import winding_number
-import numpy as np
+from utils.utils_image import base64_to_pil
 
 predict = Predict('predict.yaml', obj_type='person')
-
+predict.load_weights()
 app = Flask(__name__)
 
+conf = load_yaml_conf('./predict.yaml')
+type_ = conf['object']['person']
+class_names, num_classes = get_classes(type_['classes_path'])
+anchors, num_anchors = get_anchors(type_['anchors_path'])
 
-def _pil_to_base64(img):
-    # img = Image.open(image_path)
-    output_buffer = BytesIO()
-    img.save(output_buffer, format='JPEG')
-    byte_data = output_buffer.getvalue()
-    base64_str = base64.b64encode(byte_data)
-    return base64_str
-
-
-def _base64_to_pil(base64_data):
-    img = None
-    for i, data in enumerate(base64_data):
-        decode_data = base64.b64decode(data)
-        img_data = BytesIO(decode_data)
-        img = Image.open(img_data)
-        # data.append(img)
-    return img
+logger.info('Load yolov3 onnx model.')
+onnx_path = './onnx/person.onnx'
+session = onnxruntime.InferenceSession(onnx_path, providers=onnxruntime.get_available_providers())
+logger.info('Load done.')
 
 
 def _get_result(code: int, message: str, data):
@@ -50,42 +39,23 @@ def _get_result(code: int, message: str, data):
 @app.route('/yolov3_get_person', methods=['POST'])
 def get_person():
     params = request.json if request.method == "POST" else request.args
-    img = _base64_to_pil(params['img'])
-    data = predict.tiny_detect_image(img)
-    t = 0.65
-    post_data = [item for item in data if item['score'] > t]
-    return _get_result(200, 'success', post_data)
-
-
-# TODO:need to debug
-@app.route('/yolov3_get_person2', methods=['POST'])
-def get_person2():
-    params = request.json if request.method == "POST" else request.args
-    img = _base64_to_pil(params['img'])
-    image, data = predict.detect_image(img, draw=False)
-    t = 0.65
-    post_data = [item for item in data if item['score'] > t]
-    return _get_result(200, 'success', post_data)
-
-
-conf = load_yaml_conf('./predict.yaml')
-type_ = conf['object'][conf['obj_type']]
-class_names, num_classes = get_classes(type_['classes_path'])
-anchors, num_anchors = get_anchors(type_['anchors_path'])
-onnx_path = './onnx/person.onnx'
-session = onnxruntime.InferenceSession(onnx_path)
+    img = base64_to_pil(params['img'])
+    data = predict.detect_image(img, draw=False)
+    return _get_result(200, 'success', data)
 
 
 @app.route('/yolov3_get_person_onnx', methods=['POST'])
 def get_person_onnx():
     params = request.json if request.method == "POST" else request.args
-    image = _base64_to_pil(params['img'])
+    image = base64_to_pil(params['img'])
     w, h = image.size
-    print(w, h)
     image_shape = np.array((h, w))
+
     image_data = image_preprocess(image, (conf['input_shape'][0], conf['input_shape'][1]))
+
     outputs = session.run(None, {'input': image_data})
     outputs = list([torch.tensor(item) for item in outputs])
+
     # decode result data
     decodebox = DecodeBox(anchors,
                           num_classes,
@@ -107,7 +77,7 @@ def get_person_onnx():
                                  nms_thres=conf['nms_iou'])
 
         if results[0] is None:
-            exit()
+            return _get_result(200, 'empty', [])
 
         top_label = np.array(results[0][:, 6], dtype='int32')
         top_conf = results[0][:, 4] * results[0][:, 5]
@@ -135,16 +105,14 @@ def get_person_onnx():
             'width': int(x1 - x0)
         }
         data.append(item)
-    t = 0.65
-    post_data = [item for item in data if item['score'] > t]
-    return _get_result(200, 'success', post_data)
+    return _get_result(200, 'success', data)
 
 
 @app.route('/yolov3_poly', methods=['POST'])
 def poly():
     params = request.json if request.method == "POST" else request.args
     try:
-        image = _base64_to_pil(params['image'])
+        image = base64_to_pil(params['image'])
         polys = params['polys']
     except Exception as e:
         print(f'yolov3_poly:e:{e}')
@@ -179,7 +147,3 @@ def run():
 
 if __name__ == "__main__":
     run()
-    # img = Image.open('img.jpg')
-    # base54_data = _pil_to_base64(img)
-    # print(type(base54_data))
-    # _base64_to_pil([base54_data])

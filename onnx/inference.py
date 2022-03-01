@@ -13,11 +13,11 @@ class_names, num_classes = get_classes(type_['classes_path'])
 anchors, num_anchors = get_anchors(type_['anchors_path'])
 
 # load model
-onnx_path = './person.onnx'
-session = onnxruntime.InferenceSession(onnx_path)
+onnx_path = './head.onnx'
+session = onnxruntime.InferenceSession(onnx_path,providers=onnxruntime.get_available_providers())
 
 # read the image
-image = Image.open('../person.jpeg')
+image = Image.open('../work.jpeg')
 w, h = image.size
 image_shape = np.array((h, w))
 image_data = image_preprocess(image, (conf['input_shape'][0], conf['input_shape'][1]))
