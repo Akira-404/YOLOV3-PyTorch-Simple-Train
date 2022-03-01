@@ -11,7 +11,6 @@ url = "http://192.168.2.165:30000/yolov3_get_person"
 
 
 def torch_model(image, image_base64):
-    # url = "http://192.168.2.165:30002/yolov3_get_helmet"
     payload = json.dumps({
         "img": [image_base64]
     })
@@ -34,7 +33,6 @@ def torch_model(image, image_base64):
 
 
 def onnx_model(image, image_base64):
-    # url_onnx = "http://192.168.2.165:30002/yolov3_get_helmet_onnx"
     payload = json.dumps({
         "img": [image_base64]
     })
@@ -90,5 +88,5 @@ def image(folder: str):
 
 
 if __name__ == '__main__':
-    # video()
     image('/home/ubuntu/桌面/images/person')
+    # video()

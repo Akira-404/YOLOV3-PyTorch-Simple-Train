@@ -108,6 +108,7 @@ def get_person_onnx():
     return _get_result(200, 'success', data)
 
 
+# TODO(lee linfeng):fixbug and debug this http function
 @app.route('/yolov3_poly', methods=['POST'])
 def poly():
     params = request.json if request.method == "POST" else request.args
