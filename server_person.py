@@ -23,36 +23,43 @@ log位置：./logs/local
 保留时间：7天
 压缩格式：ZIP
 '''
-_LOG = config.get_log_config()  # 不在终端输出文本信息
-# logger.remove(handler_id=None)
+_LOG = config.get_log_config()
+
+if os.path.exists('./logs/person/') is False:
+    os.makedirs('./logs/ person / ')
+
+# logger.remove(handler_id=None)# 不在终端输出文本信息
 logger.add(sink=_LOG.file_person,
            level=_LOG.level,
            rotation=_LOG.rotation,
            retention=_LOG.retention,
            compression=_LOG.compression)
 
-if os.path.exists('./logs/person/') is False:
-    os.makedirs('./logs/ person / ')
+_Thr = config.get_threshold()
+_Url = config.get_url()
 
-    _Thr = config.get_threshold()
-    _Url = config.get_url()
+predict = Predict('predict.yaml', obj_type='person')
+# predict.load_weights()
+app = Flask(__name__)
 
-    predict = Predict('predict.yaml', obj_type='person')
-    # predict.load_weights()
-    app = Flask(__name__)
+conf = load_yaml_conf('./predict.yaml')
+type_ = conf['object']['person']
+class_names, num_classes = get_classes(type_['classes_path'])
+anchors, num_anchors = get_anchors(type_['anchors_path'])
 
-    conf = load_yaml_conf('./predict.yaml')
-    type_ = conf['object']['person']
-    class_names, num_classes = get_classes(type_['classes_path'])
-    anchors, num_anchors = get_anchors(type_['anchors_path'])
-
-    logger.info('Load yolov3 onnx model.')
-    onnx_path = './onnx/person.onnx'
-    session = onnxruntime.InferenceSession(onnx_path, providers=onnxruntime.get_available_providers())
-    logger.info('Load done.')
+logger.info('Load yolov3 onnx model.')
+onnx_path = './onnx/person.onnx'
+session = onnxruntime.InferenceSession(onnx_path, providers=onnxruntime.get_available_providers())
+logger.info('Load done.')
 
 
-def _get_result(code: int, message: str, data):
+def jsonify_(code: int, message: str, data):
+    """
+    :param code:server status code 200,500...
+    :param message: success or error ...
+    :param data: list data
+    :return: jsonify data
+    """
     result = {
         "code": code,
         "message": message,
@@ -88,7 +95,7 @@ def get_person():
     params = request.json if request.method == "POST" else request.args
     img = base64_to_pil(params['img'])
     data = predict.detect_image(img, draw=False)
-    return _get_result(200, 'success', data)
+    return jsonify_(200, 'success', data)
 
 
 @logger.catch()
@@ -143,7 +150,7 @@ def get_person_onnx():
                                  nms_thres=conf['nms_iou'])
 
         if results[0] is None:
-            return _get_result(200, 'empty', [])
+            return jsonify_(200, 'empty', [])
 
         top_label = np.array(results[0][:, 6], dtype='int32')
         top_conf = results[0][:, 4] * results[0][:, 5]
@@ -171,7 +178,8 @@ def get_person_onnx():
             'width': int(x1 - x0)
         }
         data.append(item)
-    post_data = _get_result(200, 'success', data)
+
+    post_data = jsonify_(200, 'success', data)
     return post_data
 
 
@@ -201,7 +209,7 @@ def poly():
         # image = base64_to_pil(params['image'])
         polys: list = params['polys']
     except Exception as e:
-        return _get_result(500, f'Error:{e}', [])
+        return jsonify_(500, f'Error:{e}', [])
 
     # t = 0.64
     bias = 0.5
@@ -219,7 +227,7 @@ def poly():
         response = requests.request("POST", url_person, headers=headers, data=payload)
         res_data = eval(response.text)
         if res_data['code'] != 200:
-            return _get_result(res_data['code'], 'error:from url_person', [])
+            return jsonify_(res_data['code'], 'error:from url_person', [])
 
         data = res_data['data']
         for item in data:
@@ -234,7 +242,7 @@ def poly():
             if flag:
                 post_data.append(item)
 
-    post_data = _get_result(200, 'success', post_data)
+    post_data = jsonify_(200, 'success', post_data)
     return post_data
 
 

@@ -130,11 +130,11 @@ class Predict:
     #         data.append(item)
     #     return data
 
-    def detect_image(self, image, draw: bool = True):
+    def detect_image(self, image, draw: bool = True) -> list:
 
         if not self.prepare_flag:
             print('This net is not load weights,please use Predict.load_weights()')
-            exit()
+            return []
 
         # image_shape = np.array(np.shape(image)[0:2])  # h,w
         w, h = image.size
