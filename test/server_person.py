@@ -6,8 +6,13 @@ import base64
 import requests
 import cv2
 
-url_onnx = "http://192.168.2.165:30000/yolov3_get_person_onnx"
-url = "http://192.168.2.165:30000/yolov3_get_person"
+import config
+
+_Url = config.get_url()
+
+
+# url_onnx = "http://192.168.2.165:30000/yolov3_get_person_onnx"
+# url = "http://192.168.2.165:30000/yolov3_get_person"
 
 
 def torch_model(image, image_base64):
@@ -18,7 +23,7 @@ def torch_model(image, image_base64):
         'Content-Type': 'application/json'
     }
     t1 = time.time()
-    response = requests.request("POST", url, headers=headers, data=payload)
+    response = requests.request("POST", _Url.person, headers=headers, data=payload)
     t2 = time.time()
     print(f'torch model time:{round(t2 - t1, 2)}')
 
@@ -40,7 +45,7 @@ def onnx_model(image, image_base64):
         'Content-Type': 'application/json'
     }
     t1 = time.time()
-    response = requests.request("POST", url_onnx, headers=headers, data=payload)
+    response = requests.request("POST", _Url.person, headers=headers, data=payload)
     t2 = time.time()
     print(f'onnx model use time:{round(t2 - t1, 2)}')
     data = response.text
@@ -64,7 +69,7 @@ def video():
         image = cv2.imencode('.jpg', frame)[1]
         image_base64 = str(base64.b64encode(image))[2:-1]
         torch_model(frame, image_base64)
-        onnx_model(frame, image_base64)
+        # onnx_model(frame, image_base64)
         cv2.imshow('image', frame)
         cv2.waitKey(25)
 
@@ -80,7 +85,7 @@ def image(folder: str):
         image = cv2.imencode('.jpg', img)[1]
         image_base64 = str(base64.b64encode(image))[2:-1]
 
-        torch_model(img, image_base64)
+        # torch_model(img, image_base64)
         onnx_model(img, image_base64)
 
         cv2.imshow('image', img)
@@ -88,5 +93,5 @@ def image(folder: str):
 
 
 if __name__ == '__main__':
-    image('/home/ubuntu/桌面/images/person')
-    # video()
+    # image('/home/ubuntu/桌面/images/person')
+    video()

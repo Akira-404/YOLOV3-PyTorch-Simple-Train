@@ -36,7 +36,6 @@ _C.default.confidence = 0.5  # 置信度
 _C.default.nms_iou = 0.3  # nms iou阈值
 _C.default.letterbox_image = False  # 是否使用letterbox缩放
 
-
 _C.object = CN()
 _C.object.person = CN()
 _C.object.person.dataset_root = '/home/cv/ai_data/person_yolo'
@@ -63,6 +62,7 @@ _C.threshold.helmet = 0.65
 
 _C.url = CN()
 _C.url.default = 'http://192.168.2.165'  # ai服务器ip地址
+# _C.url.default = 'http://192.168.2.7'  # ai服务器ip地址
 _C.url.smoke = _C.url.default + ":24410/yolov3_get_smoke_onnx"
 _C.url.safety_rope = _C.url.default + ":24411/yolov3_get_safety_rope_onnx"
 _C.url.cloth = _C.url.default + ":24430/yolov3_get_cloth_onnx"
@@ -71,7 +71,20 @@ _C.url.head = _C.url.default + ":30001/yolov3_get_head_onnx"
 _C.url.person = _C.url.default + ":30000/yolov3_get_person_onnx"
 _C.url.area = _C.url.default + ":30000/yolov3_poly"
 
+# loguru config
+_C.log = CN()
+_C.log.file_person = './logs/person/person_{time}.log'
+_C.log.file_helmet = './logs/helmet/helmet_{time}.log'
+_C.log.file_head = './logs/head/head_{time}.log'
+_C.log.level = 'INFO'
+_C.log.rotation = '10 MB'
+_C.log.retention = '7 day'
+_C.log.compression = 'zip'
 _C.freeze()
+
+
+def get_log_config():
+    return _C.log
 
 
 def get_url():

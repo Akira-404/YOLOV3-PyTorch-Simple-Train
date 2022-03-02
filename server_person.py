@@ -1,4 +1,5 @@
 import json
+import os
 
 import requests
 import torch
@@ -15,22 +16,40 @@ from utils.polygon import winding_number
 from utils.utils_image import base64_to_pil
 import config
 
-_Thr = config.get_threshold()
-_Url = config.get_url()
+'''
+日志大小上限：10 MB
+log位置：./logs/local
+写入级别：DEBUG
+保留时间：7天
+压缩格式：ZIP
+'''
+_LOG = config.get_log_config()  # 不在终端输出文本信息
+# logger.remove(handler_id=None)
+logger.add(sink=_LOG.file_person,
+           level=_LOG.level,
+           rotation=_LOG.rotation,
+           retention=_LOG.retention,
+           compression=_LOG.compression)
 
-predict = Predict('predict.yaml', obj_type='person')
-# predict.load_weights()
-app = Flask(__name__)
+if os.path.exists('./logs/person/') is False:
+    os.makedirs('./logs/ person / ')
 
-conf = load_yaml_conf('./predict.yaml')
-type_ = conf['object']['person']
-class_names, num_classes = get_classes(type_['classes_path'])
-anchors, num_anchors = get_anchors(type_['anchors_path'])
+    _Thr = config.get_threshold()
+    _Url = config.get_url()
 
-logger.info('Load yolov3 onnx model.')
-onnx_path = './onnx/person.onnx'
-session = onnxruntime.InferenceSession(onnx_path, providers=onnxruntime.get_available_providers())
-logger.info('Load done.')
+    predict = Predict('predict.yaml', obj_type='person')
+    # predict.load_weights()
+    app = Flask(__name__)
+
+    conf = load_yaml_conf('./predict.yaml')
+    type_ = conf['object']['person']
+    class_names, num_classes = get_classes(type_['classes_path'])
+    anchors, num_anchors = get_anchors(type_['anchors_path'])
+
+    logger.info('Load yolov3 onnx model.')
+    onnx_path = './onnx/person.onnx'
+    session = onnxruntime.InferenceSession(onnx_path, providers=onnxruntime.get_available_providers())
+    logger.info('Load done.')
 
 
 def _get_result(code: int, message: str, data):
@@ -39,10 +58,13 @@ def _get_result(code: int, message: str, data):
         "message": message,
         "data": data
     }
-    print("Response data:", result)
+
+    logger.info(result)
+    # print("Response data:", result)
     return jsonify(result)
 
 
+@logger.catch()
 @app.route('/yolov3_get_person', methods=['POST'])
 def get_person():
     """
@@ -69,6 +91,7 @@ def get_person():
     return _get_result(200, 'success', data)
 
 
+@logger.catch()
 @app.route('/yolov3_get_person_onnx', methods=['POST'])
 def get_person_onnx():
     """
@@ -148,7 +171,8 @@ def get_person_onnx():
             'width': int(x1 - x0)
         }
         data.append(item)
-    return _get_result(200, 'success', data)
+    post_data = _get_result(200, 'success', data)
+    return post_data
 
 
 @app.route('/yolov3_poly', methods=['POST'])
@@ -210,7 +234,8 @@ def poly():
             if flag:
                 post_data.append(item)
 
-    return _get_result(200, 'success', post_data)
+    post_data = _get_result(200, 'success', post_data)
+    return post_data
 
 
 def run():
