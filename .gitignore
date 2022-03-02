@@ -17,7 +17,7 @@ logs/
 **.onnx
 *.trt
 .pyc
-
+/onnx/onnx_simplifier.py
 
 experiment/area_detection.yaml
 /test.py

@@ -1,12 +1,14 @@
 import base64
-
-import numpy as np
-from PIL import Image
-from PIL import ImageDraw, ImageFont, Image
 import colorsys
 from io import BytesIO
 
+import cv2
+import numpy as np
+from PIL import ImageDraw, ImageFont, Image
 
+
+# input:PIL:Image
+# output:normalization image type:PIL::Image
 def image_normalization(image):
     image /= 255.0
     return image
@@ -28,6 +30,8 @@ def resize_image(image, size: tuple, letterbox_image: bool = False):
     return new_image
 
 
+# input:PIl::Image
+# output:RGB image
 def img2rgb(image):
     if len(np.shape(image)) == 3 and np.shape(image)[2] == 3:
         return image
@@ -36,6 +40,11 @@ def img2rgb(image):
         return image
 
 
+# input
+# image:PIL:Image
+# size:resize shape
+# letterbox:use or not using letterbox to resize image
+# output:PIL image,shape:(1,image.size)
 def image_preprocess(image, size: tuple, letterbox: bool = False):
     #   在这里将图像转换成RGB图像，防止灰度图在预测时报错。
     #   代码仅仅支持RGB图像的预测，所有其它类型的图像都会转化成RGB
@@ -98,6 +107,8 @@ def draw_box(nc: int, image, top_label, top_conf, top_boxes, class_names, input_
         del draw
 
 
+# input:PIL image
+# output:image base64 code without head code
 def pil_to_base64(img):
     output_buffer = BytesIO()
     img.save(output_buffer, format='JPEG')
@@ -106,11 +117,20 @@ def pil_to_base64(img):
     return base64_str
 
 
+# input:image base64 code without head code
+# output:PIL image
 def base64_to_pil(base64_data):
     img = None
     for i, data in enumerate(base64_data):
         decode_data = base64.b64decode(data)
         img_data = BytesIO(decode_data)
         img = Image.open(img_data)
-        # data.append(img)
     return img
+
+
+# input:opencv::mat image
+# output:image base64 code without head code
+def image_to_base64(image_np):
+    image = cv2.imencode('.jpg', image_np)[1]
+    image_code = str(base64.b64encode(image))[2:-1]
+    return image_code

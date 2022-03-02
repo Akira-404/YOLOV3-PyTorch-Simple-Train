@@ -1,7 +1,5 @@
 from yacs.config import CfgNode as CN
 
-# This file is not yet use
-
 _C = CN()
 
 _C.default = CN()
@@ -38,7 +36,6 @@ _C.default.confidence = 0.5  # 置信度
 _C.default.nms_iou = 0.3  # nms iou阈值
 _C.default.letterbox_image = False  # 是否使用letterbox缩放
 
-_C.lee_config = CN()
 
 _C.object = CN()
 _C.object.person = CN()
@@ -59,6 +56,30 @@ _C.object.helmet.model_path = _C.default.root + 'weights/helmet.pth'
 _C.object.helmet.classes_path = _C.default.root + 'data/helmet_classes.yaml'
 _C.object.helmet.anchors_path = _C.default.root + 'data/helmet_anchors.yaml'
 
+_C.threshold = CN()
+_C.threshold.person = 0.65
+_C.threshold.head = 0.65
+_C.threshold.helmet = 0.65
+
+_C.url = CN()
+_C.url.default = 'http://192.168.2.165'  # ai服务器ip地址
+_C.url.smoke = _C.url.default + ":24410/yolov3_get_smoke_onnx"
+_C.url.safety_rope = _C.url.default + ":24411/yolov3_get_safety_rope_onnx"
+_C.url.cloth = _C.url.default + ":24430/yolov3_get_cloth_onnx"
+_C.url.helmet = _C.url.default + ":30002/yolov3_get_helmet_onnx"
+_C.url.head = _C.url.default + ":30001/yolov3_get_head_onnx"
+_C.url.person = _C.url.default + ":30000/yolov3_get_person_onnx"
+_C.url.area = _C.url.default + ":30000/yolov3_poly"
+
+_C.freeze()
+
+
+def get_url():
+    return _C.url
+
+
+def get_threshold():
+    return _C.threshold
 
 
 def get_config_defaults():
@@ -67,4 +88,7 @@ def get_config_defaults():
 
 if __name__ == '__main__':
     config = get_config_defaults()
-    print(type(config))
+    print(config)
+
+    t = get_threshold()
+    print(t)

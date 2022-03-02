@@ -1,3 +1,6 @@
+import json
+
+import requests
 import torch
 import numpy as np
 import onnxruntime
@@ -10,9 +13,13 @@ from utils.utils_image import image_preprocess
 from utils.utils_prediect import Predict
 from utils.polygon import winding_number
 from utils.utils_image import base64_to_pil
+import config
+
+_Thr = config.get_threshold()
+_Url = config.get_url()
 
 predict = Predict('predict.yaml', obj_type='person')
-predict.load_weights()
+# predict.load_weights()
 app = Flask(__name__)
 
 conf = load_yaml_conf('./predict.yaml')
@@ -38,6 +45,24 @@ def _get_result(code: int, message: str, data):
 
 @app.route('/yolov3_get_person', methods=['POST'])
 def get_person():
+    """
+    Args:
+        img:base64 code without code head
+    Returns:
+        {
+            "code": server status code,
+            "data": [
+              {
+                "height": int
+                "label": str,
+                "left": int,
+                "score": float,
+                "top": int,
+                "width": int
+              }
+            ],
+            "message": "success"
+    """
     params = request.json if request.method == "POST" else request.args
     img = base64_to_pil(params['img'])
     data = predict.detect_image(img, draw=False)
@@ -46,6 +71,24 @@ def get_person():
 
 @app.route('/yolov3_get_person_onnx', methods=['POST'])
 def get_person_onnx():
+    """
+        Args:
+            img:base64 code without code head
+        Returns:
+            {
+                "code": server status code,
+                "data": [
+                  {
+                    "height": int
+                    "label": str,
+                    "left": int,
+                    "score": float,
+                    "top": int,
+                    "width": int
+                  }
+                ],
+                "message": "success"
+        """
     params = request.json if request.method == "POST" else request.args
     image = base64_to_pil(params['img'])
     w, h = image.size
@@ -108,26 +151,57 @@ def get_person_onnx():
     return _get_result(200, 'success', data)
 
 
-# TODO(lee linfeng):fixbug and debug this http function
 @app.route('/yolov3_poly', methods=['POST'])
 def poly():
+    """
+        Args:
+            img:base64 code without code head
+            polys:[[(int, int), (int, int), ...],...]
+        Returns:
+            {
+                "code": server statue code,
+                "data": [
+                  {
+                    "height": int
+                    "label": str,
+                    "left": int,
+                    "score": float,
+                    "top": int,
+                    "width": int
+                  }
+                ],
+                "message": "success"
+        """
     params = request.json if request.method == "POST" else request.args
     try:
-        image = base64_to_pil(params['image'])
-        polys = params['polys']
+        # image = base64_to_pil(params['image'])
+        polys: list = params['polys']
     except Exception as e:
-        print(f'yolov3_poly:e:{e}')
-        return _get_result(500, 'Error', ["Input data error"])
+        return _get_result(500, f'Error:{e}', [])
 
-    t = 0.64
+    # t = 0.64
+    bias = 0.5
     post_data = []
 
     if poly:
-        data = predict.tiny_detect_image(image)
+        # data = predict.detect_image(image, draw=False)
+        payload = json.dumps({
+            "img": params['img']
+        })
+        headers = {
+            'Content-Type': 'application/json'
+        }
+        url_person = _Url.person
+        response = requests.request("POST", url_person, headers=headers, data=payload)
+        res_data = eval(response.text)
+        if res_data['code'] != 200:
+            return _get_result(res_data['code'], 'error:from url_person', [])
+
+        data = res_data['data']
         for item in data:
             flag = False
-            if item['score'] > t:
-                foot_x = int(item['left'] + item['width'] * 0.5)
+            if item['score'] > _Thr.person:
+                foot_x = int(item['left'] + item['width'] * bias)
                 foot_y = int(item['top'] + item['height'])
 
                 # flag = crossing_number([foot_x, foot_y], polys)
@@ -135,8 +209,6 @@ def poly():
 
             if flag:
                 post_data.append(item)
-
-        # api_test('/home/cv/AI_Data/person.avi', predict, polys)
 
     return _get_result(200, 'success', post_data)
 
