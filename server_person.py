@@ -1,5 +1,6 @@
 import json
 import os
+import time
 
 import requests
 import torch
@@ -18,17 +19,17 @@ import config
 
 '''
 日志大小上限：10 MB
-log位置：./logs/local
-写入级别：DEBUG
+log位置：./logs/person
+写入级别:WARNING
 保留时间：7天
 压缩格式：ZIP
 '''
 _LOG = config.get_log_config()
 
 if os.path.exists('./logs/person/') is False:
-    os.makedirs('./logs/ person / ')
+    os.makedirs('./logs/person/ ')
 
-# logger.remove(handler_id=None)# 不在终端输出文本信息
+logger.remove(handler_id=None)  # 不在终端输出文本信息
 logger.add(sink=_LOG.file_person,
            level=_LOG.level,
            rotation=_LOG.rotation,
@@ -38,18 +39,27 @@ logger.add(sink=_LOG.file_person,
 _Thr = config.get_threshold()
 _Url = config.get_url()
 
-predict = Predict('predict.yaml', obj_type='person')
+_local_path = os.path.dirname(__file__)
+predict_file = os.path.join(_local_path, 'predict.yaml')
+
+predict = Predict(predict_file, obj_type='person')
 # predict.load_weights()
 app = Flask(__name__)
 
-conf = load_yaml_conf('./predict.yaml')
+conf = load_yaml_conf(predict_file)
 type_ = conf['object']['person']
-class_names, num_classes = get_classes(type_['classes_path'])
-anchors, num_anchors = get_anchors(type_['anchors_path'])
+
+classes_path = os.path.join(_local_path, type_['classes_path'])
+anchors_path = os.path.join(_local_path, type_['anchors_path'])
+class_names, num_classes = get_classes(classes_path)
+anchors, num_anchors = get_anchors(anchors_path)
 
 logger.info('Load yolov3 onnx model.')
-onnx_path = './onnx/person.onnx'
-session = onnxruntime.InferenceSession(onnx_path, providers=onnxruntime.get_available_providers())
+onnx_path = os.path.join(_local_path, './onnx/person.onnx')
+t1 = time.time()
+session = onnxruntime.InferenceSession(onnx_path, providers=['CUDAExecutionProvider', 'CPUExecutionProvider'])
+t2 = time.time()
+print(f'load onnx model use time:{t2 - t1}')
 logger.info('Load done.')
 
 
@@ -98,8 +108,8 @@ def get_person():
     return jsonify_(200, 'success', data)
 
 
-@logger.catch()
 @app.route('/yolov3_get_person_onnx', methods=['POST'])
+@logger.catch()
 def get_person_onnx():
     """
         Args:
@@ -123,13 +133,16 @@ def get_person_onnx():
     image = base64_to_pil(params['img'])
     w, h = image.size
     image_shape = np.array((h, w))
-
     image_data = image_preprocess(image, (conf['input_shape'][0], conf['input_shape'][1]))
 
+    t1 = time.time()
     outputs = session.run(None, {'input': image_data})
+    t2 = time.time()
+    print(t2 - t1)
     outputs = list([torch.tensor(item) for item in outputs])
 
     # decode result data
+
     decodebox = DecodeBox(anchors,
                           num_classes,
                           input_shape=(conf['input_shape'][0], conf['input_shape'][1]),
@@ -171,7 +184,7 @@ def get_person_onnx():
 
         item = {
             'label': predicted_class,
-            'score': float(score),
+            'score': round(float(score), 2),
             'height': int(y1 - y0),
             'left': int(x0),
             'top': int(y0),
@@ -184,6 +197,7 @@ def get_person_onnx():
 
 
 @app.route('/yolov3_poly', methods=['POST'])
+@logger.catch()
 def poly():
     """
         Args:
@@ -246,9 +260,12 @@ def poly():
     return post_data
 
 
+_HTTP = config.get_http()
+
+
 def run():
     app.config['JSON_AS_ASCII'] = False
-    app.run(host='0.0.0.0', port=30000, use_reloader=False)
+    app.run(host=_HTTP.local, port=_HTTP.person_port, use_reloader=False)
 
 
 if __name__ == "__main__":

@@ -1,3 +1,4 @@
+import os
 import torch
 import numpy as np
 import onnxruntime
@@ -8,21 +9,46 @@ from utils.utils import load_yaml_conf, get_classes, get_anchors
 from utils.utils_bbox import DecodeBox
 from utils.utils_image import image_preprocess
 from utils.utils_prediect import Predict
-from utils.polygon import winding_number
 from utils.utils_image import base64_to_pil
+import config
 
-predict = Predict('predict.yaml', obj_type='head')
-predict.load_weights()
+'''
+日志大小上限：10 MB
+log位置：./logs/head
+写入级别:INFO
+保留时间：7天
+压缩格式：ZIP
+'''
+_LOG = config.get_log_config()
+
+if os.path.exists('./logs/head') is False:
+    os.makedirs('./logs/head')
+
+logger.remove(handler_id=None)  # 不在终端输出文本信息
+logger.add(sink=_LOG.file_head,
+           level=_LOG.level,
+           rotation=_LOG.rotation,
+           retention=_LOG.retention,
+           compression=_LOG.compression)
+
+_local_path = os.path.dirname(__file__)
+predict_file = os.path.join(_local_path, 'predict.yaml')
+
+predict = Predict(predict_file, obj_type='head')
+# predict.load_weights()
 app = Flask(__name__)
 
-conf = load_yaml_conf('./predict.yaml')
+conf = load_yaml_conf(predict_file)
 type_ = conf['object']['head']
-class_names, num_classes = get_classes(type_['classes_path'])
-anchors, num_anchors = get_anchors(type_['anchors_path'])
+
+classes_path = os.path.join(_local_path, type_['classes_path'])
+anchors_path = os.path.join(_local_path, type_['anchors_path'])
+class_names, num_classes = get_classes(classes_path)
+anchors, num_anchors = get_anchors(anchors_path)
 
 logger.info('Load yolov3 onnx model.')
-onnx_path = './onnx/head.onnx'
-session = onnxruntime.InferenceSession(onnx_path, providers=onnxruntime.get_available_providers())
+onnx_path = os.path.join(_local_path, './onnx/head.onnx')
+session = onnxruntime.InferenceSession(onnx_path, providers=['CUDAExecutionProvider', 'CPUExecutionProvider'])
 logger.info('Load done.')
 
 
@@ -108,9 +134,12 @@ def get_head_onnx():
     return _get_result(200, 'success', data)
 
 
+_HTTP = config.get_http()
+
+
 def run():
     app.config['JSON_AS_ASCII'] = False
-    app.run(host='0.0.0.0', port=30001, use_reloader=False)
+    app.run(host=_HTTP.local, port=_HTTP.head_port, use_reloader=False)
 
 
 if __name__ == "__main__":

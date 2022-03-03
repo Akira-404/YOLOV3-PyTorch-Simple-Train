@@ -33,13 +33,18 @@ class Predict:
         self.device = torch.device('cuda' if self.CUDA else 'cpu')
 
         self.ignore_track = ignore_track
+        _local_path = os.path.dirname(os.path.dirname(__file__))
 
-        assert os.path.exists(self.type['classes_path']) is True, self.type['classes_path']
-        assert os.path.exists(self.type['anchors_path']) is True, self.type['anchors_path'] + 'is error'
-        assert os.path.exists(self.type['model_path']) is True, self.type['model_path']
+        self.classes_path = os.path.join(_local_path, self.type['classes_path'])
+        self.anchors_path = os.path.join(_local_path, self.type['anchors_path'])
+        self.model_path = os.path.join(_local_path, self.type['model_path'])
 
-        self.class_names, self.num_classes = get_classes(self.type['classes_path'])
-        self.anchors, self.num_anchors = get_anchors(self.type['anchors_path'])
+        assert os.path.exists(self.classes_path) is True, self.classes_path
+        assert os.path.exists(self.anchors_path) is True, self.anchors_path + 'is error'
+        assert os.path.exists(self.model_path) is True, self.model_path
+
+        self.class_names, self.num_classes = get_classes(self.classes_path)
+        self.anchors, self.num_anchors = get_anchors(self.anchors_path)
 
         self.bbox_util = DecodeBox(self.anchors,
                                    self.num_classes,
@@ -52,7 +57,7 @@ class Predict:
         self.prepare_flag = False
 
     def get_model_with_weights(self, ignore_track: bool = False):
-        load_weights(self.net, self.type['model_path'], self.device, ignore_track)
+        load_weights(self.net, self.model_path, self.device, ignore_track)
         return self.net
 
     def get_model_without_weights(self):

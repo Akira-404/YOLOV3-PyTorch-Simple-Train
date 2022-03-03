@@ -54,7 +54,7 @@ def draw_area(path: str):
         t1 = time.time()
         response = requests.request("POST", _Url.area, headers=headers, data=payload)
         t2 = time.time()
-        print(f'ara time:{round(t2 - t1, 2)}')
+        print(f'arae time:{round(t2 - t1, 2)}')
 
         res_data = eval(response.text)
         if res_data['code'] != 200:
@@ -85,7 +85,7 @@ def draw_area(path: str):
         # out_cat.write(frame)  # 保存视频
 
         cv2.imshow('video', frame)
-        cv2.waitKey(int(1000 / fps))
+        cv2.waitKey(25)
         flag, frame = cap.read()
 
     # out_cat.release()

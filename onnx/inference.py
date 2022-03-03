@@ -1,20 +1,28 @@
+import os
+
 import onnxruntime
 import numpy as np
 from PIL import Image
 import torch
+
+import config
 from utils.utils_bbox import DecodeBox
 from utils.utils_image import image_preprocess
 from utils.utils import load_yaml_conf, get_classes, get_anchors
 
 # load config file
+local_path = os.path.dirname(os.path.dirname(__file__))
+
 conf = load_yaml_conf('../predict.yaml')
 type_ = conf['object'][conf['obj_type']]
-class_names, num_classes = get_classes(type_['classes_path'])
-anchors, num_anchors = get_anchors(type_['anchors_path'])
+classes_path = os.path.join('../', type_['classes_path'])
+class_names, num_classes = get_classes(classes_path)
+anchors_path = os.path.join('../', type_['anchors_path'])
+anchors, num_anchors = get_anchors(anchors_path)
 
 # load model
 onnx_path = './head.onnx'
-session = onnxruntime.InferenceSession(onnx_path,providers=onnxruntime.get_available_providers())
+session = onnxruntime.InferenceSession(onnx_path, providers=onnxruntime.get_available_providers())
 
 # read the image
 image = Image.open('../work.jpeg')

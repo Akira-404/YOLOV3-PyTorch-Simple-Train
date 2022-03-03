@@ -59,7 +59,6 @@ def get_classes(classes_path: str):
     :param classes_path: support file type:yaml or txt
     :return: classes names and length of classes names
     """
-
     if classes_path.endswith(".yaml"):
         with open(classes_path, 'r') as f:
             data = yaml.safe_load(f)

@@ -39,9 +39,9 @@ _C.default.letterbox_image = False  # 是否使用letterbox缩放
 _C.object = CN()
 _C.object.person = CN()
 _C.object.person.dataset_root = '/home/cv/ai_data/person_yolo'
-_C.object.person.model_path = _C.default.root + 'weights/person.pth'
-_C.object.person.classes_path = _C.default.root + 'data/person_classes.yaml'
-_C.object.person.anchors_path = _C.default.root + 'data/person_anchors.yaml'
+_C.object.person.model_path = 'weights/person.pth'
+_C.object.person.classes_path = 'data/person_classes.yaml'
+_C.object.person.anchors_path = 'data/person_anchors.yaml'
 
 _C.object.head = CN()
 _C.object.head.dataset_root = '/home/cv/ai_data/head_datas_yolo'
@@ -60,27 +60,42 @@ _C.threshold.person = 0.65
 _C.threshold.head = 0.65
 _C.threshold.helmet = 0.65
 
+_C.http = CN()
+_C.http.local = '0.0.0.0'
+_C.http.person_port = 30000
+_C.http.head_port = 30001
+_C.http.helmet_port = 30002
+
 _C.url = CN()
 _C.url.default = 'http://192.168.2.165'  # ai服务器ip地址
 # _C.url.default = 'http://192.168.2.7'  # ai服务器ip地址
 _C.url.smoke = _C.url.default + ":24410/yolov3_get_smoke_onnx"
 _C.url.safety_rope = _C.url.default + ":24411/yolov3_get_safety_rope_onnx"
 _C.url.cloth = _C.url.default + ":24430/yolov3_get_cloth_onnx"
-_C.url.helmet = _C.url.default + ":30002/yolov3_get_helmet_onnx"
-_C.url.head = _C.url.default + ":30001/yolov3_get_head_onnx"
-_C.url.person = _C.url.default + ":30000/yolov3_get_person_onnx"
-_C.url.area = _C.url.default + ":30000/yolov3_poly"
+_C.url.helmet = _C.url.default + ":" + str(_C.http.helmet_port) + "/yolov3_get_helmet_onnx"
+_C.url.head = _C.url.default + ":" + str(_C.http.head_port) + "/yolov3_get_head_onnx"
+_C.url.person = _C.url.default + ":" + str(_C.http.person_port) + "/yolov3_get_person_onnx"
+_C.url.area = _C.url.default + ":" + str(_C.http.person_port) + "/yolov3_poly"
 
 # loguru config
 _C.log = CN()
 _C.log.file_person = './logs/person/person_{time}.log'
 _C.log.file_helmet = './logs/helmet/helmet_{time}.log'
 _C.log.file_head = './logs/head/head_{time}.log'
-_C.log.level = 'INFO'
+_C.log.level = 'WARNING'
 _C.log.rotation = '10 MB'
 _C.log.retention = '7 day'
 _C.log.compression = 'zip'
+
 _C.freeze()
+
+
+def get_http():
+    return _C.http
+
+
+def get_object():
+    return _C.object
 
 
 def get_log_config():

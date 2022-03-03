@@ -1,26 +1,26 @@
 object:
   person:
     dataset_root: '/home/cv/AI_Data/person_yolo'
-    model_path: '/home/ubuntu/PycharmProjects/YOLOV3-PyTorch-Simple-Train/weights/person.pth' #模型权重路径
-    #    model_path: '/home/ubuntu/PycharmProjects/YOLOV3-PyTorch-Simple-Train/weights/person_spp.pth' #模型权重路径
-    classes_path: '/home/ubuntu/PycharmProjects/YOLOV3-PyTorch-Simple-Train/data/person_classes.yaml' #数据类别文件
-    anchors_path: '/home/ubuntu/PycharmProjects/YOLOV3-PyTorch-Simple-Train/data/person_anchors.yaml' #数据集anchors文件
+    model_path: 'weights/person.pth' #模型权重路径
+    #    model_path: 'weights/person_spp.pth' #模型权重路径
+    classes_path: 'data/person_classes.yaml' #数据类别文件
+    anchors_path: 'data/person_anchors.yaml' #数据集anchors文件
   head:
-    dataset_root: '//home/cv/AI_Data/head_datas_yolo' #数据集根目录
-    model_path: '/home/ubuntu/PycharmProjects/YOLOV3-PyTorch-Simple-Train/weights/head.pth'
-    #    model_path: '/home/ubuntu/PycharmProjects/YOLOV3-PyTorch-Simple-Train/weights/head_spp.pth'
-    classes_path: '/home/ubuntu/PycharmProjects/YOLOV3-PyTorch-Simple-Train/data/head_classes.yaml' #数据类别文件
-    anchors_path: '/home/ubuntu/PycharmProjects/YOLOV3-PyTorch-Simple-Train/data/head_anchors.yaml' #数据集anchors文件head
+    dataset_root: '/home/cv/AI_Data/head_datas_yolo' #数据集根目录
+    model_path: 'weights/head.pth'
+    #    model_path: 'weights/head_spp.pth'
+    classes_path: 'data/head_classes.yaml' #数据类别文件
+    anchors_path: 'data/head_anchors.yaml' #数据集anchors文件head
   helmet:
-    dataset_root: '//home/cv/AI_Data/HardHatWorker_voc'
-    model_path: '/home/ubuntu/PycharmProjects/YOLOV3-PyTorch-Simple-Train/weights/HardHatWorker.pth' #模型权重路径
-    classes_path: '/home/ubuntu/PycharmProjects/YOLOV3-PyTorch-Simple-Train/data/HardHatWorker_classes.yaml' #数据类别文件
-    anchors_path: '/home/ubuntu/PycharmProjects/YOLOV3-PyTorch-Simple-Train/data/HardHatWorker_anchors.yaml' #数据集anchors文件
+    dataset_root: '/home/cv/AI_Data/HardHatWorker_voc'
+    model_path: 'weights/HardHatWorker.pth' #模型权重路径
+    classes_path: 'data/HardHatWorker_classes.yaml' #数据类别文件
+    anchors_path: 'data/HardHatWorker_anchors.yaml' #数据集anchors文件
   reflective:
-    dataset_root: '//home/cv/AI_Data/reflective'
-    model_path: '/home/ubuntu/PycharmProjects/YOLOV3-PyTorch-Simple-Train/weights/reflective.pth' #预加载yolov3权重文件
-    classes_path: '/home/ubuntu/PycharmProjects/YOLOV3-PyTorch-Simple-Train/data/reflective_classes.yaml' #数据集类别文件
-    anchors_path: '/home/ubuntu/PycharmProjects/YOLOV3-PyTorch-Simple-Train/data/reflective_anchors.yaml' #数据集聚类anchors
+    dataset_root: '/home/cv/AI_Data/reflective'
+    model_path: 'weights/reflective.pth' #预加载yolov3权重文件
+    classes_path: 'data/reflective_classes.yaml' #数据集类别文件
+    anchors_path: 'data/reflective_anchors.yaml' #数据集聚类anchors
 
 
 cuda: True
@@ -43,5 +43,5 @@ letterbox_image: False #是否使用letterbox缩放
 
 minoverlap: 0.5 #map计算中的iou阈值
 
-onnx_model: /home/ubuntu/PycharmProjects/YOLOV3-PyTorch-Simple-Train/data/yolov3_new_spp.onnx
-trt_model: /home/ubuntu/PycharmProjects/YOLOV3-PyTorch-Simple-Train/data/head.trt
+onnx_model: data/yolov3_new_spp.onnx
+trt_model: data/head.trt
