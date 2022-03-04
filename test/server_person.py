@@ -85,4 +85,4 @@ if __name__ == '__main__':
     # image('/home/ubuntu/桌面/images/person')
 
     video_path = '/home/ubuntu/github/opencv/samples/data/vtest.avi'
-    video(video_path, draw=False)
+    video(video_path)

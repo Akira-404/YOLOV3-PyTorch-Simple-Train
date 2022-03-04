@@ -1,8 +1,7 @@
 #!/bin/bash
 
-root="/home/ubuntu/PycharmProjects/YOLOV3-PyTorch-Simple-Train/"
-
 person_id=`ps -ef| grep person|grep -v "$0"|grep -v grep | awk '{print $2}'`
+root=~/PycharmProjects/YOLOV3-PyTorch-Simple-Train/
 
 echo "======"
 if [ -z "$person_id" ];then
