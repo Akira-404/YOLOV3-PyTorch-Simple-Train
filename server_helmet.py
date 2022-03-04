@@ -22,12 +22,13 @@ log位置：./logs/helmet
 压缩格式：ZIP
 '''
 _LOG = config.get_log_config()
-
-if os.path.exists('./logs/helmet') is False:
-    os.makedirs('./logs/helmet')
+_local_path = os.path.dirname(__file__)
+log_path = os.path.join(_local_path, 'log/helmet')
+if os.path.exists(log_path) is False:
+    os.makedirs(log_path)
 
 logger.remove(handler_id=None)  # 不在终端输出文本信息
-logger.add(sink=_LOG.file_helmet,
+logger.add(sink=os.path.join(log_path, 'helmet_{time}.log'),
            level=_LOG.level,
            rotation=_LOG.rotation,
            retention=_LOG.retention,

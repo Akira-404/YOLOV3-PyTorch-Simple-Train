@@ -25,12 +25,13 @@ log位置：./logs/person
 压缩格式：ZIP
 '''
 _LOG = config.get_log_config()
-
-if os.path.exists('./logs/person/') is False:
-    os.makedirs('./logs/person/ ')
+_local_path = os.path.dirname(__file__)
+log_path = os.path.join(_local_path, 'log/person')
+if os.path.exists(log_path) is False:
+    os.makedirs(log_path)
 
 logger.remove(handler_id=None)  # 不在终端输出文本信息
-logger.add(sink=_LOG.file_person,
+logger.add(sink=os.path.join(log_path, 'person_{time}.log'),
            level=_LOG.level,
            rotation=_LOG.rotation,
            retention=_LOG.retention,

@@ -25,3 +25,4 @@ experiment/area_detection.yaml
 
 docs/YOLOv3.pdf
 /test/.pytest_cache/
+/log/
