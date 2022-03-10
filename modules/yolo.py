@@ -8,20 +8,6 @@ import torch.nn.functional as F
 from modules.darknet import darknet53
 
 
-class SPP(nn.Module):
-    def __init__(self, pool_sizes: list):
-        super(SPP, self).__init__()
-
-        # kernel stride padding
-        self.maxpools = nn.ModuleList([nn.MaxPool2d(pool_size, 1, pool_size // 2) for pool_size in pool_sizes])
-
-    def forward(self, x):
-        features = [maxpool(x) for maxpool in self.maxpools[::-1]]
-        features = torch.cat(features + [x], dim=1)
-
-        return features
-
-
 def conv2d(in_channel: int, out_channel: int, kernel_size):
     pad = (kernel_size - 1) // 2 if kernel_size else 0
 
@@ -58,30 +44,9 @@ def _prediction_block(channels: list, in_channel: int, out_channel: int):
     return m
 
 
-def _ultralytics_spp_block(spp_args, channels: list, in_channel: int, out_channel: int):
-    m = nn.Sequential(
-        # conv set
-        conv2d(in_channel, channels[0], kernel_size=1),
-        conv2d(channels[0], channels[1], kernel_size=3),
-        conv2d(channels[1], channels[0], kernel_size=1),
-
-        # This is spp module
-        # spp out channel=4*input channel
-        SPP(spp_args),
-        conv2d(channels[0] * 4, channels[0], kernel_size=1),
-
-        conv2d(channels[0], channels[1], kernel_size=3),
-        conv2d(channels[1], channels[0], kernel_size=1),
-
-        # prediction out
-        conv2d(channels[0], channels[1], kernel_size=3),
-        nn.Conv2d(channels[1], out_channel, kernel_size=(1, 1), stride=(1, 1), padding=0, bias=True))
-
-    return m
-
-
 class YOLO(nn.Module):
-    def __init__(self, anchors_mask: list, num_classes: int, spp: list = None, act: str = 'leaky_relu'):
+    # def __init__(self, anchors_mask: list, num_classes: int, spp: list = None, act: str = 'leaky_relu'):
+    def __init__(self, anchors_mask: list, num_classes: int, act: str = 'leaky_relu'):
         super(YOLO, self).__init__()
 
         self.backbone = darknet53(act)
@@ -89,16 +54,9 @@ class YOLO(nn.Module):
         out_filters = self.backbone.layers_out_filters  # [64, 128, 256, 512, 1024]
 
         # big object
-        if not spp:
-            self.big_detect_layer = _prediction_block([512, 1024],
-                                                      out_filters[-1],  # 1024
-                                                      len(anchors_mask[0]) * (num_classes + 5))
-
-        else:
-            self.big_detect_layer = _ultralytics_spp_block(spp,
-                                                           [512, 1024],
-                                                           out_filters[-1],  # 1024
-                                                           len(anchors_mask[0]))
+        self.big_detect_layer = _prediction_block([512, 1024],
+                                                  out_filters[-1],  # 1024
+                                                  len(anchors_mask[0]) * (num_classes + 5))
 
         # medium object
         self.medium_detect_layer_conv = conv2d(512, 256, 1)
@@ -148,7 +106,4 @@ class YOLO(nn.Module):
 
 
 if __name__ == '__main__':
-    a = [1, 2, 3, 4, 5]
-    print(a[:3])
-    print(a[:-2])
-    print(a[-2:])
+    ...

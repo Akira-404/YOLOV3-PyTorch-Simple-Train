@@ -11,32 +11,7 @@ from utils.utils import load_yaml_conf
 predict = Predict('predict.yaml')
 predict.load_weights()
 conf = load_yaml_conf('predict.yaml')
-conf = conf['object'][conf['obj_type']]
-
-
-# output_path = ''
-# if os.path.exists(args.save_path) is False:
-#     os.mkdir(args.save_path)
-
-
-# def run_test_image():
-#     test_file = os.path.join(conf['dataset_root'], 'VOCdevkit/VOC2007/ImageSets/Main/test.txt')
-#     with open(test_file, 'r') as f:
-#         lines = f.readlines()
-#     # for i, line in enumerate(lines):
-#     cnt = 0
-#     for line in tqdm(lines):
-#         line = line.strip()
-#         img_path = os.path.join(conf['dataset_root'], 'VOCdevkit/VOC2007/JPEGImages', line) + '.jpg'
-#         assert os.path.exists(img_path), f'{img_path} is error'
-#         # print(img_path)
-#         if img_path.lower().endswith('jpg'):
-#             image = Image.open(img_path)
-#             r_image = predict.detect_image(image)
-#             r_image.save(os.path.join(args.save_path, line) + '.jpg')
-#         cnt += 1
-#         if cnt > 100:
-#             break
+conf = conf['object'][conf['head']]
 
 
 def main(args):
@@ -44,8 +19,8 @@ def main(args):
         if args.image != "":
             if os.path.exists(args.image) is True:
                 image = Image.open(args.image)
-                ret_image, _ = predict.detect_image(image)
-                ret_image.show()
+                data = predict.detect_image(image)
+                image.show()
             else:
                 print(f'{args.image} is error')
 
@@ -103,7 +78,6 @@ def main(args):
 
                 r_image.save(os.path.join(args.save_path, image_name))
     elif args.mode == 'test':
-        # run_test_image()
         ...
     else:
         raise TypeError('args.mode must be:image,video,dir')
@@ -113,7 +87,7 @@ if __name__ == '__main__':
     parse = argparse.ArgumentParser('predict config')
     parse.add_argument('-m', '--mode', type=str, choices=['image', 'video', 'dir'], default='image',
                        help='predict image or video or dir')
-    parse.add_argument('-i', '--image', type=str, default='',
+    parse.add_argument('-i', '--image', type=str, default='./person.jpeg',
                        help='image path')
     parse.add_argument('-v', '--video', type=str, default='',
                        help='video path')
