@@ -19,6 +19,7 @@ logs/
 .pyc
 *.mp4
 *.avi
+*.engine
 /onnx/onnx_simplifier.py
 
 experiment/area_detection.yaml

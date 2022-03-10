@@ -13,7 +13,7 @@ input_shape = (3, 416, 416)
 input_names = ['input']
 output_names = ['output']
 
-onnx_simplify = True
+simplify = True
 
 dynamic = False
 dynamic_params = {
@@ -40,7 +40,7 @@ onnx_model = onnx.load(onnx_path)
 onnx.checker.check_model(onnx_model)  # check onnx model
 
 # Simplify
-if onnx_simplify:
+if simplify:
     try:
         import onnxsim
 
@@ -54,6 +54,4 @@ if onnx_simplify:
         print(e)
 
 print('torch2onnx finish.')
-# print(f'input torch model:{torch_model}')
-# print(f'output onnx model:{onnx_model}')
 print(f'model input shape:{input_shape}')
