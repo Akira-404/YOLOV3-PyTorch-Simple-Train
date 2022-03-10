@@ -64,7 +64,7 @@ def export_onnx(model, im, file, opset, train, dynamic, simplify, prefix=colorst
 
     model:torch model
     im:input data [type:tensor]
-    file:onnx output file [type:str]
+    file:onnx output file [type:Path(str)]
     opset:onnx opset version [type:int]
     train:torch model.mode:train or eval [type:bool]
     dynamic:output dynamic shape [type:bool]
