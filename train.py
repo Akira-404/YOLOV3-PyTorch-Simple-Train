@@ -5,6 +5,7 @@ import torch.optim as optim
 from torch.utils.data import DataLoader
 
 from modules.yolo import YOLO
+from modules.yolo_spp import YOLOSPP
 from modules.loss import YOLOLoss, weights_init
 from utils.callbacks import LossHistory
 from utils.dataloader import YoloDataset, yolo_dataset_collate
@@ -168,7 +169,9 @@ def train():
     print(f'Unfreeze batch size:{conf["Unfreeze_batch_size"]}')
     print(f'Unfreeze_lr epoch:{conf["Unfreeze_lr"]}')
 
-    model = YOLO(conf['anchors_mask'], num_classes, conf['spp'], conf['activation'])
+    model = YOLO(conf['anchors_mask'], num_classes, conf['activation'])
+    if conf['spp']:
+        model = YOLOSPP(conf['anchors_mask'], num_classes, conf['spp'], conf['activation'])
 
     weights_init(model)
     print('YOLOV3 Weights Init Done.')

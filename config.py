@@ -67,8 +67,8 @@ _C.http.head_port = 30001
 _C.http.helmet_port = 30002
 
 _C.url = CN()
-# _C.url.default = 'http://192.168.2.165'  # ai服务器ip地址
-_C.url.default = 'http://192.168.2.7'  # ai服务器ip地址
+_C.url.default = 'http://192.168.2.165'  # ai服务器ip地址
+# _C.url.default = 'http://192.168.2.7'  # ai服务器ip地址
 _C.url.smoke = _C.url.default + ":24410/yolov3_get_smoke_onnx"
 _C.url.safety_rope = _C.url.default + ":24411/yolov3_get_safety_rope_onnx"
 _C.url.cloth = _C.url.default + ":24430/yolov3_get_cloth_onnx"

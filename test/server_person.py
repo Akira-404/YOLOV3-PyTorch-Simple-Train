@@ -39,9 +39,9 @@ def video(path: str = None, draw: bool = True):
             for item in data['data']:
                 x1, y1 = item['left'], item['top']
                 x2, y2 = item['left'] + item['width'], item['top'] + item['height']
-                cv2.rectangle(image, (x1 - 10, y1 - 10), (x2 + 10, y2 + 10), (255, 0, 0), 1)
-                cv2.putText(image, str(item['label']), (x1, y1), cv2.FONT_HERSHEY_PLAIN, 1, (255, 0, 0))
-                cv2.putText(image, str(round(item['score'], 3)), (x1 + 60, y1), cv2.FONT_HERSHEY_PLAIN, 1, (255, 0, 0))
+                cv2.rectangle(frame, (x1 - 10, y1 - 10), (x2 + 10, y2 + 10), (255, 0, 0), 1)
+                cv2.putText(frame, str(item['label']), (x1, y1), cv2.FONT_HERSHEY_PLAIN, 1, (255, 0, 0))
+                cv2.putText(frame, str(round(item['score'], 3)), (x1 + 60, y1), cv2.FONT_HERSHEY_PLAIN, 1, (255, 0, 0))
             cv2.imshow('image', frame)
         cv2.waitKey(25)
 

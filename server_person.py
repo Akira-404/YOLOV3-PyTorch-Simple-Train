@@ -44,7 +44,7 @@ _local_path = os.path.dirname(__file__)
 predict_file = os.path.join(_local_path, 'predict.yaml')
 
 predict = Predict(predict_file, obj_type='person')
-# predict.load_weights()
+predict.load_weights()
 app = Flask(__name__)
 
 conf = load_yaml_conf(predict_file)

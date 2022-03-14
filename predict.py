@@ -11,7 +11,7 @@ from utils.utils import load_yaml_conf
 predict = Predict('predict.yaml')
 predict.load_weights()
 conf = load_yaml_conf('predict.yaml')
-conf = conf['object'][conf['head']]
+conf = conf['object'][conf['obj_type']]
 
 
 def main(args):

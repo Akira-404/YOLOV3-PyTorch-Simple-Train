@@ -24,7 +24,7 @@ object:
 
 
 cuda: True
-obj_type: head
+obj_type: person
 
 spp: [ ] #不使用SPP 则设为[]
 #spp: [ 5,9,13 ]
