@@ -61,6 +61,7 @@ class Predict:
         self.prepare_flag = False
 
     def get_model_with_weights(self, ignore_track: bool = False):
+        print(f'model type:{self.conf["obj_type"]}')
         load_weights(self.net, self.model_path, self.device, ignore_track)
         return self.net
 

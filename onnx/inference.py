@@ -21,7 +21,7 @@ anchors_path = os.path.join('../', type_['anchors_path'])
 anchors, num_anchors = get_anchors(anchors_path)
 
 # load model
-onnx_path = './head.onnx'
+onnx_path = './person.onnx'
 session = onnxruntime.InferenceSession(onnx_path, providers=onnxruntime.get_available_providers())
 
 # read the image
@@ -32,6 +32,7 @@ image_data = image_preprocess(image, (conf['input_shape'][0], conf['input_shape'
 
 # run onnx model
 outputs = session.run(None, {'input': image_data})
+# print(np.shape(outputs))
 outputs = list([torch.tensor(item) for item in outputs])
 
 # decode result data

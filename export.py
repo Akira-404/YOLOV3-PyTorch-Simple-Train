@@ -7,31 +7,6 @@ import torch
 import onnxsim
 
 
-def colorstr(*input):
-    # Colors a string https://en.wikipedia.org/wiki/ANSI_escape_code, i.e.  colorstr('blue', 'hello world')
-    *args, string = input if len(input) > 1 else ('blue', 'bold', input[0])  # color arguments, string
-    colors = {'black': '\033[30m',  # basic colors
-              'red': '\033[31m',
-              'green': '\033[32m',
-              'yellow': '\033[33m',
-              'blue': '\033[34m',
-              'magenta': '\033[35m',
-              'cyan': '\033[36m',
-              'white': '\033[37m',
-              'bright_black': '\033[90m',  # bright colors
-              'bright_red': '\033[91m',
-              'bright_green': '\033[92m',
-              'bright_yellow': '\033[93m',
-              'bright_blue': '\033[94m',
-              'bright_magenta': '\033[95m',
-              'bright_cyan': '\033[96m',
-              'bright_white': '\033[97m',
-              'end': '\033[0m',  # misc
-              'bold': '\033[1m',
-              'underline': '\033[4m'}
-    return ''.join(colors[x] for x in args) + f'{string}' + colors['end']
-
-
 def file_size(path):
     # Return file/dir size (MB)
     mb = 1 << 20  # bytes to MiB (1024 ** 2)
@@ -56,7 +31,7 @@ def check_version(current='0.0.0', minimum='0.0.0', name='version ', pinned=Fals
     return result
 
 
-def export_onnx(model, im, file, opset, train, dynamic, simplify, prefix=colorstr('ONNX:')):
+def export_onnx(model, im, file, opset, train, dynamic, simplify):
     """
     YOLOv5 ONNX export
 
@@ -71,7 +46,7 @@ def export_onnx(model, im, file, opset, train, dynamic, simplify, prefix=colorst
     """
     try:
 
-        logger.info(f'\n{prefix} starting export with onnx {onnx.__version__}...')
+        logger.info(f'\nONNX: starting export with onnx {onnx.__version__}...')
         f = file.with_suffix('.onnx')
 
         torch.onnx.export(model, im, f, verbose=False, opset_version=opset,
@@ -91,7 +66,7 @@ def export_onnx(model, im, file, opset, train, dynamic, simplify, prefix=colorst
         # Simplify
         if simplify:
             try:
-                logger.info(f'{prefix} simplifying with onnx-simplifier {onnxsim.__version__}...')
+                logger.info(f'ONNX: simplifying with onnx-simplifier {onnxsim.__version__}...')
                 model_onnx, check = onnxsim.simplify(
                     model_onnx,
                     dynamic_input_shape=dynamic,
@@ -99,14 +74,14 @@ def export_onnx(model, im, file, opset, train, dynamic, simplify, prefix=colorst
                 assert check, 'assert check failed'
                 onnx.save(model_onnx, f)
             except Exception as e:
-                logger.info(f'{prefix} simplifier failure: {e}')
-        logger.info(f'{prefix} export success, saved as {f} ({file_size(f):.1f} MB)')
+                logger.info(f'ONNX: simplifier failure: {e}')
+        logger.info(f'ONNX: export success, saved as {f} ({file_size(f):.1f} MB)')
         return f
     except Exception as e:
-        logger.info(f'{prefix} export failure: {e}')
+        logger.info(f'ONNX: export failure: {e}')
 
 
-def export_engine(model, im, file, train, simplify, workspace=4, verbose=False, prefix=colorstr('TensorRT:')):
+def export_engine(model, im, file, train, simplify, workspace=4, verbose=False):
     """
     YOLOv5 TensorRT export https://developer.nvidia.com/tensorrt
 
@@ -114,7 +89,7 @@ def export_engine(model, im, file, train, simplify, workspace=4, verbose=False, 
 
     model:torch model
     im:input data [type:tensor]
-    file:engine output file [type:str]
+    file:engine output file [type:Path(str)]
     train:torch model.mode:train or eval
     simplify:using onnx simplify or not
     """
@@ -132,7 +107,7 @@ def export_engine(model, im, file, train, simplify, workspace=4, verbose=False, 
             export_onnx(model, im, file, 13, train, False, simplify)  # opset 13
         onnx = file.with_suffix('.onnx')
 
-        logger.info(f'\n{prefix} starting export with TensorRT {trt.__version__}...')
+        logger.info(f'\nTensorRT: starting export with TensorRT {trt.__version__}...')
         assert im.device.type != 'cpu', 'export running on CPU but must be on GPU, i.e. `python export.py --device 0`'
         assert onnx.exists(), f'failed to export ONNX file: {onnx}'
         f = file.with_suffix('.engine')  # TensorRT engine file
@@ -153,21 +128,21 @@ def export_engine(model, im, file, train, simplify, workspace=4, verbose=False, 
 
         inputs = [network.get_input(i) for i in range(network.num_inputs)]
         outputs = [network.get_output(i) for i in range(network.num_outputs)]
-        logger.info(f'{prefix} Network Description:')
+        logger.info(f'TensorRT: Network Description:')
         for inp in inputs:
-            logger.info(f'{prefix}\tinput "{inp.name}" with shape {inp.shape} and dtype {inp.dtype}')
+            logger.info(f'TensorRT:\tinput "{inp.name}" with shape {inp.shape} and dtype {inp.dtype}')
         for out in outputs:
-            logger.info(f'{prefix}\toutput "{out.name}" with shape {out.shape} and dtype {out.dtype}')
+            logger.info(f'TensorRT:\toutput "{out.name}" with shape {out.shape} and dtype {out.dtype}')
 
-        logger.info(f'{prefix} building FP{16 if builder.platform_has_fast_fp16 else 32} engine in {f}')
+        logger.info(f'TensorRT: building FP{16 if builder.platform_has_fast_fp16 else 32} engine in {f}')
         if builder.platform_has_fast_fp16:
             config.set_flag(trt.BuilderFlag.FP16)
         with builder.build_engine(network, config) as engine, open(f, 'wb') as t:
             t.write(engine.serialize())
-        logger.info(f'{prefix} export success, saved as {f} ({file_size(f):.1f} MB)')
+        logger.info(f'TensorRT: export success, saved as {f} ({file_size(f):.1f} MB)')
         return f
     except Exception as e:
-        logger.info(f'\n{prefix} export failure: {e}')
+        logger.info(f'\nTensorRT: export failure: {e}')
 
 
 if __name__ == '__main__':
@@ -177,8 +152,8 @@ if __name__ == '__main__':
     torch_model = predict.get_model_with_weights()
 
     # export params:
-    onnx_path = Path('./head.onnx')
-    engine_path = Path('./head.engine')
+    onnx_path = Path('./person.onnx')
+    engine_path = Path('./person.engine')
     batch_size = 1
     input_shape = (3, 416, 416)
 
