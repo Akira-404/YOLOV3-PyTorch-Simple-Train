@@ -1,33 +1,33 @@
 object:
   reflective:
     dataset_root: '/home/cv/AI_Data/reflective'
-    model_path: 'home/ubuntu/PycharmProjects/YOLOV3-PyTorch-Simlple-Train/weights/reflective-ep124-loss4.193.pth' #预加载yolov3权重文件
-    classes_path: 'home/ubuntu/PycharmProjects/YOLOV3-PyTorch-Simlple-Train/data/reflective_classes.yaml' #数据集类别文件
-    anchors_path: 'home/ubuntu/PycharmProjects/YOLOV3-PyTorch-Simlple-Train/data/reflective_anchors.yaml' #数据集聚类anchors
+    model_path: 'weights/reflective-ep124-loss4.193.pth' #预加载yolov3权重文件
+    classes_path: 'data/reflective_classes.yaml' #数据集类别文件
+    anchors_path: 'data/reflective_anchors.yaml' #数据集聚类anchors
   person:
     dataset_root: '/home/cv/AI_Data/person_yolo'
-    #    model_path: 'home/ubuntu/PycharmProjects/YOLOV3-PyTorch-Simlple-Train/weights/person.pth' #预加载yolov3权重文件
+    #    model_path: 'weights/person.pth' #预加载yolov3权重文件
     model_path: '' #预加载yolov3权重文件
-    classes_path: 'home/ubuntu/PycharmProjects/YOLOV3-PyTorch-Simlple-Train/data/person_classes.yaml' #数据集类别文件
-    anchors_path: 'home/ubuntu/PycharmProjects/YOLOV3-PyTorch-Simlple-Train/data/person_anchors.yaml' #数据集聚类anchors
-  widerperson:
-    dataset_root: '/home/cv/AI_Data/widerperson'
-    model_path: 'home/ubuntu/PycharmProjects/YOLOV3-PyTorch-Simlple-Train/weights/person.pth' #预加载yolov3权重文件
-    classes_path: 'home/ubuntu/PycharmProjects/YOLOV3-PyTorch-Simlple-Train/data/widerperson_classes.yaml' #数据集类别文件
-    anchors_path: 'home/ubuntu/PycharmProjects/YOLOV3-PyTorch-Simlple-Train/data/widerperson_anchors.yaml' #数据集聚类anchors
+    classes_path: 'data/person_classes.yaml' #数据集类别文件
+    anchors_path: 'data/person_anchors.yaml' #数据集聚类anchors
   helmet:
     dataset_root: '/home/cv/AI_Data/yolo_helmet_train\\anno'
-    model_path: 'home/ubuntu/PycharmProjects/YOLOV3-PyTorch-Simlple-Train/weights/helmet.pth' #预加载yolov3权重文件
-    classes_path: 'home/ubuntu/PycharmProjects/YOLOV3-PyTorch-Simlple-Train/data/helmet_classes.yaml' #数据类别文件
-    anchors_path: 'home/ubuntu/PycharmProjects/YOLOV3-PyTorch-Simlple-Train/data/helmet_anchors.yaml' #数据集anchors文件
+    model_path: 'weights/helmet.pth' #预加载yolov3权重文件
+    classes_path: 'data/helmet_classes.yaml' #数据类别文件
+    anchors_path: 'data/helmet_anchors.yaml' #数据集anchors文件
   head:
     dataset_root: '/home/cv/AI_Data/head_datas_yolo' #数据集根目录
     model_path: ''
-    classes_path: 'home/ubuntu/PycharmProjects/YOLOV3-PyTorch-Simlple-Train/data/head_classes.yaml' #数据类别文件
-    anchors_path: 'home/ubuntu/PycharmProjects/YOLOV3-PyTorch-Simlple-Train/data/head_anchors.yaml' #数据集anchors文件head
+    classes_path: 'data/head_classes.yaml' #数据类别文件
+    anchors_path: 'data/head_anchors.yaml' #数据集anchors文件head
+  widerperson:
+    dataset_root: '/home/ubuntu/data/VOCdevkit/VOC2007/WiderPerson'
+    model_path: weights/person.pth'
+    classes_path: 'data/widerperson_classes.yaml' #数据集类别文件
+    anchors_path: 'data/widerperson_anchors.yaml' #数据集聚类anchors
 
 year: '2007'
-obj_type: person
+obj_type: widerperson
 
 cuda: True
 num_workers: 8
@@ -37,12 +37,11 @@ spp: [ 5,9,13 ]
 activation: mish #leakyrelu or mish
 #activation: leakyrelu #leakyrelu or mish
 mosaic: False
-cosine_lr: True
 label_smoothing: 0 #if label_smoothing=0:不适用平滑标签
 
 Init_Epoch: 0
-#input_shape: [ 416, 416 ] #模型输入图片尺度
-input_shape: [ 608,608 ] #模型输入图片尺度
+input_shape: [ 416, 416 ] #模型输入图片尺度
+#input_shape: [ 608,608 ] #模型输入图片尺度
 anchors_mask: [ [ 6, 7, 8 ], [ 3, 4, 5 ], [ 0, 1, 2 ] ]
 
 #generate config
@@ -50,17 +49,26 @@ train_percent: 0.9
 trainval_percent: 0.9
 
 Freeze_Train: False
+
 #冻结训练参数设置
-Freeze_Epoch: 10
+Freeze_Epoch: 50
 Freeze_batch_size: 16
 Freeze_lr: 1e-3
+
 #全网络训练参数设置
-UnFreeze_Epoch: 120
+UnFreeze_Epoch: 100
 Unfreeze_batch_size: 8
 Unfreeze_lr: 1e-4
 
+#new args:
+Init_lr: 1e-2
+optimizer_type: "sgd"
+momentum: 0.937
+weight_decay: 5e-4
+lr_decay_type: "cos"
+
 #训练数据集路径文件
-train_annotation_path: '2007_train.txt'
-val_annotation_path: '2007_val.txt'
+train_file: 'train.txt'
+val_file: 'val.txt'
 
 

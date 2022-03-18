@@ -1,7 +1,12 @@
+import os
+
+from loguru import logger
 import numpy as np
 import torch
 import torch.backends.cudnn as cudnn
+
 import torch.optim as optim
+from torch import nn
 from torch.utils.data import DataLoader
 
 from modules.yolo import YOLO
@@ -9,13 +14,15 @@ from modules.yolo_spp import YOLOSPP
 from modules.loss import YOLOLoss, weights_init
 from utils.callbacks import LossHistory
 from utils.dataloader import YoloDataset, yolo_dataset_collate
-from utils.utils import get_anchors, get_classes, load_yaml_conf
+from utils.utils import get_anchors, get_classes, load_yaml_conf, get_lr_scheduler, set_optimizer_lr
 from utils.utils_fit import fit_one_epoch
 
 conf = load_yaml_conf('train.yaml')
 CUDA = True if (torch.cuda.is_available() and conf["cuda"]) else False
 device = torch.device('cuda' if CUDA else 'cpu')
-print(f'CUDA:{CUDA}')
+logger.info(f'CUDA:{CUDA}')
+
+local_path = os.path.dirname(__file__)
 
 
 # 加载权重
@@ -30,7 +37,7 @@ def load_weights(model, model_path: str, ignore_track: bool = False):
         # ignore_track=False:加载net中的 num_batches_tracked参数
         # ignore_track=True:忽略加载net中的 num_batches_tracked参数
         if 'num_batches_tracked' in k and ignore_track:
-            print('pass item:', k)
+            logger.info('pass item:', k)
         else:
             _model_dict[k] = v
 
@@ -44,147 +51,49 @@ def load_weights(model, model_path: str, ignore_track: bool = False):
 
     model_dict.update(load_dict)
     model.load_state_dict(model_dict)
-    print(f'Load weight data:{cnt}/{len(pretrained_dict)}')
-
-
-def freeze_train(model, model_train, train_lines, val_lines, num_classes, num_train, num_val, yolo_loss,
-                 loss_history):
-    batch_size = conf['Freeze_batch_size']
-    lr = eval(conf['Freeze_lr'])
-    start_epoch = conf['Init_Epoch']
-    end_epoch = conf['Freeze_Epoch']
-    mosaic = conf['mosaic']
-
-    optimizer = optim.Adam(model_train.parameters(), lr, weight_decay=5e-4)
-    if conf['cosine_lr']:
-        lr_scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=5, eta_min=1e-5)
-    else:
-        lr_scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=1, gamma=0.94)
-
-    train_dataset = YoloDataset(train_lines, conf['input_shape'], num_classes, train=True, mosaic=mosaic)
-    val_dataset = YoloDataset(val_lines, conf['input_shape'], num_classes, train=False, mosaic=False)
-
-    gen = DataLoader(train_dataset,
-                     shuffle=True,
-                     batch_size=batch_size,
-                     num_workers=conf['num_workers'],
-                     pin_memory=True,
-                     drop_last=True,
-                     collate_fn=yolo_dataset_collate)
-
-    gen_val = DataLoader(val_dataset,
-                         shuffle=True,
-                         batch_size=batch_size,
-                         num_workers=conf['num_workers'],
-                         pin_memory=True,
-                         drop_last=True,
-                         collate_fn=yolo_dataset_collate)
-
-    epoch_step = num_train // batch_size
-    epoch_step_val = num_val // batch_size
-
-    if epoch_step == 0 or epoch_step_val == 0:
-        raise ValueError("数据集过小，无法进行训练，请扩充数据集。")
-
-    if conf['Freeze_Train']:
-        for param in model.backbone.parameters():
-            param.requires_grad = False
-
-    for epoch in range(start_epoch, end_epoch):
-        fit_one_epoch(model_train, model, yolo_loss, loss_history, optimizer, epoch,
-                      epoch_step, epoch_step_val, gen, gen_val, end_epoch, CUDA)
-        lr_scheduler.step()
-
-
-def unfreeze_train(model, model_train, train_lines, val_lines, num_classes, num_train, num_val, yolo_loss,
-                   loss_history):
-    batch_size = conf['Unfreeze_batch_size']
-    lr = eval(conf['Unfreeze_lr'])
-    start_epoch = conf['Freeze_Epoch']
-    end_epoch = conf['UnFreeze_Epoch']
-    mosaic = conf['mosaic']
-    optimizer = optim.Adam(model_train.parameters(), lr, weight_decay=5e-4)
-
-    if conf['cosine_lr']:
-        print('Using cosine_lr ')
-        lr_scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=5, eta_min=1e-5)
-    else:
-        lr_scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=1, gamma=0.94)
-
-    train_dataset = YoloDataset(train_lines, conf['input_shape'], num_classes, train=True, mosaic=mosaic)
-    val_dataset = YoloDataset(val_lines, conf['input_shape'], num_classes, train=False, mosaic=False)
-    gen = DataLoader(train_dataset,
-                     shuffle=True,
-                     batch_size=batch_size,
-                     num_workers=conf['num_workers'],
-                     pin_memory=True,
-                     drop_last=True,
-                     collate_fn=yolo_dataset_collate)
-
-    gen_val = DataLoader(val_dataset,
-                         shuffle=True,
-                         batch_size=batch_size,
-                         num_workers=conf['num_workers'],
-                         pin_memory=True,
-                         drop_last=True,
-                         collate_fn=yolo_dataset_collate)
-
-    epoch_step = num_train // batch_size
-    epoch_step_val = num_val // batch_size
-
-    if epoch_step == 0 or epoch_step_val == 0:
-        raise ValueError("数据集过小，无法进行训练，请扩充数据集。")
-
-    if conf['Freeze_Train']:
-        for param in model.backbone.parameters():
-            param.requires_grad = True
-
-    for epoch in range(start_epoch, end_epoch):
-        fit_one_epoch(model_train, model, yolo_loss, loss_history, optimizer, epoch,
-                      epoch_step, epoch_step_val, gen, gen_val, end_epoch, CUDA)
-        lr_scheduler.step()
+    logger.info(f'Load weight data:{cnt}/{len(pretrained_dict)}')
 
 
 def train():
     obj = conf['object'][conf['obj_type']]
-    class_names, num_classes = get_classes(obj['classes_path'])
-    anchors, num_anchors = get_anchors(obj['anchors_path'])
+    classes_path = os.path.join(local_path, obj['classes_path'])
+    anchors_path = os.path.join(local_path, obj['anchors_path'])
+    logger.info(f'Classes path:{classes_path}')
+    logger.info(f'Anchors path:{anchors_path}')
 
-    print(f'classes names:{class_names}')
-    print(f'anchors:{anchors}')
-    print(f'num workers:{conf["num_workers"]}')
-    print(f'SPP args:{conf["spp"]}')
-    print(f'Mosaic:{conf["mosaic"]}')
-    print(f'Activation:{conf["activation"]}')
-    print(f'Cosine LR:{conf["cosine_lr"]}')
-    print(f'Label smoothing:{conf["label_smoothing"]}')
+    class_names, num_classes = get_classes(classes_path)
+    anchors, num_anchors = get_anchors(anchors_path)
 
-    print(f'Freeze_Train:{conf["Freeze_Train"]}')
+    logger.info(f'Classes names:{class_names}')
+    logger.info(f'Anchors:{anchors}')
+    logger.info(f'Num Workers:{conf["num_workers"]}')
+    logger.info(f'SPP args:{conf["spp"]}')
+    logger.info(f'Mosaic:{conf["mosaic"]}')
+    logger.info(f'Activation:{conf["activation"]}')
+
+    logger.info(f'Freeze_Train:{conf["Freeze_Train"]}')
     if conf['Freeze_Train']:
-        print(f'Freeze epoch:{conf["Freeze_Epoch"]}')
-        print(f'Freeze batch size:{conf["freeze_batch_size"]}')
-        print(f'Freeze_lr epoch:{conf["freeze_lr"]}')
+        logger.info(f'Freeze epoch:{conf["Freeze_Epoch"]}')
+        logger.info(f'Freeze batch size:{conf["freeze_batch_size"]}')
+        logger.info(f'Freeze_lr:{conf["freeze_lr"]}')
 
-    print(f'Unfreeze epoch:{conf["UnFreeze_Epoch"]}')
-    print(f'Unfreeze batch size:{conf["Unfreeze_batch_size"]}')
-    print(f'Unfreeze_lr epoch:{conf["Unfreeze_lr"]}')
+    logger.info(f'Unfreeze epoch:{conf["UnFreeze_Epoch"]}')
+    logger.info(f'Unfreeze batch size:{conf["Unfreeze_batch_size"]}')
+    logger.info(f'Unfreeze_lr:{conf["Unfreeze_lr"]}')
 
     model = YOLO(conf['anchors_mask'], num_classes, conf['activation'])
     if conf['spp']:
         model = YOLOSPP(conf['anchors_mask'], num_classes, conf['spp'], conf['activation'])
 
     weights_init(model)
-    print('YOLOV3 Weights Init Done.')
+    logger.info('YOLOV3 Weights Init Done.')
 
     # 载入yolo weight
     if obj['model_path'] != '':
-        print(f'loading weights:{obj["model_path"]}')
-
-        load_weights(model, obj['model_path'])
-        # pretrained_dict = torch.load(obj['model_path'], map_location=device)
-        # model.load_state_dict(pretrained_dict, strict=False)
-        # _t = model.state_dict()
-        print('loading weights done.')
+        model_path = os.path.join(local_path, obj["model_path"])
+        logger.info(f'Loading weights:{model_path}')
+        load_weights(model, model_path)
+        logger.info('Loading weights done.')
 
     model_train = model.train()
 
@@ -197,27 +106,131 @@ def train():
                          num_classes,
                          conf['input_shape'],
                          CUDA,
-                         conf['anchors_mask'],
-                         label_smoothing=conf['label_smoothing'])
+                         conf['anchors_mask'])
 
-    loss_history = LossHistory("logs/")
+    loss_history = LossHistory("logs/", model, input_shape=conf['input_shape'])
 
     # load train val dataset txt
-    with open(conf['train_annotation_path']) as f:
+    train_file = os.path.join(local_path, conf['train_file'])
+    val_file = os.path.join(local_path, conf['val_file'])
+    logger.info(f'train file:{train_file}')
+    logger.info(f'val file:{val_file}')
+
+    with open(train_file) as f:
         train_lines = f.readlines()
-    with open(conf['val_annotation_path']) as f:
+    with open(val_file) as f:
         val_lines = f.readlines()
 
     num_train = len(train_lines)
     num_val = len(val_lines)
+    logger.info(f'num_train:{num_train}')
+    logger.info(f'num_val:{num_val}')
 
-    # 冻结训练
-    if conf['Freeze_Train']:
-        freeze_train(model, model_train, train_lines, val_lines, num_classes, num_train, num_val, yolo_loss,
-                     loss_history)
-    # 全网络训练
-    unfreeze_train(model, model_train, train_lines, val_lines, num_classes, num_train, num_val, yolo_loss,
-                   loss_history)
+    batch_size = conf['Freeze_batch_size'] if conf['Freeze_Train'] else conf['Unfreeze_batch_size']
+    logger.info(f'batch_size:{batch_size}')
+
+    nbs = 64
+    min_lr = eval(conf['Init_lr']) * 0.01
+    init_lr_fit = max(batch_size / nbs * eval(conf['Init_lr']), 1e-4)
+    min_lr_fit = max(batch_size / nbs * min_lr, 1e-6)
+    logger.info(f'init_lr_fit:{init_lr_fit}')
+    logger.info(f'min_lr_fit:{min_lr_fit}')
+
+    pg0, pg1, pg2 = [], [], []
+    for k, v in model.named_modules():
+        if hasattr(v, "bias") and isinstance(v.bias, nn.Parameter):
+            pg2.append(v.bias)
+        if isinstance(v, nn.BatchNorm2d) or "bn" in k:
+            pg0.append(v.weight)
+        elif hasattr(v, "weight") and isinstance(v.weight, nn.Parameter):
+            pg1.append(v.weight)
+
+    optimizer = {
+        'adam': optim.Adam(pg0, init_lr_fit, betas=(conf['momentum'], 0.999)),
+        'sgd': optim.SGD(pg0, init_lr_fit, momentum=conf['momentum'], nesterov=True)
+    }[conf['optimizer_type']]
+
+    optimizer.add_param_group({"params": pg1, "weight_decay": eval(conf['weight_decay'])})
+    optimizer.add_param_group({"params": pg2})
+
+    lr_scheduler_func = get_lr_scheduler(conf['lr_decay_type'], init_lr_fit, min_lr_fit, conf['UnFreeze_Epoch'])
+
+    epoch_step = num_train // batch_size
+    epoch_step_val = num_val // batch_size
+    logger.info(f'epoch step:{epoch_step}')
+    logger.info(f'epoch step val:{epoch_step_val}')
+
+    logger.info(f'Create Dataset...')
+
+    train_dataset = YoloDataset(train_lines, conf['input_shape'], num_classes, train=True, mosaic=conf['mosaic'])
+    val_dataset = YoloDataset(val_lines, conf['input_shape'], num_classes, train=False, mosaic=False)
+
+    gen = DataLoader(train_dataset,
+                     shuffle=True,
+                     batch_size=batch_size,
+                     num_workers=conf['num_workers'],
+                     pin_memory=True,
+                     drop_last=True,
+                     collate_fn=yolo_dataset_collate)
+
+    gen_val = DataLoader(val_dataset,
+                         shuffle=True,
+                         batch_size=batch_size,
+                         num_workers=conf['num_workers'],
+                         pin_memory=True,
+                         drop_last=True,
+                         collate_fn=yolo_dataset_collate)
+    UnFreeze_flag = False
+    save_period = 1
+    logger.info(f'Begin to train...')
+
+    # 从初始epoch到最后一个epoch
+    for epoch in range(conf['Init_Epoch'], conf['UnFreeze_Epoch']):
+        # ---------------------------------------#
+        #   如果模型有冻结学习部分
+        #   则解冻，并设置参数
+        # ---------------------------------------#
+        if epoch >= conf['Freeze_Epoch'] and not conf['UnFreeze_flag'] and conf['Freeze_Train']:
+            batch_size = conf['Unfreeze_batch_size']
+
+            nbs = 64
+            min_lr = eval(conf['Init_lr']) * 0.01
+            init_lr_fit = max(batch_size / nbs * eval(conf['Init_lr']), 1e-4)
+            min_lr_fit = max(batch_size / nbs * min_lr, 1e-6)
+
+            lr_scheduler_func = get_lr_scheduler(conf['lr_decay_type'], init_lr_fit, min_lr_fit, conf['UnFreeze_Epoch'])
+
+            for param in model.backbone.parameters():
+                param.requires_grad = True
+
+            epoch_step = num_train // batch_size
+            epoch_step_val = num_val // batch_size
+
+            if epoch_step == 0 or epoch_step_val == 0:
+                raise ValueError("数据集过小，无法继续进行训练，请扩充数据集。")
+
+            gen = DataLoader(train_dataset,
+                             shuffle=True,
+                             batch_size=batch_size,
+                             num_workers=conf['num_workers'],
+                             pin_memory=True,
+                             drop_last=True, collate_fn=yolo_dataset_collate)
+            gen_val = DataLoader(val_dataset,
+                                 shuffle=True,
+                                 batch_size=batch_size,
+                                 num_workers=conf['num_workers'],
+                                 pin_memory=True,
+                                 drop_last=True,
+                                 collate_fn=yolo_dataset_collate)
+
+            UnFreeze_flag = True
+
+        set_optimizer_lr(optimizer, lr_scheduler_func, epoch)
+
+        fit_one_epoch(model_train, model, yolo_loss, loss_history, optimizer, epoch, epoch_step, epoch_step_val, gen,
+                      gen_val, conf['UnFreeze_Epoch'], CUDA, save_period)
+
+    loss_history.writer.close()
 
 
 def main():

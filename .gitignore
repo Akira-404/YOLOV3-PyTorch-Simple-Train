@@ -31,3 +31,5 @@ docs/YOLOv3.pdf
 
 2007_train.txt
 2007_val.txt
+/val.txt
+/train.txt

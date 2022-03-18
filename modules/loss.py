@@ -12,8 +12,7 @@ class YOLOLoss(nn.Module):
                  num_classes: int,
                  input_shape: list,
                  cuda: bool,
-                 anchors_mask: list,
-                 label_smoothing: int = 0):
+                 anchors_mask: list, ):
         super(YOLOLoss, self).__init__()
 
         # yolov3 anchors
@@ -23,8 +22,7 @@ class YOLOLoss(nn.Module):
         self.bbox_attrs = 5 + num_classes  # (x,y,w,h,p)+num_classes
         self.input_shape = input_shape
         self.anchors_mask = anchors_mask if not anchors_mask else [[6, 7, 8], [3, 4, 5], [0, 1, 2]]
-        self.label_smoothing = label_smoothing
-
+        self.giou
         self.ignore_threshold = 0.5
         self.cuda = cuda
 
@@ -88,39 +86,32 @@ class YOLOLoss(nn.Module):
         #   表示真实框的宽高，二者均在0-1之间
         #   真实框越大，比重越小，小框的比重更大。
         box_loss_scale = 2 - box_loss_scale
+        loss = 0
+        obj_mask = y_true[..., 4] == 1
+        n = torch.sum(obj_mask)
 
-        #   计算中心偏移情况的loss，使用BCELoss效果好一些
-        loss_x = torch.sum(BCELoss(x, y_true[..., 0]) * box_loss_scale * y_true[..., 4])
-        loss_y = torch.sum(BCELoss(y, y_true[..., 1]) * box_loss_scale * y_true[..., 4])
-        #   计算宽高调整值的loss
-        loss_w = torch.sum(MSELoss(w, y_true[..., 2]) * 0.5 * box_loss_scale * y_true[..., 4])
-        loss_h = torch.sum(MSELoss(h, y_true[..., 3]) * 0.5 * box_loss_scale * y_true[..., 4])
-        loss_loc = loss_x + loss_y + loss_w + loss_h
+        if n != 0:
+            if self.giou:
 
-        # ==This part from yolov4 loss
-        # ciou = (1 - box_ciou(pred_boxes[y_true[..., 4] == 1],
-        #                      y_true[..., :4][y_true[..., 4] == 1])) * box_loss_scale[y_true[..., 4] == 1]
-        #
-        # loss_loc = torch.sum(ciou)
-        # ==This part from yolov4 loss
+                giou = box_giou(pred_boxes, y_true[..., :4])
+                loss_loc = torch.mean((1 - giou)[obj_mask])
+            else:
 
-        #   计算置信度的loss
-        loss_conf = torch.sum(BCELoss(conf, y_true[..., 4]) * y_true[..., 4]) + \
-                    torch.sum(BCELoss(conf, y_true[..., 4]) * noobj_mask)
+                loss_x = torch.mean(BCELoss(x[obj_mask], y_true[..., 0][obj_mask]) * box_loss_scale)
+                loss_y = torch.mean(BCELoss(y[obj_mask], y_true[..., 1][obj_mask]) * box_loss_scale)
 
-        # smooth_labels
-        loss_cls = torch.sum(BCELoss(pred_cls[y_true[..., 4] == 1],
-                                     smooth_labels(y_true[..., 5:][y_true[..., 4] == 1], self.label_smoothing,
-                                                   self.num_classes)))
-        # smooth_labels
+                loss_w = torch.mean(MSELoss(w[obj_mask], y_true[..., 2][obj_mask]) * box_loss_scale)
+                loss_h = torch.mean(MSELoss(h[obj_mask], y_true[..., 3][obj_mask]) * box_loss_scale)
+                loss_loc = (loss_x + loss_y + loss_h + loss_w) * 0.1
 
-        # loss_cls = torch.sum(BCELoss(pred_cls[y_true[..., 4] == 1], y_true[..., 5:][y_true[..., 4] == 1]))
+            loss_cls = torch.mean(BCELoss(pred_cls[obj_mask], y_true[..., 5:][obj_mask]))
+            loss += loss_loc * self.box_ratio + loss_cls * self.cls_ratio
 
-        loss = loss_loc + loss_conf + loss_cls
-
-        num_pos = torch.sum(y_true[..., 4])
-        num_pos = torch.max(num_pos, torch.ones_like(num_pos))
-        return loss, num_pos
+        loss_conf = torch.mean(BCELoss(conf, obj_mask.type_as(conf))[noobj_mask.bool() | obj_mask])
+        loss += loss_conf * self.balance[l] * self.obj_ratio
+        # if n != 0:
+        #     print(loss_loc * self.box_ratio, loss_cls * self.cls_ratio, loss_conf * self.balance[l] * self.obj_ratio)
+        return loss
 
     def get_target(self, l, targets, anchors, in_h, in_w):
         """

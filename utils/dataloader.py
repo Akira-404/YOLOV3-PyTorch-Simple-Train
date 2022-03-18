@@ -1,10 +1,12 @@
 from random import sample, shuffle
 
+import cv2
 import numpy as np
 from torch.utils.data.dataset import Dataset
-import cv2
 from PIL import Image
-from utils.utils import img2rgb, preprocess_input
+
+# from utils.utils import img2rgb, preprocess_input
+from utils.utils_image import image_normalization, img2rgb
 
 
 class YoloDataset(Dataset):
@@ -31,10 +33,11 @@ class YoloDataset(Dataset):
                 image, box = get_random_data_with_Mosaic(lines, self.input_shape)
             else:
                 image, box = get_random_data(self.annotation_lines[index], self.input_shape, random=self.train)
+
         else:
             image, box = get_random_data(self.annotation_lines[index], self.input_shape, random=self.train)
 
-        image = np.transpose(preprocess_input(np.array(image, dtype=np.float32)), (2, 0, 1))
+        image = np.transpose(image_normalization(np.array(image, dtype=np.float32)), (2, 0, 1))
         box = np.array(box, dtype=np.float32)
 
         if len(box) != 0:
@@ -115,20 +118,35 @@ def get_random_data(annotation_line: str,
     flip = rand() < .5
     if flip: image = image.transpose(Image.FLIP_LEFT_RIGHT)
 
+    image_data = np.array(image, np.uint8)
+
+    r = np.random.uniform(-1, 1, 3) * [hue, sat, val] + 1
+    #   将图像转到HSV上
+    hue, sat, val = cv2.split(cv2.cvtColor(image_data, cv2.COLOR_RGB2HSV))
+    dtype = image_data.dtype
+    #   应用变换
+    x = np.arange(0, 256, dtype=r.dtype)
+    lut_hue = ((x * r[0]) % 180).astype(dtype)
+    lut_sat = np.clip(x * r[1], 0, 255).astype(dtype)
+    lut_val = np.clip(x * r[2], 0, 255).astype(dtype)
+
+    image_data = cv2.merge((cv2.LUT(hue, lut_hue), cv2.LUT(sat, lut_sat), cv2.LUT(val, lut_val)))
+    image_data = cv2.cvtColor(image_data, cv2.COLOR_HSV2RGB)
+
     #   色域扭曲
-    hue = rand(-hue, hue)
-    sat = rand(1, sat) if rand() < .5 else 1 / rand(1, sat)
-    val = rand(1, val) if rand() < .5 else 1 / rand(1, val)
-    x = cv2.cvtColor(np.array(image, np.float32) / 255, cv2.COLOR_RGB2HSV)
-    x[..., 0] += hue * 360
-    x[..., 0][x[..., 0] > 1] -= 1
-    x[..., 0][x[..., 0] < 0] += 1
-    x[..., 1] *= sat
-    x[..., 2] *= val
-    x[x[:, :, 0] > 360, 0] = 360
-    x[:, :, 1:][x[:, :, 1:] > 1] = 1
-    x[x < 0] = 0
-    image_data = cv2.cvtColor(x, cv2.COLOR_HSV2RGB) * 255
+    # hue = rand(-hue, hue)
+    # sat = rand(1, sat) if rand() < .5 else 1 / rand(1, sat)
+    # val = rand(1, val) if rand() < .5 else 1 / rand(1, val)
+    # x = cv2.cvtColor(np.array(image, np.float32) / 255, cv2.COLOR_RGB2HSV)
+    # x[..., 0] += hue * 360
+    # x[..., 0][x[..., 0] > 1] -= 1
+    # x[..., 0][x[..., 0] < 0] += 1
+    # x[..., 1] *= sat
+    # x[..., 2] *= val
+    # x[x[:, :, 0] > 360, 0] = 360
+    # x[:, :, 1:][x[:, :, 1:] > 1] = 1
+    # x[x < 0] = 0
+    # image_data = cv2.cvtColor(x, cv2.COLOR_HSV2RGB) * 255
 
     #   对真实框进行调整
     if len(box) > 0:

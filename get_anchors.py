@@ -9,6 +9,7 @@ from utils.utils import load_yaml_conf
 
 from kmeans_anchors.read_voc import VOCDataSet
 from kmeans_anchors.yolo_kmeans import k_means, wh_iou
+from loguru import logger
 
 # parse = argparse.ArgumentParser('k-means get the anchors')
 # parse.add_argument('-r', '--root', type=str, default='/home/cv/AI_Data/hat_worker_voc',
@@ -20,6 +21,7 @@ from kmeans_anchors.yolo_kmeans import k_means, wh_iou
 # args = parse.parse_args()
 
 conf = load_yaml_conf('train.yaml')
+logger.info(f'object type:{conf["obj_type"]}')
 obj = conf['object'][conf['obj_type']]
 
 
@@ -35,7 +37,8 @@ def anchor_fitness(k: np.ndarray, wh: np.ndarray, thr: float):  # mutation fitne
 
 def main(img_size: int = 512, n: int = 9, thr: float = 0.25, gen: int = 1000):
     # 从数据集中读取所有图片的wh以及对应bboxes的wh
-    dataset = VOCDataSet(voc_root=obj['dataset_root'], year=conf['year'], txt_name="train.txt")
+    logger.info(f'dataset root:{obj["dataset_root"]}')
+    dataset = VOCDataSet(voc_root=obj['dataset_root'], file_name="train.txt")
     im_wh, boxes_wh = dataset.get_info()
 
     # 最大边缩放到img_size
@@ -47,22 +50,22 @@ def main(img_size: int = 512, n: int = 9, thr: float = 0.25, gen: int = 1000):
     # Filter 过滤掉小目标
     i = (wh0 < 3.0).any(1).sum()
     if i:
-        print(f'WARNING: Extremely small objects found. {i} of {len(wh0)} labels are < 3 pixels in size.')
+        logger.info(f'WARNING: Extremely small objects found. {i} of {len(wh0)} labels are < 3 pixels in size.')
     wh = wh0[(wh0 >= 2.0).any(1)]  # 只保留wh>=2个像素的box
 
     # Kmeans calculation
-    # print(f'Running kmeans for {n} anchors on {len(wh)} points...')
+    # logger.info(f'Running kmeans for {n} anchors on {len(wh)} points...')
     # s = wh.std(0)  # sigmas for whitening
     # k, dist = kmeans(wh / s, n, iter=30)  # points, mean distance
-    # assert len(k) == n, print(f'ERROR: scipy.cluster.vq.kmeans requested {n} points but returned only {len(k)}')
+    # assert len(k) == n, logger.info(f'ERROR: scipy.cluster.vq.kmeans requested {n} points but returned only {len(k)}')
     # k *= s
     k = k_means(wh, n)
 
     # 按面积排序
     k = k[np.argsort(k.prod(1))]  # sort small to large
     f, bpr = anchor_fitness(k, wh, thr)
-    print("kmeans: " + " ".join([f"[{int(i[0])}, {int(i[1])}]" for i in k]))
-    print(f"fitness: {f:.5f}, best possible recall: {bpr:.5f}")
+    logger.info("kmeans: " + " ".join([f"[{int(i[0])}, {int(i[1])}]" for i in k]))
+    logger.info(f"fitness: {f:.5f}, best possible recall: {bpr:.5f}")
 
     # Evolve
     # 遗传算法(在kmeans的结果基础上变异mutation)
@@ -81,10 +84,10 @@ def main(img_size: int = 512, n: int = 9, thr: float = 0.25, gen: int = 1000):
 
     # 按面积排序
     k = k[np.argsort(k.prod(1))]  # sort small to large
-    print("genetic: " + " ".join([f"[{int(i[0])}, {int(i[1])}]" for i in k]))
-    print(f"fitness: {f:.5f}, best possible recall: {bpr:.5f}")
+    logger.info("genetic: " + " ".join([f"[{int(i[0])}, {int(i[1])}]" for i in k]))
+    logger.info(f"fitness: {f:.5f}, best possible recall: {bpr:.5f}")
     k_f = [int(i) for i in k.flatten()]
-    print(k_f)
+    logger.info(k_f)
     anchors = {'anchors': k_f}
     with open(obj['anchors_path'], 'w', encoding='UTF-8') as f:
         yaml.dump(anchors, f)
