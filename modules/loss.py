@@ -22,9 +22,14 @@ class YOLOLoss(nn.Module):
         self.bbox_attrs = 5 + num_classes  # (x,y,w,h,p)+num_classes
         self.input_shape = input_shape
         self.anchors_mask = anchors_mask if not anchors_mask else [[6, 7, 8], [3, 4, 5], [0, 1, 2]]
-        self.giou
         self.ignore_threshold = 0.5
         self.cuda = cuda
+        self.giou = True
+        self.balance        = [0.4, 1.0, 4]
+        self.box_ratio      = 0.05
+        self.obj_ratio      = 5 * (input_shape[0] * input_shape[1]) / (416 ** 2)
+        self.cls_ratio      = 1 * (num_classes / 80)
+        
 
     def forward(self, l, input, targets=None):
         # l:当前第几个有效特征层

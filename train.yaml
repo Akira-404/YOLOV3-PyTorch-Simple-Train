@@ -22,7 +22,7 @@ object:
     anchors_path: 'data/head_anchors.yaml' #数据集anchors文件head
   widerperson:
     dataset_root: '/home/ubuntu/data/VOCdevkit/VOC2007/WiderPerson'
-    model_path: weights/person.pth'
+    model_path: weights/person.pth
     classes_path: 'data/widerperson_classes.yaml' #数据集类别文件
     anchors_path: 'data/widerperson_anchors.yaml' #数据集聚类anchors
 
