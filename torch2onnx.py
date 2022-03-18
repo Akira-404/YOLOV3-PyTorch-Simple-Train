@@ -6,7 +6,6 @@ import tensorrt as trt
 from utils.utils_prediect import Predict
 
 
-
 def export_onnx(model,
                 im,
                 file: str,
@@ -62,11 +61,11 @@ def export_onnx(model,
 
 
 if __name__ == '__main__':
-    predict = Predict('../predict.yaml')
+    predict = Predict('./predict.yaml', obj_type='person')
     torch_model = predict.get_model_with_weights()
 
     # model params:
-    onnx_path = './head.onnx'
+    onnx_path = './person.onnx'
     batch_size = 1
     input_shape = (3, 416, 416)
 

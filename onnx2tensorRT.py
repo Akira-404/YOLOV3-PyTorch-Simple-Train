@@ -55,6 +55,6 @@ def export_engine(onnx, file, workspace: int = 4, verbose=False):
 
 
 if __name__ == '__main__':
-    onnx = Path('')
-    engine = Path('')
+    onnx = Path('./person.onnx')
+    engine = Path('person.trt')
     export_engine(onnx, engine, verbose=True)
