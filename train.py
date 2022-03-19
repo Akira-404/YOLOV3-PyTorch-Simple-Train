@@ -74,8 +74,8 @@ def train():
     logger.info(f'Freeze_Train:{conf["Freeze_Train"]}')
     if conf['Freeze_Train']:
         logger.info(f'Freeze epoch:{conf["Freeze_Epoch"]}')
-        logger.info(f'Freeze batch size:{conf["freeze_batch_size"]}')
-        logger.info(f'Freeze_lr:{conf["freeze_lr"]}')
+        logger.info(f'Freeze batch size:{conf["Freeze_batch_size"]}')
+        logger.info(f'Freeze_lr:{conf["Freeze_lr"]}')
 
     logger.info(f'Unfreeze epoch:{conf["UnFreeze_Epoch"]}')
     logger.info(f'Unfreeze batch size:{conf["Unfreeze_batch_size"]}')
@@ -186,11 +186,9 @@ def train():
 
     # 从初始epoch到最后一个epoch
     for epoch in range(conf['Init_Epoch'], conf['UnFreeze_Epoch']):
-        # ---------------------------------------#
         #   如果模型有冻结学习部分
         #   则解冻，并设置参数
-        # ---------------------------------------#
-        if epoch >= conf['Freeze_Epoch'] and not conf['UnFreeze_flag'] and conf['Freeze_Train']:
+        if epoch >= conf['Freeze_Epoch'] and not UnFreeze_flag and conf['Freeze_Train']:
             batch_size = conf['Unfreeze_batch_size']
 
             nbs = 64

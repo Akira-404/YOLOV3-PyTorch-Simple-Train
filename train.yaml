@@ -32,10 +32,10 @@ obj_type: widerperson
 cuda: True
 num_workers: 8
 
-#spp: [ ] #不使用SPP 则设为[]
-spp: [ 5,9,13 ]
-activation: mish #leakyrelu or mish
-#activation: leakyrelu #leakyrelu or mish
+spp: [ ] #不使用SPP 则设为[]
+#spp: [ 5,9,13 ]
+#activation: mish #leakyrelu or mish
+activation: leakyrelu #leakyrelu or mish
 mosaic: False
 label_smoothing: 0 #if label_smoothing=0:不适用平滑标签
 
@@ -48,7 +48,7 @@ anchors_mask: [ [ 6, 7, 8 ], [ 3, 4, 5 ], [ 0, 1, 2 ] ]
 train_percent: 0.9
 trainval_percent: 0.9
 
-Freeze_Train: False
+Freeze_Train: True
 
 #冻结训练参数设置
 Freeze_Epoch: 50
