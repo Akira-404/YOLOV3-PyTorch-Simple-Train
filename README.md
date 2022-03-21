@@ -1,6 +1,7 @@
-# YOLO-V3-Simple-Train：基于PyTorch框架的目标检测模型
+# [TensorRT] [ONNX] YOLOv3-Simple-Train
+# 基于PyTorch框架的快捷YOLOV3模型
 
-更新时间：2021-11-10
+更新时间：2022-03-21
 
 重构了YOLOV3模型，只需要修改少量部分即可完成训练推理，使用迁移学习，更好的让模型收敛，配置化操作，开箱即用。代码中添加了大量注释方便大家进行阅读修改。  
 同时提供了由 Torch到ONNX ONNX到TensorRT模型转换的python文件。 欢迎给小星星。
