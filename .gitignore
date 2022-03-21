@@ -10,7 +10,6 @@ logs/
 *.jpg
 *.jpeg
 *.png
-*.txt
 *.pt
 *.pth
 *.pkl
@@ -29,3 +28,8 @@ experiment/area_detection.yaml
 docs/YOLOv3.pdf
 /test/.pytest_cache/
 /log/
+
+2007_train.txt
+2007_val.txt
+/val.txt
+/train.txt

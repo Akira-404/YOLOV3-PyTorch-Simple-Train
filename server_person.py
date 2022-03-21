@@ -105,7 +105,7 @@ def get_person():
     """
     params = request.json if request.method == "POST" else request.args
     img = base64_to_pil(params['img'])
-    data = predict.detect_image(img, draw=False)
+    data = predict.detect_image(img)
     return jsonify_(200, 'success', data)
 
 

@@ -1,4 +1,5 @@
 import os
+from loguru import logger
 from tqdm import tqdm
 from lxml import etree
 
@@ -6,18 +7,17 @@ from lxml import etree
 # dataset path:xxx/xxxx/VOCdevkit/VOC2007(2012)
 # voc_root path:xxx/xxxx
 class VOCDataSet:
-    def __init__(self, voc_root: str, year: str = "2012", txt_name: str = "train.txt"):
-        assert year in ["2007", "2012"], "year must be in ['2007', '2012']"
-        self.root = os.path.join(voc_root, "VOCdevkit", f"VOC{year}")
+    def __init__(self, voc_root: str, file_name: str = "train.txt"):
+        self.root = voc_root
         self.annotations_root = os.path.join(self.root, "Annotations")
         assert os.path.exists(self.root) is True, f'voc root:{self.root} is error'
         assert os.path.exists(self.annotations_root) is True, f'annotations root:{self.annotations_root} is error'
-        print(f'root:{self.root}')
-        print(f'annotations root:{self.annotations_root}')
+        logger.info(f'root:{self.root}')
+        logger.info(f'annotations root:{self.annotations_root}')
 
         # read train.txt or val.txt file
-        txt_path = os.path.join(self.root, "ImageSets", "Main", txt_name)
-        assert os.path.exists(txt_path), f"not found {txt_name} file."
+        txt_path = os.path.join(self.root, "ImageSets", "Main", file_name)
+        assert os.path.exists(txt_path), f"not found {file_name} file."
 
         with open(txt_path) as read:
             self.xml_list = [os.path.join(self.annotations_root, line.strip() + ".xml")
@@ -87,8 +87,7 @@ class VOCDataSet:
 
 
 if __name__ == '__main__':
-    voc_root = '/home/cv/AI_Data/hat_worker_voc'
-    year = '2007'
-    txt_name = 'train.txt'
-    dataset = VOCDataSet(voc_root, year, txt_name)
+    voc_root = ''
+    file_name = 'train.txt'
+    dataset = VOCDataSet(voc_root, file_name)
     im_wh_list, boxes_wh_list = dataset.get_info()

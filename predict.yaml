@@ -21,10 +21,15 @@ object:
     model_path: 'weights/reflective.pth' #预加载yolov3权重文件
     classes_path: 'data/reflective_classes.yaml' #数据集类别文件
     anchors_path: 'data/reflective_anchors.yaml' #数据集聚类anchors
-
+  widerperson:
+    dataset_root: '/home/ubuntu/data/VOCdevkit/VOC2007/WiderPerson'
+    model_path: weights/widerperson.pth
+    classes_path: 'data/widerperson_classes.yaml' #数据集类别文件
+    anchors_path: 'data/widerperson_anchors.yaml' #数据集聚类anchors
 
 cuda: True
-obj_type: person
+obj_type: widerperson
+#obj_type: person
 
 spp: [ ] #不使用SPP 则设为[]
 #spp: [ 5,9,13 ]

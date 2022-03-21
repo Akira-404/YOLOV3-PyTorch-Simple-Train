@@ -31,7 +31,7 @@ print('Load model done.')
 
 print('Get predict result.')
 for image_id in tqdm(image_ids):
-    image_path = os.path.join(_type['dataset_root'], "VOCdevkit/VOC2007/JPEGImages/" + image_id + ".jpg")
+    image_path = os.path.join(_type['dataset_root'], "JPEGImages/" + image_id + ".jpg")
     image = Image.open(image_path)
     predict.get_map_txt(image_id, image, class_names, _map_out_path)
 print('Get predict result done.')
@@ -40,7 +40,7 @@ print("Get ground truth result.")
 for image_id in tqdm(image_ids):
     with open(os.path.join(_map_out_path, "ground-truth/" + image_id + ".txt"), "w") as new_f:
         root = ET.parse(
-            os.path.join(_type['dataset_root'], "VOCdevkit/VOC2007/Annotations/" + image_id + ".xml")).getroot()
+            os.path.join(_type['dataset_root'], "Annotations/" + image_id + ".xml")).getroot()
         for obj in root.findall('object'):
             difficult_flag = False
             if obj.find('difficult') is not None:
