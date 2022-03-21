@@ -66,7 +66,7 @@ def _get_result(code: int, message: str, data):
 def get_head():
     params = request.json if request.method == "POST" else request.args
     img = base64_to_pil(params['img'])
-    data = predict.detect_image(img, draw=False)
+    data = predict.detect_image(img)
     return _get_result(200, 'success', data)
 
 

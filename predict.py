@@ -20,7 +20,20 @@ def main(args):
             if os.path.exists(args.image) is True:
                 image = Image.open(args.image)
                 data = predict.detect_image(image)
-                image.show()
+                print(f'data:{data}')
+
+                # PIL:Image->OpenCV
+                frame = cv2.cvtColor(np.asarray(image), cv2.COLOR_RGB2BGR)
+
+                for item in data:
+                    x1, y1 = item['left'], item['top']
+                    x2, y2 = item['left'] + item['width'], item['top'] + item['height']
+                    cv2.rectangle(frame, (x1 - 10, y1 - 10), (x2 + 10, y2 + 10), (255, 0, 0), 1)
+                    cv2.putText(frame, str(item['label']), (x1, y1), cv2.FONT_HERSHEY_PLAIN, 1, (255, 0, 0))
+                    cv2.putText(frame, str(round(item['score'], 3)), (x1, y1 + 15), cv2.FONT_HERSHEY_PLAIN, 1,
+                                (255, 0, 0))
+                cv2.imshow("video", frame)
+                cv2.waitKey(0)
             else:
                 print(f'{args.image} is error')
 
@@ -37,27 +50,30 @@ def main(args):
         out = cv2.VideoWriter(_video_save_path, fourcc, _video_save_fps, size)
 
         while True:
-            t1 = time.time()
             ref, frame = capture.read()
             frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-            # 转变成Image
-            frame = Image.fromarray(np.uint8(frame))
-            data = predict.detect_image(frame)
+
+            # OpenCV->PIL:Image
+            image = Image.fromarray(np.uint8(frame))
+            data = predict.detect_image(image)
             print(f'data:{data}')
-            frame = cv2.cvtColor(np.asarray(frame), cv2.COLOR_RGB2BGR)
 
-            fps = (_fps + (1. / (time.time() - t1))) / 2
-            print("fps= %.2f" % fps)
-            frame = cv2.putText(frame, "fps= %.2f" % _fps, (0, 40), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
-
+            for item in data:
+                x1, y1 = item['left'], item['top']
+                x2, y2 = item['left'] + item['width'], item['top'] + item['height']
+                cv2.rectangle(frame, (x1 - 10, y1 - 10), (x2 + 10, y2 + 10), (255, 0, 0), 1)
+                cv2.putText(frame, str(item['label']), (x1, y1), cv2.FONT_HERSHEY_PLAIN, 1, (255, 0, 0))
+                cv2.putText(frame, str(round(item['score'], 3)), (x1, y1 + 15), cv2.FONT_HERSHEY_PLAIN, 1, (255, 0, 0))
             cv2.imshow("video", frame)
-            c = cv2.waitKey(1) & 0xff
+
+            c = cv2.waitKey(25) & 0xff
             if _video_save_path != "":
                 out.write(frame)
 
             if c == 27:
                 capture.release()
                 break
+
         capture.release()
         out.release()
         cv2.destroyAllWindows()

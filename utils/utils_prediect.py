@@ -78,7 +78,7 @@ class Predict:
             self.net = self.net.cuda()
         self.prepare_flag = True
 
-    def detect_image(self, image, draw: bool = True) -> list:
+    def detect_image(self, image) -> list:
 
         if not self.prepare_flag:
             print('This net is not load weights,please use Predict.load_weights()')
@@ -112,13 +112,18 @@ class Predict:
             if results[0] is None:
                 return []
 
+            # top_label=[class_idx1,class_idx2,...]
             top_label = np.array(results[0][:, 6], dtype='int32')
+
+            # top_conf=[conf1,conf2,...]
             top_conf = results[0][:, 4] * results[0][:, 5]
+
+            # top_boxes=[[x1,y1,x2,y2],...]
             top_boxes = results[0][:, :4]
 
-        if draw:
-            draw_box(self.num_classes, image, top_label, top_conf, top_boxes, self.class_names,
-                     self.conf['input_shape'])
+        # if draw:
+        #     draw_box(self.num_classes, image, top_label, top_conf, top_boxes, self.class_names,
+        #              self.conf['input_shape'])
 
         # package data
         data = []
