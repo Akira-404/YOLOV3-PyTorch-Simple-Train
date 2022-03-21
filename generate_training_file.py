@@ -99,7 +99,7 @@ def generate_yolo_train_val():
             list_file.write('\n')
 
         list_file.close()
-    print("Generate 2007_train.txt and 2007_val.txt for train done.")
+    print("Generate train.txt and val.txt for train done.")
 
 
 def maia():
