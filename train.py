@@ -21,6 +21,7 @@ conf = load_yaml_conf('train.yaml')
 CUDA = True if (torch.cuda.is_available() and conf["cuda"]) else False
 device = torch.device('cuda' if CUDA else 'cpu')
 logger.info(f'CUDA:{CUDA}')
+logger.info(f'Device:{device}')
 
 local_path = os.path.dirname(__file__)
 
@@ -74,11 +75,11 @@ def train():
     if conf['Freeze_Train']:
         logger.info(f'Freeze epoch:{conf["Freeze_Epoch"]}')
         logger.info(f'Freeze batch size:{conf["Freeze_batch_size"]}')
-        logger.info(f'Freeze_lr:{conf["Freeze_lr"]}')
+        logger.info(f'Freeze_lr:{eval(conf["Freeze_lr"])}')
 
     logger.info(f'Unfreeze epoch:{conf["UnFreeze_Epoch"]}')
     logger.info(f'Unfreeze batch size:{conf["Unfreeze_batch_size"]}')
-    logger.info(f'Unfreeze_lr:{conf["Unfreeze_lr"]}')
+    logger.info(f'Unfreeze_lr:{eval(conf["Unfreeze_lr"])}')
 
     model = YOLO(conf['anchors_mask'], num_classes, conf['activation'])
     if conf['spp']:
@@ -93,7 +94,6 @@ def train():
         logger.info(f'Loading weights:{model_path}')
         load_weights(model, model_path)
         logger.info('Loading weights done.')
-
     model_train = model.train()
 
     if CUDA:

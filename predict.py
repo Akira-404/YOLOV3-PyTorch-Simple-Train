@@ -90,24 +90,35 @@ def main(args):
                 image_path = os.path.join(args.dir, image_name)
                 image = Image.open(image_path)
                 data = predict.detect_image(image)
-                print(data)
-                image.show()
-                # r_image.save(os.path.join(args.save_path, image_name))
+                frame = cv2.cvtColor(np.asarray(image), cv2.COLOR_RGB2BGR)
 
+                for item in data:
+                    x1, y1 = item['left'], item['top']
+                    x2, y2 = item['left'] + item['width'], item['top'] + item['height']
+                    cv2.rectangle(frame, (x1 - 10, y1 - 10), (x2 + 10, y2 + 10), (255, 0, 0), 1)
+                    cv2.putText(frame, str(item['label']), (x1, y1), cv2.FONT_HERSHEY_PLAIN, 1, (255, 0, 0))
+                    cv2.putText(frame, str(round(item['score'], 3)), (x1, y1 + 15), cv2.FONT_HERSHEY_PLAIN, 1,
+                                (255, 0, 0))
+
+                print(data)
+                cv2.imshow("image", frame)
+                cv2.waitKey(0)
+                out_image_path = os.path.join("out", image_name)
+                # cv2.imwrite(f'{out_image_path}.jpg', frame)
     else:
         raise TypeError('args.mode must be:image,video,dir')
 
 
 if __name__ == '__main__':
     parse = argparse.ArgumentParser('predict config')
-    parse.add_argument('-m', '--mode', type=str, choices=['image', 'video', 'dir'], default='video',
+    parse.add_argument('-m', '--mode', type=str, choices=['image', 'video', 'dir'], default='dir',
                        help='predict image or video or dir')
     parse.add_argument('-i', '--image', type=str, default='./person.jpeg',
                        help='image path')
     parse.add_argument('-v', '--video', type=str, default='/home/ubuntu/github/opencv/samples/data/vtest.avi',
                        help='video path')
     parse.add_argument('-d', '--dir', type=str,
-                       default='',
+                       default='/home/ubuntu/data/VOCdevkit/VOC2007/WiderPerson/test_images',
                        help='dir path')
     parse.add_argument('-s', '--save_path', type=str, default='')
     args = parse.parse_args()
