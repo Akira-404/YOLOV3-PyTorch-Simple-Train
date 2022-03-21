@@ -115,6 +115,24 @@ def run(VOCRoot: str):
             shutil.copy(img_path, os.path.join(VOCRoot, 'JPEGImages', filename))
 
 
+def move_test_image(root: str):
+    ImageSets_path = os.path.join(root, 'ImageSets')
+    JPEGImages_path = os.path.join(root, 'JPEGImages')
+    test_txt_path = os.path.join(root, 'test.txt')
+    test_image_path = os.path.join(root, 'test_images')
+
+    if not os.path.exists(test_image_path):
+        os.makedirs(test_image_path)
+
+    with open(test_txt_path, 'r') as f:
+        imgIds = [x for x in f.read().splitlines()]
+        for imgId in tqdm(imgIds):
+            filename = imgId + '.jpg'
+            img_path = os.path.join(root, 'images', filename)
+            shutil.copy(img_path, os.path.join(test_image_path, filename))
+
+
 if __name__ == '__main__':
     VOCRoot = '/home/ubuntu/data/VOCdevkit/VOC2007/WiderPerson'
-    run(VOCRoot)
+    # run(VOCRoot)
+    move_test_image(VOCRoot)
