@@ -4,7 +4,7 @@ import torch.cuda
 import math
 import numpy as np
 from utils.utils_loss import *
-
+from loguru import logger
 
 class YOLOLoss(nn.Module):
     def __init__(self,
@@ -115,7 +115,7 @@ class YOLOLoss(nn.Module):
         loss_conf = torch.mean(BCELoss(conf, obj_mask.type_as(conf))[noobj_mask.bool() | obj_mask])
         loss += loss_conf * self.balance[l] * self.obj_ratio
         # if n != 0:
-        #     print(loss_loc * self.box_ratio, loss_cls * self.cls_ratio, loss_conf * self.balance[l] * self.obj_ratio)
+        #     logger.info(loss_loc * self.box_ratio, loss_cls * self.cls_ratio, loss_conf * self.balance[l] * self.obj_ratio)
         return loss
 
     def get_target(self, l, targets, anchors, in_h, in_w):
@@ -273,5 +273,5 @@ def weights_init(net, init_type: str = 'normal', init_gain: float = 0.02):
             torch.nn.init.normal_(m.weight.data, 1.0, 0.02)
             torch.nn.init.constant_(m.bias.data, 0.0)
 
-    print('initialize network with %s type' % init_type)
+    logger.info('initialize network with %s type' % init_type)
     net.apply(init_func)

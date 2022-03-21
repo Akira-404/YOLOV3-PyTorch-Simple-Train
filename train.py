@@ -30,7 +30,6 @@ def load_weights(model, model_path: str, ignore_track: bool = False):
     model_dict = model.state_dict()
     _model_dict = {}
     pretrained_dict = torch.load(model_path, map_location=device)
-
     for k, v in model_dict.items():
 
         # pytorch 0.4.0后BN layer新增 num_batches_tracked 参数
@@ -190,7 +189,7 @@ def train():
         #   则解冻，并设置参数
         if epoch >= conf['Freeze_Epoch'] and not UnFreeze_flag and conf['Freeze_Train']:
             batch_size = conf['Unfreeze_batch_size']
-
+            logger.info(f'Unfreeze train...')
             nbs = 64
             min_lr = eval(conf['Init_lr']) * 0.01
             init_lr_fit = max(batch_size / nbs * eval(conf['Init_lr']), 1e-4)

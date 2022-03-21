@@ -1,7 +1,7 @@
 from typing import Union, Optional, List
 import torch
 import torch.nn as nn
-# from torchvision.ops import nms
+from torchvision.ops import nms
 import numpy as np
 from nms.cpu_nms import nms as cpu_nms
 
@@ -176,7 +176,7 @@ class DecodeBox:
 
                 #   使用官方自带的非极大抑制会速度更快一些
 
-                keep = cpu_nms(detections_class[:, :4],
+                keep = nms(detections_class[:, :4],
                                detections_class[:, 4] * detections_class[:, 5],
                                nms_thres)
 

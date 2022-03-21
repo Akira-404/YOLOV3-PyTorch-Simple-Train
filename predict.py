@@ -39,13 +39,12 @@ def main(args):
         while True:
             t1 = time.time()
             ref, frame = capture.read()
-            # 格式转变，BGRtoRGB
             frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
             # 转变成Image
             frame = Image.fromarray(np.uint8(frame))
-            frame, _ = np.array(predict.detect_image(frame))
-            # RGBtoBGR满足opencv显示格式
-            frame = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
+            data = predict.detect_image(frame)
+            print(f'data:{data}')
+            frame = cv2.cvtColor(np.asarray(frame), cv2.COLOR_RGB2BGR)
 
             fps = (_fps + (1. / (time.time() - t1))) / 2
             print("fps= %.2f" % fps)
@@ -74,26 +73,26 @@ def main(args):
             if image_name.lower().endswith('jpg'):
                 image_path = os.path.join(args.dir, image_name)
                 image = Image.open(image_path)
-                r_image, _ = predict.detect_image(image)
+                data = predict.detect_image(image)
+                print(data)
+                image.show()
+                # r_image.save(os.path.join(args.save_path, image_name))
 
-                r_image.save(os.path.join(args.save_path, image_name))
-    elif args.mode == 'test':
-        ...
     else:
         raise TypeError('args.mode must be:image,video,dir')
 
 
 if __name__ == '__main__':
     parse = argparse.ArgumentParser('predict config')
-    parse.add_argument('-m', '--mode', type=str, choices=['image', 'video', 'dir'], default='image',
+    parse.add_argument('-m', '--mode', type=str, choices=['image', 'video', 'dir'], default='video',
                        help='predict image or video or dir')
     parse.add_argument('-i', '--image', type=str, default='./person.jpeg',
                        help='image path')
-    parse.add_argument('-v', '--video', type=str, default='',
+    parse.add_argument('-v', '--video', type=str, default='/home/ubuntu/github/opencv/samples/data/vtest.avi',
                        help='video path')
     parse.add_argument('-d', '--dir', type=str,
                        default='',
                        help='dir path')
-    parse.add_argument('-s', '--save_path', type=str, default='./out/person_spp')
+    parse.add_argument('-s', '--save_path', type=str, default='')
     args = parse.parse_args()
     main(args)
