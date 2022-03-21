@@ -26,7 +26,6 @@ object:
     classes_path: 'data/widerperson_classes.yaml' #数据集类别文件
     anchors_path: 'data/widerperson_anchors.yaml' #数据集聚类anchors
 
-year: '2007'
 obj_type: widerperson
 
 cuda: True
