@@ -6,7 +6,7 @@ object:
     anchors_path: 'data/reflective_anchors.yaml' #数据集聚类anchors
   person:
     dataset_root: '/home/cv/AI_Data/person_yolo'
-    #    model_path: 'weights/person.pth' #预加载yolov3权重文件
+    #    model_path: 'weights/yolov3.pth' #预加载yolov3权重文件
     model_path: '' #预加载yolov3权重文件
     classes_path: 'data/person_classes.yaml' #数据集类别文件
     anchors_path: 'data/person_anchors.yaml' #数据集聚类anchors
@@ -22,7 +22,7 @@ object:
     anchors_path: 'data/head_anchors.yaml' #数据集anchors文件head
   widerperson:
     dataset_root: '/home/ubuntu/data/VOCdevkit/VOC2007/WiderPerson'
-    model_path: weights/person.pth
+    model_path: weights/yolov3.pth
     classes_path: 'data/widerperson_classes.yaml' #数据集类别文件
     anchors_path: 'data/widerperson_anchors.yaml' #数据集聚类anchors
 

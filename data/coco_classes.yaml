@@ -2,7 +2,7 @@
 #number of classes
 nc: 80
 names:
- - person,
+ - yolov3,
  - bicycle,
  - car,
  - motorbike,

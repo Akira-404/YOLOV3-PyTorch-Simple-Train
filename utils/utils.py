@@ -1,13 +1,13 @@
 import os
-import numpy as np
-from PIL import Image
 import yaml
-import torch
-from tqdm import tqdm
-import xml.etree.ElementTree as ET
-from PIL import ImageFile
 import math
+
+import torch
+import numpy as np
+from tqdm import tqdm
+from PIL import ImageFile
 from functools import partial
+import xml.etree.ElementTree as ET
 
 ImageFile.LOAD_TRUNCATED_IMAGES = True
 
@@ -94,9 +94,9 @@ def get_anchors(anchors_path: str):
     return anchors, len(anchors)
 
 
-def get_lr(optimizer):
-    for param_group in optimizer.param_groups:
-        return param_group['lr']
+# def get_lr(optimizer):
+#     for param_group in optimizer.param_groups:
+#         return param_group['lr']
 
 
 def get_lr_scheduler(lr_decay_type,

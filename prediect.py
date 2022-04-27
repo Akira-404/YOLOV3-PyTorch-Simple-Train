@@ -1,4 +1,3 @@
-# import colorsys
 import os
 import time
 
@@ -27,7 +26,7 @@ class Predict:
         if obj_type is not None:
             self.conf['obj_type'] = obj_type
 
-        # get the object,like person ,hat...
+        # get the object,like yolov3 ,hat...
         self.type = self.conf['object'][self.conf['obj_type']]
 
         self.CUDA = True if torch.cuda.is_available() and self.conf['cuda'] else False

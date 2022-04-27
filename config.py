@@ -9,7 +9,7 @@ _C.default.cuda = True
 _C.default.num_worker = 8  # train
 _C.default.batch_size = 1  # prediction
 _C.default.input_shape = [416, 416]
-_C.default.type = 'person'
+_C.default.type = 'yolov3'
 _C.default.ssp = []  # spp: [ 6,9,13 ]
 _C.default.mosaic = False
 _C.default.cosine_lr = True
@@ -79,7 +79,7 @@ _C.url.area = _C.url.default + ":" + str(_C.http.person_port) + "/yolov3_poly"
 
 # loguru config
 _C.log = CN()
-_C.log.file_person = './logs/person/person_{time}.log'
+_C.log.file_person = './logs/yolov3/person_{time}.log'
 _C.log.file_helmet = './logs/helmet/helmet_{time}.log'
 _C.log.file_head = './logs/head/head_{time}.log'
 _C.log.level = 'WARNING'

@@ -139,12 +139,12 @@ object:
     anchors_path: 'data/reflective_anchors.yaml' #数据集聚类anchors
   person:
     dataset_root: '/home/cv/AI_Data/person_yolo'
-    model_path: 'weights/person.pth' #预加载yolov3权重文件
+    model_path: 'weights/yolov3.pth' #预加载yolov3权重文件
     classes_path: 'data/person_classes.yaml' #数据集类别文件
     anchors_path: 'data/person_anchors.yaml' #数据集聚类anchors
   widerperson:
     dataset_root: '/home/cv/AI_Data/widerperson'
-    model_path: 'weights/person.pth' #预加载yolov3权重文件
+    model_path: 'weights/yolov3.pth' #预加载yolov3权重文件
     classes_path: 'data/widerperson_classes.yaml' #数据集类别文件
     anchors_path: 'data/widerperson_anchors.yaml' #数据集聚类anchors
   helmet:
@@ -229,7 +229,7 @@ names:
   - dog,
   - horse,
   - motorbike,
-  - person,
+  - yolov3,
   - pottedplant,
   - sheep,
   - sofa,
@@ -306,7 +306,7 @@ train.py
 object:
   person:
     dataset_root: '/home/cv/AI_Data/HardHatWorker_voc'
-    model_path: 'weights/person.pth' #模型权重路径
+    model_path: 'weights/yolov3.pth' #模型权重路径
     classes_path: 'data/person_classes.yaml' #数据类别文件
     anchors_path: 'data/person_anchors.yaml' #数据集anchors文件
   head:
@@ -328,7 +328,7 @@ object:
 
 cuda: True
 obj_type: widerperson
-#obj_type: person
+#obj_type: yolov3
 
 spp: [ ] #不使用SPP 则设为[]
 #spp: [ 5,9,13 ]
@@ -368,7 +368,7 @@ parse.add_argument('-v', '--video', type=str, default='',
 parse.add_argument('-d', '--dir', type=str,
                    default='',
                    help='dir path')
-predict = Predict('predict.yaml', 'person')
+predict = Predict('predict.yaml', 'yolov3')
 ```
 
 ## 评估

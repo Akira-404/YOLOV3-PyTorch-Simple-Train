@@ -82,7 +82,7 @@ def image(folder: str, draw: bool = True):
 
 
 if __name__ == '__main__':
-    # image('/home/ubuntu/桌面/images/person')
+    # image('/home/ubuntu/桌面/images/yolov3')
 
     video_path = '/home/ubuntu/github/opencv/samples/data/vtest.avi'
     video(video_path)

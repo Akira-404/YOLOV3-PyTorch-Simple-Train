@@ -12,7 +12,7 @@ import torchvision
 local_path = os.path.dirname(os.path.dirname(__file__))
 filename = os.path.join(local_path, 'work.jpeg')
 max_batch_size = 1
-onnx_model_path = os.path.join(local_path, 'person.onnx')
+onnx_model_path = os.path.join(local_path, 'yolov3.onnx')
 
 TRT_LOGGER = trt.Logger()  # This logger is required to build an engine
 

@@ -61,7 +61,7 @@ def export_onnx(model,
 
 
 if __name__ == '__main__':
-    predict = Predict('./predict.yaml', obj_type='person')
+    predict = Predict('./predict.yaml', obj_type='yolov3')
     torch_model = predict.get_model_with_weights()
 
     # model params:

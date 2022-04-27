@@ -1,11 +1,13 @@
-import math
-from collections import OrderedDict
+import os
+import sys
 
-import numpy as np
+# sys.path.append(os.path.dirname(__file__))
+
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
-from modules.darknet import darknet53
+
+from darknet import darknet53
+from collections import OrderedDict
 
 
 def conv2d(in_channel: int, out_channel: int, kernel_size):

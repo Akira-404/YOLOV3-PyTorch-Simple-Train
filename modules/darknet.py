@@ -2,17 +2,7 @@ import math
 from collections import OrderedDict
 
 import numpy as np
-import torch
 import torch.nn as nn
-import torch.nn.functional as F
-
-
-class Mish(nn.Module):
-    def __init__(self):
-        super(Mish, self).__init__()
-
-    def forward(self, x):
-        return x * torch.tanh(F.softplus(x))
 
 
 class BasicConv(nn.Module):

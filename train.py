@@ -1,7 +1,7 @@
 import os
+import argparse
 
 from loguru import logger
-import numpy as np
 import torch
 import torch.backends.cudnn as cudnn
 
@@ -12,52 +12,54 @@ from torch.utils.data import DataLoader
 from modules.yolo import YOLO
 from modules.yolo_spp import YOLOSPP
 from modules.loss import YOLOLoss, weights_init
+
 from utils.callbacks import LossHistory
 from utils.dataloader import YoloDataset, yolo_dataset_collate
-from utils.utils import get_anchors, get_classes, load_yaml_conf, get_lr_scheduler, set_optimizer_lr
 from utils.utils_fit import fit_one_epoch
+from utils.utils import get_anchors, get_classes, load_yaml_conf, get_lr_scheduler, set_optimizer_lr, load_weights
 
-conf = load_yaml_conf('train.yaml')
-CUDA = True if (torch.cuda.is_available() and conf["cuda"]) else False
-device = torch.device('cuda' if CUDA else 'cpu')
-logger.info(f'CUDA:{CUDA}')
-logger.info(f'Device:{device}')
-
-local_path = os.path.dirname(__file__)
+exit()
 
 
 # 加载权重
-def load_weights(model, model_path: str, ignore_track: bool = False):
-    model_dict = model.state_dict()
-    _model_dict = {}
-    pretrained_dict = torch.load(model_path, map_location=device)
-    for k, v in model_dict.items():
+# def load_weights(model, model_path: str, device, ignore_track: bool = False):
+#     model_dict = model.state_dict()
+#     _model_dict = {}
+#     pretrained_dict = torch.load(model_path, map_location=device)
+#     for k, v in model_dict.items():
+#
+#         # pytorch 0.4.0后BN layer新增 num_batches_tracked 参数
+#         # ignore_track=False:加载net中的 num_batches_tracked参数
+#         # ignore_track=True:忽略加载net中的 num_batches_tracked参数
+#         if 'num_batches_tracked' in k and ignore_track:
+#             logger.info('pass item:', k)
+#         else:
+#             _model_dict[k] = v
+#
+#     load_dict = {}
+#     cnt = 0
+#     pretrained_dict = pretrained_dict['model'] if 'model' in pretrained_dict.keys() else pretrained_dict
+#     for kv1, kv2 in zip(_model_dict.items(), pretrained_dict.items()):
+#         if np.shape(kv1[1]) == np.shape(kv2[1]):
+#             load_dict[kv1[0]] = kv2[1]
+#             cnt += 1
+#
+#     model_dict.update(load_dict)
+#     model.load_state_dict(model_dict)
+#     logger.info(f'Load weight data:{cnt}/{len(pretrained_dict)}')
 
-        # pytorch 0.4.0后BN layer新增 num_batches_tracked 参数
-        # ignore_track=False:加载net中的 num_batches_tracked参数
-        # ignore_track=True:忽略加载net中的 num_batches_tracked参数
-        if 'num_batches_tracked' in k and ignore_track:
-            logger.info('pass item:', k)
-        else:
-            _model_dict[k] = v
 
-    load_dict = {}
-    cnt = 0
-    pretrained_dict = pretrained_dict['model'] if 'model' in pretrained_dict.keys() else pretrained_dict
-    for kv1, kv2 in zip(_model_dict.items(), pretrained_dict.items()):
-        if np.shape(kv1[1]) == np.shape(kv2[1]):
-            load_dict[kv1[0]] = kv2[1]
-            cnt += 1
+def train(args):
+    logger.info(f'Input config yaml: {args.config}')
+    conf = load_yaml_conf(args.config)
+    CUDA = True if (torch.cuda.is_available() and conf["cuda"]) else False
+    device = torch.device('cuda' if CUDA else 'cpu')
+    logger.info(f'CUDA:{CUDA}')
+    logger.info(f'Device:{device}')
 
-    model_dict.update(load_dict)
-    model.load_state_dict(model_dict)
-    logger.info(f'Load weight data:{cnt}/{len(pretrained_dict)}')
-
-
-def train():
-    obj = conf['object'][conf['obj_type']]
-    classes_path = os.path.join(local_path, obj['classes_path'])
-    anchors_path = os.path.join(local_path, obj['anchors_path'])
+    local_path = os.path.dirname(__file__)
+    classes_path = os.path.join(local_path, conf['classes_path'])
+    anchors_path = os.path.join(local_path, conf['anchors_path'])
     logger.info(f'Classes path:{classes_path}')
     logger.info(f'Anchors path:{anchors_path}')
 
@@ -89,10 +91,10 @@ def train():
     logger.info('YOLOV3 Weights Init Done.')
 
     # 载入yolo weight
-    if obj['model_path'] != '':
-        model_path = os.path.join(local_path, obj["model_path"])
+    if conf['model_path'] != '':
+        model_path = os.path.join(local_path, conf["model_path"])
         logger.info(f'Loading weights:{model_path}')
-        load_weights(model, model_path)
+        load_weights(model, model_path, device)
         logger.info('Loading weights done.')
     model_train = model.train()
 
@@ -164,30 +166,30 @@ def train():
     train_dataset = YoloDataset(train_lines, conf['input_shape'], num_classes, train=True, mosaic=conf['mosaic'])
     val_dataset = YoloDataset(val_lines, conf['input_shape'], num_classes, train=False, mosaic=False)
 
-    gen = DataLoader(train_dataset,
-                     shuffle=True,
-                     batch_size=batch_size,
-                     num_workers=conf['num_workers'],
-                     pin_memory=True,
-                     drop_last=True,
-                     collate_fn=yolo_dataset_collate)
+    train_dataloader = DataLoader(train_dataset,
+                                  shuffle=True,
+                                  batch_size=batch_size,
+                                  num_workers=conf['num_workers'],
+                                  pin_memory=True,
+                                  drop_last=True,
+                                  collate_fn=yolo_dataset_collate)
 
-    gen_val = DataLoader(val_dataset,
-                         shuffle=True,
-                         batch_size=batch_size,
-                         num_workers=conf['num_workers'],
-                         pin_memory=True,
-                         drop_last=True,
-                         collate_fn=yolo_dataset_collate)
-    UnFreeze_flag = False
+    val_dataloader = DataLoader(val_dataset,
+                                shuffle=True,
+                                batch_size=batch_size,
+                                num_workers=conf['num_workers'],
+                                pin_memory=True,
+                                drop_last=True,
+                                collate_fn=yolo_dataset_collate)
+    unfreeze_flag = False
     save_period = 1
     logger.info(f'Begin to train...')
 
     # 从初始epoch到最后一个epoch
-    for epoch in range(conf['Init_Epoch'], conf['UnFreeze_Epoch']):
+    for curr_epoch in range(conf['Init_Epoch'], conf['UnFreeze_Epoch']):
         #   如果模型有冻结学习部分
         #   则解冻，并设置参数
-        if epoch >= conf['Freeze_Epoch'] and not UnFreeze_flag and conf['Freeze_Train']:
+        if curr_epoch >= conf['Freeze_Epoch'] and not unfreeze_flag and conf['Freeze_Train']:
             batch_size = conf['Unfreeze_batch_size']
             logger.info(f'Unfreeze train...')
             nbs = 64
@@ -206,33 +208,44 @@ def train():
             if epoch_step == 0 or epoch_step_val == 0:
                 raise ValueError("数据集过小，无法继续进行训练，请扩充数据集。")
 
-            gen = DataLoader(train_dataset,
-                             shuffle=True,
-                             batch_size=batch_size,
-                             num_workers=conf['num_workers'],
-                             pin_memory=True,
-                             drop_last=True, collate_fn=yolo_dataset_collate)
-            gen_val = DataLoader(val_dataset,
-                                 shuffle=True,
-                                 batch_size=batch_size,
-                                 num_workers=conf['num_workers'],
-                                 pin_memory=True,
-                                 drop_last=True,
-                                 collate_fn=yolo_dataset_collate)
+            train_dataloader = DataLoader(train_dataset,
+                                          shuffle=True,
+                                          batch_size=batch_size,
+                                          num_workers=conf['num_workers'],
+                                          pin_memory=True,
+                                          drop_last=True, collate_fn=yolo_dataset_collate)
+            val_dataloader = DataLoader(val_dataset,
+                                        shuffle=True,
+                                        batch_size=batch_size,
+                                        num_workers=conf['num_workers'],
+                                        pin_memory=True,
+                                        drop_last=True,
+                                        collate_fn=yolo_dataset_collate)
 
-            UnFreeze_flag = True
+            unfreeze_flag = True
 
-        set_optimizer_lr(optimizer, lr_scheduler_func, epoch)
+        set_optimizer_lr(optimizer, lr_scheduler_func, curr_epoch)
 
-        fit_one_epoch(model_train, model, yolo_loss, loss_history, optimizer, epoch, epoch_step, epoch_step_val, gen,
-                      gen_val, conf['UnFreeze_Epoch'], CUDA, save_period)
+        fit_one_epoch(model_train,
+                      model,
+                      yolo_loss,
+                      loss_history,
+                      optimizer,
+                      curr_epoch,
+                      epoch_step,
+                      epoch_step_val,
+                      train_dataloader,
+                      val_dataloader,
+                      conf['UnFreeze_Epoch'],
+                      CUDA,
+                      save_period)
 
     loss_history.writer.close()
 
 
-def main():
-    train()
-
-
 if __name__ == '__main__':
-    main()
+    parser = argparse.ArgumentParser('YOLOV3 config.')
+    parser.add_argument('--config', '-c', default='cfg/reflective.yaml', type=str,
+                        help='training config yaml. eg: person.yaml')
+    args = parser.parse_args()
+    train(args)

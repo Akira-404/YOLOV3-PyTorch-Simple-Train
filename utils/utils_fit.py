@@ -1,7 +1,11 @@
 import torch
 from tqdm import tqdm
 from loguru import logger
-from utils.utils import get_lr
+
+
+def get_lr(optimizer):
+    for param_group in optimizer.param_groups:
+        return param_group['lr']
 
 
 def fit_one_epoch(model_train,
@@ -9,12 +13,12 @@ def fit_one_epoch(model_train,
                   yolo_loss,
                   loss_history,
                   optimizer,
-                  epoch,
+                  curr_epoch,
                   epoch_step,
                   epoch_step_val,
-                  gen,
-                  gen_val,
-                  Epoch,
+                  train_dataloader,
+                  val_dataloader,
+                  epoch,
                   cuda,
                   save_period):
     loss = 0
@@ -22,10 +26,13 @@ def fit_one_epoch(model_train,
 
     model_train.train()
     logger.info('Start Train.')
-    with tqdm(total=epoch_step, desc=f'Epoch {epoch + 1}/{Epoch}', postfix=dict, mininterval=0.3) as pbar:
-        for iteration, batch in enumerate(gen):
+    with tqdm(total=epoch_step, desc=f'epoch {curr_epoch + 1}/{epoch}', postfix=dict, mininterval=0.3) as pbar:
+        for iteration, batch in enumerate(train_dataloader):
+
+            # 一个epoch的结束
             if iteration >= epoch_step:
                 break
+
             images, targets = batch[0], batch[1]
             with torch.no_grad():
                 if cuda:
@@ -48,7 +55,7 @@ def fit_one_epoch(model_train,
             loss_value = loss_value_all
             loss_value.backward()
             optimizer.step()
-            loss+=loss_value.item()
+            loss += loss_value.item()
             pbar.set_postfix(**{'loss': loss / (iteration + 1),
                                 'lr': get_lr(optimizer)})
             pbar.update(1)
@@ -57,8 +64,8 @@ def fit_one_epoch(model_train,
 
     model_train.eval()
     logger.info('Start Validation.')
-    with tqdm(total=epoch_step_val, desc=f'Epoch {epoch + 1}/{Epoch}', postfix=dict, mininterval=0.3) as pbar:
-        for iteration, batch in enumerate(gen_val):
+    with tqdm(total=epoch_step_val, desc=f'epoch {curr_epoch + 1}/{epoch}', postfix=dict, mininterval=0.3) as pbar:
+        for iteration, batch in enumerate(val_dataloader):
             if iteration >= epoch_step_val:
                 break
             images, targets = batch[0], batch[1]
@@ -87,9 +94,10 @@ def fit_one_epoch(model_train,
 
     logger.info('Finish Validation')
 
-    loss_history.append_loss(epoch+1,loss / epoch_step, val_loss / epoch_step_val)
-    logger.info('Epoch:' + str(epoch + 1) + '/' + str(Epoch))
+    loss_history.append_loss(curr_epoch + 1, loss / epoch_step, val_loss / epoch_step_val)
+    logger.info('epoch:' + str(curr_epoch + 1) + '/' + str(epoch))
     logger.info('Total Loss: %.3f || Val Loss: %.3f ' % (loss / epoch_step, val_loss / epoch_step_val))
-    if (epoch + 1) % save_period == 0 or epoch + 1 == Epoch:
+    if (curr_epoch + 1) % save_period == 0 or curr_epoch + 1 == epoch:
         torch.save(model.state_dict(),
-                   'logs/ep%03d-loss%.3f-val_loss%.3f.pth' % (epoch + 1, loss / epoch_step, val_loss / epoch_step_val))
+                   'logs/ep%03d-loss%.3f-val_loss%.3f.pth' % (
+                       curr_epoch + 1, loss / epoch_step, val_loss / epoch_step_val))

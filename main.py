@@ -1,5 +1,4 @@
 import os
-import time
 import argparse
 from tqdm import tqdm
 import cv2
@@ -113,7 +112,7 @@ if __name__ == '__main__':
     parse = argparse.ArgumentParser('predict config')
     parse.add_argument('-m', '--mode', type=str, choices=['image', 'video', 'dir'], default='dir',
                        help='predict image or video or dir')
-    parse.add_argument('-i', '--image', type=str, default='./person.jpeg',
+    parse.add_argument('-i', '--image', type=str, default='./image1.jpeg',
                        help='image path')
     parse.add_argument('-v', '--video', type=str, default='/home/ubuntu/github/opencv/samples/data/vtest.avi',
                        help='video path')

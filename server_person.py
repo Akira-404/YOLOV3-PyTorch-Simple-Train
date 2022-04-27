@@ -19,7 +19,7 @@ import config
 
 '''
 日志大小上限：10 MB
-log位置：./logs/person
+log位置：./logs/yolov3
 写入级别:WARNING
 保留时间：7天
 压缩格式：ZIP
@@ -43,12 +43,12 @@ _Url = config.get_url()
 _local_path = os.path.dirname(__file__)
 predict_file = os.path.join(_local_path, 'predict.yaml')
 
-predict = Predict(predict_file, obj_type='person')
+predict = Predict(predict_file, obj_type='yolov3')
 predict.load_weights()
 app = Flask(__name__)
 
 conf = load_yaml_conf(predict_file)
-type_ = conf['object']['person']
+type_ = conf['object']['yolov3']
 
 classes_path = os.path.join(_local_path, type_['classes_path'])
 anchors_path = os.path.join(_local_path, type_['anchors_path'])

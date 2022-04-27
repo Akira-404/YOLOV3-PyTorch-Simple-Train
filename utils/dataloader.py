@@ -6,11 +6,11 @@ from torch.utils.data.dataset import Dataset
 from PIL import Image
 
 # from utils.utils import img2rgb, preprocess_input
-from utils.utils_image import image_normalization, img2rgb
+from utils_image import image_normalization, img2rgb
 
 
 class YoloDataset(Dataset):
-    def __init__(self, annotation_lines, input_shape, num_classes: int, train, mosaic):
+    def __init__(self, annotation_lines, input_shape, num_classes: int, train, mosaic: bool):
         super(YoloDataset, self).__init__()
         self.annotation_lines = annotation_lines
         self.input_shape = input_shape
@@ -132,21 +132,6 @@ def get_random_data(annotation_line: str,
 
     image_data = cv2.merge((cv2.LUT(hue, lut_hue), cv2.LUT(sat, lut_sat), cv2.LUT(val, lut_val)))
     image_data = cv2.cvtColor(image_data, cv2.COLOR_HSV2RGB)
-
-    #   色域扭曲
-    # hue = rand(-hue, hue)
-    # sat = rand(1, sat) if rand() < .5 else 1 / rand(1, sat)
-    # val = rand(1, val) if rand() < .5 else 1 / rand(1, val)
-    # x = cv2.cvtColor(np.array(image, np.float32) / 255, cv2.COLOR_RGB2HSV)
-    # x[..., 0] += hue * 360
-    # x[..., 0][x[..., 0] > 1] -= 1
-    # x[..., 0][x[..., 0] < 0] += 1
-    # x[..., 1] *= sat
-    # x[..., 2] *= val
-    # x[x[:, :, 0] > 360, 0] = 360
-    # x[:, :, 1:][x[:, :, 1:] > 1] = 1
-    # x[x < 0] = 0
-    # image_data = cv2.cvtColor(x, cv2.COLOR_HSV2RGB) * 255
 
     #   对真实框进行调整
     if len(box) > 0:
