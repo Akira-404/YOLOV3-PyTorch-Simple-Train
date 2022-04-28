@@ -440,6 +440,7 @@ class YOLOLoss(nn.Module):
 
 def weights_init(net, init_type: str = 'normal', init_gain: float = 0.02):
     def init_func(m):
+        class__=m.__class__
         classname = m.__class__.__name__
         if hasattr(m, 'weight') and classname.find('Conv') != -1:
             if init_type == 'normal':

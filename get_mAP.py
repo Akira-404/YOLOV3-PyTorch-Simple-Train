@@ -5,7 +5,7 @@ import xml.etree.ElementTree as ET
 from PIL import Image
 from tqdm import tqdm
 
-from main import Predict
+from infer import Predict
 from utils.utils import get_classes, load_yaml_conf
 from utils.utils_map import get_coco_map, get_map
 

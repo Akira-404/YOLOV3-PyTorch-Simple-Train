@@ -5,8 +5,8 @@ import sys
 
 import torch
 import torch.nn as nn
-
-from darknet import darknet53
+#TODO: fix bug:path error
+from modules.darknet import darknet53
 from collections import OrderedDict
 
 
@@ -108,4 +108,6 @@ class YOLO(nn.Module):
 
 
 if __name__ == '__main__':
-    ...
+    yolo = YOLO(anchors_mask=[[6, 7, 8], [3, 4, 5], [0, 1, 2]]
+                , num_classes=2)
+    print(yolo)

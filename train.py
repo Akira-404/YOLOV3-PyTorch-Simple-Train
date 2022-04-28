@@ -18,8 +18,6 @@ from utils.dataloader import YoloDataset, yolo_dataset_collate
 from utils.utils_fit import fit_one_epoch
 from utils.utils import get_anchors, get_classes, load_yaml_conf, get_lr_scheduler, set_optimizer_lr, load_weights
 
-exit()
-
 
 # 加载权重
 # def load_weights(model, model_path: str, device, ignore_track: bool = False):
@@ -52,9 +50,10 @@ exit()
 def train(args):
     logger.info(f'Input config yaml: {args.config}')
     conf = load_yaml_conf(args.config)
-    CUDA = True if (torch.cuda.is_available() and conf["cuda"]) else False
-    device = torch.device('cuda' if CUDA else 'cpu')
-    logger.info(f'CUDA:{CUDA}')
+
+    cuda = True if (torch.cuda.is_available() and conf["cuda"]) else False
+    device = torch.device('cuda' if cuda else 'cpu')
+    logger.info(f'cuda:{cuda}')
     logger.info(f'Device:{device}')
 
     local_path = os.path.dirname(__file__)
@@ -87,8 +86,9 @@ def train(args):
     if conf['spp']:
         model = YOLOSPP(conf['anchors_mask'], num_classes, conf['spp'], conf['activation'])
 
+    logger.info('Init model weights...')
     weights_init(model)
-    logger.info('YOLOV3 Weights Init Done.')
+    logger.info('Init done.')
 
     # 载入yolo weight
     if conf['model_path'] != '':
@@ -96,9 +96,10 @@ def train(args):
         logger.info(f'Loading weights:{model_path}')
         load_weights(model, model_path, device)
         logger.info('Loading weights done.')
+
     model_train = model.train()
 
-    if CUDA:
+    if cuda:
         model_train = torch.nn.DataParallel(model)
         cudnn.benchmark = True
         model_train = model_train.cuda()
@@ -106,7 +107,7 @@ def train(args):
     yolo_loss = YOLOLoss(anchors,
                          num_classes,
                          conf['input_shape'],
-                         CUDA,
+                         cuda,
                          conf['anchors_mask'])
 
     loss_history = LossHistory("logs/", model, input_shape=conf['input_shape'])
@@ -237,7 +238,7 @@ def train(args):
                       train_dataloader,
                       val_dataloader,
                       conf['UnFreeze_Epoch'],
-                      CUDA,
+                      cuda,
                       save_period)
 
     loss_history.writer.close()

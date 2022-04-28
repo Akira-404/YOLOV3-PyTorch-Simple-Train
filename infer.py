@@ -4,7 +4,7 @@ from tqdm import tqdm
 import cv2
 import numpy as np
 from PIL import Image
-from utils.utils_prediect import Predict
+from prediect import Predict
 from utils.utils import load_yaml_conf
 
 predict = Predict('predict.yaml')
