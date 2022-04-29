@@ -212,7 +212,7 @@ val_file: 'val.txt'
 进行数据集分析，将会以饼图的形式展示当前数据集存在的标签个数和分类情况。
 
 ```yaml
-#voc_classes.yaml
+#classes.yaml
 nc: 20
 names:
   - aeroplane,

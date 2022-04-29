@@ -440,9 +440,8 @@ class YOLOLoss(nn.Module):
 
 def weights_init(net, init_type: str = 'normal', init_gain: float = 0.02):
     def init_func(m):
-        class__=m.__class__
-        classname = m.__class__.__name__
-        if hasattr(m, 'weight') and classname.find('Conv') != -1:
+        m_class_name = m.__class__.__name__  # get the class name of m(module)
+        if hasattr(m, 'weight') and m_class_name.find('Conv') != -1:
             if init_type == 'normal':
                 torch.nn.init.normal_(m.weight.data, 0.0, init_gain)
             elif init_type == 'xavier':
@@ -453,7 +452,7 @@ def weights_init(net, init_type: str = 'normal', init_gain: float = 0.02):
                 torch.nn.init.orthogonal_(m.weight.data, gain=init_gain)
             else:
                 raise NotImplementedError('initialization method [%s] is not implemented' % init_type)
-        elif classname.find('BatchNorm2d') != -1:
+        elif m_class_name.find('BatchNorm2d') != -1:
             torch.nn.init.normal_(m.weight.data, 1.0, 0.02)
             torch.nn.init.constant_(m.bias.data, 0.0)
 

@@ -10,7 +10,12 @@ from utils_image import image_normalization, img2rgb
 
 
 class YoloDataset(Dataset):
-    def __init__(self, annotation_lines, input_shape, num_classes: int, train, mosaic: bool):
+    def __init__(self,
+                 annotation_lines,
+                 input_shape,
+                 num_classes: int,
+                 train,
+                 mosaic: bool):
         super(YoloDataset, self).__init__()
         self.annotation_lines = annotation_lines
         self.input_shape = input_shape

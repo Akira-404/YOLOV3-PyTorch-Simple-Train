@@ -8,12 +8,12 @@ import torch
 import config
 from utils.utils_bbox import DecodeBox
 from utils.utils_image import image_preprocess
-from utils.utils import load_yaml_conf, get_classes, get_anchors
+from utils.utils import load_yaml, get_classes, get_anchors
 
 # load config file
 local_path = os.path.dirname(os.path.dirname(__file__))
 
-conf = load_yaml_conf('../predict.yaml')
+conf = load_yaml('../predict.yaml')
 type_ = conf['object'][conf['obj_type']]
 classes_path = os.path.join('../', type_['classes_path'])
 class_names, num_classes = get_classes(classes_path)

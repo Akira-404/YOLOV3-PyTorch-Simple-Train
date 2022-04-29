@@ -5,7 +5,7 @@ import sys
 
 import torch
 import torch.nn as nn
-#TODO: fix bug:path error
+# TODO: fix bug:path error
 from modules.darknet import darknet53
 from collections import OrderedDict
 

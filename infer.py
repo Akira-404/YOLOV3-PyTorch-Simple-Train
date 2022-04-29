@@ -5,11 +5,11 @@ import cv2
 import numpy as np
 from PIL import Image
 from prediect import Predict
-from utils.utils import load_yaml_conf
+from utils.utils import load_yaml
 
 predict = Predict('predict.yaml')
 predict.load_weights()
-conf = load_yaml_conf('predict.yaml')
+conf = load_yaml('predict.yaml')
 conf = conf['object'][conf['obj_type']]
 
 

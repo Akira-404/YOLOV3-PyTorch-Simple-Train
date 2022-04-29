@@ -2,9 +2,9 @@ import os
 import random
 import xml.etree.ElementTree as ET
 
-from utils.utils import get_classes, load_yaml_conf
+from utils.utils import get_classes, load_yaml
 
-conf = load_yaml_conf('train.yaml')
+conf = load_yaml('train.yaml')
 print(f'object type:{conf["obj_type"]}')
 obj = conf['object'][conf['obj_type']]
 

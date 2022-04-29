@@ -1,0 +1,22 @@
+nc: 20
+names:
+  - aeroplane
+  - bicycle
+  - bird
+  - boat
+  - bottle
+  - bus
+  - car
+  - cat
+  - chair
+  - cow
+  - diningtable
+  - dog
+  - horse
+  - motorbike
+  - yolov3
+  - pottedplant
+  - sheep
+  - sofa
+  - train
+  - tvmonitor

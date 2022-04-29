@@ -5,7 +5,7 @@ import numpy as np
 import yaml
 from tqdm import tqdm
 from scipy.cluster.vq import kmeans
-from utils.utils import load_yaml_conf
+from utils.utils import load_yaml
 
 from kmeans_anchors.read_voc import VOCDataSet
 from kmeans_anchors.yolo_kmeans import k_means, wh_iou
@@ -20,7 +20,7 @@ from loguru import logger
 #                    help='this path will save you anchors.yaml')
 # args = parse.parse_args()
 
-conf = load_yaml_conf('train.yaml')
+conf = load_yaml('train.yaml')
 logger.info(f'object type:{conf["obj_type"]}')
 obj = conf['object'][conf['obj_type']]
 

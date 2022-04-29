@@ -9,7 +9,7 @@ import onnxruntime
 from loguru import logger
 from flask import Flask, jsonify, request
 
-from utils.utils import load_yaml_conf, get_classes, get_anchors
+from utils.utils import load_yaml, get_classes, get_anchors
 from utils.utils_bbox import DecodeBox
 from utils.utils_image import image_preprocess
 from utils.utils_prediect import Predict
@@ -47,7 +47,7 @@ predict = Predict(predict_file, obj_type='yolov3')
 predict.load_weights()
 app = Flask(__name__)
 
-conf = load_yaml_conf(predict_file)
+conf = load_yaml(predict_file)
 type_ = conf['object']['yolov3']
 
 classes_path = os.path.join(_local_path, type_['classes_path'])

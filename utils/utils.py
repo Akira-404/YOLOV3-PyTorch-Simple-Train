@@ -13,7 +13,7 @@ ImageFile.LOAD_TRUNCATED_IMAGES = True
 
 
 # 加载yaml配置文件
-def load_yaml_conf(conf_path: str) -> dict:
+def load_yaml(conf_path: str):
     """
     :param conf_path: xxx/xxx/xxx.yaml
     :return: dict

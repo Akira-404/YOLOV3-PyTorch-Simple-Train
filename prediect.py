@@ -7,7 +7,7 @@ import torch.nn as nn
 
 from modules.yolo import YOLO
 from modules.yolo_spp import YOLOSPP
-from utils.utils import get_anchors, get_classes, load_yaml_conf, load_weights
+from utils.utils import get_anchors, get_classes, load_yaml, load_weights
 from utils.utils_bbox import DecodeBox
 from utils.utils_image import img2rgb, image_normalization, resize_image, image_preprocess
 
@@ -21,7 +21,7 @@ class Predict:
         self.ignore_track = ignore_track
 
         # 加载配置文件
-        self.conf = load_yaml_conf(conf_path)
+        self.conf = load_yaml(conf_path)
 
         if obj_type is not None:
             self.conf['obj_type'] = obj_type

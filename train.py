@@ -16,7 +16,7 @@ from modules.loss import YOLOLoss, weights_init
 from utils.callbacks import LossHistory
 from utils.dataloader import YoloDataset, yolo_dataset_collate
 from utils.utils_fit import fit_one_epoch
-from utils.utils import get_anchors, get_classes, load_yaml_conf, get_lr_scheduler, set_optimizer_lr, load_weights
+from utils.utils import get_anchors, get_classes, load_yaml, get_lr_scheduler, set_optimizer_lr, load_weights
 
 
 # 加载权重
@@ -49,7 +49,7 @@ from utils.utils import get_anchors, get_classes, load_yaml_conf, get_lr_schedul
 
 def train(args):
     logger.info(f'Input config yaml: {args.config}')
-    conf = load_yaml_conf(args.config)
+    conf = load_yaml(args.config)
 
     cuda = True if (torch.cuda.is_available() and conf["cuda"]) else False
     device = torch.device('cuda' if cuda else 'cpu')
