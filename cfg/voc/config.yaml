@@ -1,7 +1,7 @@
-dataset_root: '/home/cv/AI_Data/reflective'
+dataset_root: '/home/cv/data/reflective'
 model_path: 'weights/reflective-ep124-loss4.193.pth' #预加载yolov3权重文件
-classes_path: 'data/reflective_classes.yaml' #数据集类别文件
-anchors_path: 'data/reflective_anchors.yaml' #数据集聚类anchors
+classes_path: 'cfg/voc/classes.yaml' #数据集类别文件
+anchors_path: 'cfg/voc/anchors.yaml' #数据集聚类anchors
 cuda: True
 num_workers: 8
 
