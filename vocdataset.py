@@ -82,7 +82,16 @@ class VOCDataset(Dataset):
         return image, boxes, classes
 
 
-def get_random_data(img_path: str, anno_path: str, name2id: dict, use_difficult: bool):
+def get_random_data(img_path: str,
+                    anno_path: str,
+                    name2id: dict,
+                    use_difficult: bool,
+                    resize: tuple,
+                    jitter: float = .3,
+                    hue: float = .1,
+                    sat: float = 1.5,
+                    val: float = 1.5,
+                    random: bool = True):
     img = cv2.cvtColor(cv2.imread(img_path), cv2.COLOR_BGR2RGB)
 
     anno = ET.parse(anno_path).getroot()  # 读取xml文档的根节点
@@ -112,11 +121,57 @@ def get_random_data(img_path: str, anno_path: str, name2id: dict, use_difficult:
 
     boxes = np.array(boxes, dtype=np.float32)
 
-    # 将img,box和classes转成tensor
-    img = transforms.ToTensor()(img)  # transforms 自动将 图像进行了归一化，
-    boxes = torch.from_numpy(boxes)
-    classes = torch.LongTensor(classes)
+    # image resize
+    ih, iw, ic = img.shape
+    h, w = resize
+    new_ar = w / h * rand(1 - jitter, 1 + jitter) / rand(1 - jitter, 1 + jitter)
+    scale = rand(.25, 2)
+    if new_ar < 1:
+        nh = int(scale * h)
+        nw = int(nh * new_ar)
+    else:
+        nw = int(scale * w)
+        nh = int(nw / new_ar)
 
+    img = cv2.resize(img, resize, interpolation=cv2.INTER_CUBIC)
+
+    # TODO:
+    # image add gray bar
+    dx = int(rand(0, w - nw))
+    dy = int(rand(0, h - nh))
+
+    # flip image
+    flip = rand() < .5
+    img = img if flip else cv2.flip(img, 1)
+
+    # RGB->HSV->RGB
+    image_data = np.array(img, np.uint8)
+
+    r = np.random.uniform(-1, 1, 3) * [hue, sat, val] + 1
+    #   将图像转到HSV上
+    hue, sat, val = cv2.split(cv2.cvtColor(image_data, cv2.COLOR_RGB2HSV))
+    dtype = image_data.dtype
+    #   应用变换
+    x = np.arange(0, 256, dtype=r.dtype)
+    lut_hue = ((x * r[0]) % 180).astype(dtype)
+    lut_sat = np.clip(x * r[1], 0, 255).astype(dtype)
+    lut_val = np.clip(x * r[2], 0, 255).astype(dtype)
+
+    image_data = cv2.merge((cv2.LUT(hue, lut_hue), cv2.LUT(sat, lut_sat), cv2.LUT(val, lut_val)))
+    img = cv2.cvtColor(image_data, cv2.COLOR_HSV2RGB)
+
+    # change bbox
+    if len(boxes) > 0:
+        np.random.shuffle(boxes)
+        boxes[:, [0, 2]] = boxes[:, [0, 2]] * nw / iw + dx
+        boxes[:, [1, 3]] = boxes[:, [1, 3]] * nh / ih + dy
+        if flip: boxes[:, [0, 2]] = w - boxes[:, [2, 0]]
+        boxes[:, 0:2][boxes[:, 0:2] < 0] = 0
+        boxes[:, 2][boxes[:, 2] > w] = w
+        boxes[:, 3][boxes[:, 3] > h] = h
+        box_w = boxes[:, 2] - boxes[:, 0]
+        box_h = boxes[:, 3] - boxes[:, 1]
+        boxes = boxes[np.logical_and(box_w > 1, box_h > 1)]
     return img, boxes, classes
 
 
