@@ -10,7 +10,7 @@ use_text: trainval
 use_difficult: False
 use_mosaic: False
 
-image_shape: [ 416, 416 ] #模型输入图片尺度
+image_shape: [ 416, 416 ] #模型输入图片尺度(h,w)
 #image_shape: [ 608,608 ] #模型输入图片尺度
 #<<< dataset config <<<
 

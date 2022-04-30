@@ -1,4 +1,5 @@
 import os
+import copy
 from random import sample, shuffle
 import xml.etree.ElementTree as ET
 
@@ -72,12 +73,32 @@ class VOCDataset(Dataset):
         image = image_normalization(np.array(image, dtype=np.float32))
         image = np.transpose(image, (2, 0, 1))  # (h,w,c)->(c,h,w)
 
-        # if len(boxes) != 0:
-        #     boxes[:, [0, 2]] = boxes[:, [0, 2]] / self.config['image_shape'][1]
-        #     boxes[:, [1, 3]] = boxes[:, [1, 3]] / self.config['image_shape'][0]
-        #
-        #     boxes[:, 2:4] = boxes[:, 2:4] - boxes[:, 0:2]
-        #     boxes[:, 0:2] = boxes[:, 0:2] + boxes[:, 2:4] / 2
+        if len(boxes) != 0:
+            # This part is from darknet yolov3
+            # darknete box=[xmin,xmax,ymin,ymax]
+            # dw = 1. / (size[0])
+            # dh = 1. / (size[1])
+            # x = (box[0] + box[1]) / 2.0 - 1
+            # y = (box[2] + box[3]) / 2.0 - 1
+            # w = box[1] - box[0]
+            # h = box[3] - box[2]
+            # x = x * dw
+            # w = w * dw
+            # y = y * dh
+            # h = h * dh
+
+            boxes_tmp = copy.deepcopy(boxes)
+            # this box =[xmin,ymin,xmax,ymax]
+            # [cx,cy.]=([x1,y1]+[x2,y2])/2
+            boxes[:, [0, 1]] = (boxes_tmp[:, [0, 1]] + boxes_tmp[:, [2, 3]]) / 2 - 1
+            # [w,h]=[x2,y2]-[x1,y1]
+            boxes[:, [2, 3]] = boxes_tmp[:, [2, 3]] - boxes_tmp[:, [0, 1]]
+
+            # [cx,w]/iw
+            # [cy,h]/ih
+            boxes[:, [0, 2]] = boxes[:, [0, 2]] / self.config['image_shape'][1]  # w
+            boxes[:, [1, 3]] = boxes[:, [1, 3]] / self.config['image_shape'][0]  # h
+            # return box=[cx,cy,w,h]
         return image, boxes, classes
 
 
@@ -126,15 +147,15 @@ def get_random_data(img_path: str = None,
     # img resize
     img_resize = image_resize_letterbox(img, resize) if random else img
 
-    # flip = rand() < .5 if random else False
-    flip = random
+    # image flip
+    flip = rand() < .5 if random else False
     img_resize = image_flip(img_resize) if flip else img_resize
 
     # change bbox
     boxes = label_adjust(img.shape[:2], resize, boxes, flip) if random else boxes
 
     # RGB->HSV->RGB
-    # img = color_jittering(img_resize, hue, sat, val)
+    img_resize = color_jittering(img_resize, hue, sat, val)
 
     return img_resize, boxes, classes
 
@@ -158,9 +179,23 @@ if __name__ == '__main__':
     logger.info(boxes)
     logger.info(classes)
 
-    # 这里简单做一下可视化
     img = (image * 255).astype(np.uint8).transpose(1, 2, 0)  # 注意由于图像像素分布0-255，所以转成uint8
     img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
+
+    # [cx,w]*iw
+    # [cy,h]*ih
+    boxes[:, [0, 2]] = boxes[:, [0, 2]] * img.shape[1]
+    boxes[:, [1, 3]] = boxes[:, [1, 3]] * img.shape[0]
+
+    # [h,w]=[h/2,w/2]
+    boxes[:, 2:4] = boxes[:, 2:4] / 2
+    tmp = copy.deepcopy(boxes)
+
+    # [x1,,y1]=[cx-w/2,cy-h/2]
+    boxes[:, 0:2] = tmp[:, 0:2] - tmp[:, 2:4]
+    # [x2,,y2]=[cx+w/2,cy+h/2]
+    boxes[:, 2: 4] = tmp[:, 0:2] + tmp[:, 2:4]
+
     for box in boxes:
         x1, y1 = int(box[0]), int(box[1])
         x2, y2 = int(box[2]), int(box[3])
