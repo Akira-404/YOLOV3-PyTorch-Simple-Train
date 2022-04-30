@@ -15,6 +15,7 @@ from modules.loss import YOLOLoss, weights_init
 
 from utils.callbacks import LossHistory
 from utils.dataloader import YoloDataset, yolo_dataset_collate
+from vocdataset import VOCDataset
 from utils.utils_fit import fit_one_epoch
 from utils.utils import get_anchors, get_classes, load_yaml, get_lr_scheduler, set_optimizer_lr, load_weights
 
@@ -163,6 +164,8 @@ def train(args):
     logger.info(f'epoch step val:{epoch_step_val}')
 
     logger.info(f'Create Dataset...')
+    # TODO: test vocdataset
+    train_dataset_ = VOCDataset(args.config, train=True)
 
     train_dataset = YoloDataset(train_lines, conf['input_shape'], num_classes, train=True, mosaic=conf['mosaic'])
     val_dataset = YoloDataset(val_lines, conf['input_shape'], num_classes, train=False, mosaic=False)
@@ -246,7 +249,7 @@ def train(args):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser('YOLOV3 config.')
-    parser.add_argument('--config', '-c', default='cfg/reflective.yaml', type=str,
+    parser.add_argument('--config', '-c', default='data/voc/config.yaml', type=str,
                         help='training config yaml. eg: person.yaml')
     args = parser.parse_args()
     train(args)
