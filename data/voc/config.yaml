@@ -1,15 +1,17 @@
 #<<< dataset config <<<
-dataset_root: '/home/ubuntu/data/VOCdevkit/VOC2007/VOC2007/trainval'
+#dataset_root: '/home/ubuntu/data/VOCdevkit/VOC2007/VOC2007/trainval'
+train_dataset_root: '/Users/lee/Desktop/dataset/voc/VOCtrain/VOC2007'
+test_dataset_root: '/Users/lee/Desktop/dataset/voc/VOCtest/VOC2007'
 model_path: 'weights/reflective-ep124-loss4.193.pth' #预加载yolov3权重文件
 classes_path: 'data/voc/classes.yaml' #数据集类别文件
 anchors_path: 'data/voc/anchors.yaml' #数据集聚类anchors
 
-mean: [ 0.485, 0.456, 0.406 ]
-std: [ 0.229, 0.224, 0.225 ]
-
 use_text: trainval
 use_difficult: False
 use_mosaic: False
+
+image_shape: [ 416, 416 ] #模型输入图片尺度
+#image_shape: [ 608,608 ] #模型输入图片尺度
 #<<< dataset config <<<
 
 #<<< training config <<<
@@ -17,13 +19,13 @@ cuda: True
 num_workers: 8
 spp: [ ] #不使用SPP 则设为[]
 #spp: [ 5,9,13 ]
+
 #activation: mish #leakyrelu or mish
 activation: leakyrelu #leakyrelu or mish
 label_smoothing: 0 #if label_smoothing=0:不适用平滑标签
 
 Init_Epoch: 0
-input_shape: [ 416, 416 ] #模型输入图片尺度
-#input_shape: [ 608,608 ] #模型输入图片尺度
+
 anchors_mask: [ [ 6, 7, 8 ], [ 3, 4, 5 ], [ 0, 1, 2 ] ]
 
 #generate config

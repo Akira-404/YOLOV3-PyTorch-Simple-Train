@@ -9,31 +9,28 @@ from loguru import logger
 from torchvision import transforms
 from torch.utils.data.dataset import Dataset
 
-from utils.utils import load_yaml
-
-
-def rand(a: float = 0.0, b: float = 1.0) -> np.ndarray:
-    return np.random.rand() * (b - a) + a
+from utils.utils import load_yaml, read_txt
+from utils.image import image_normalization
+from utils.data_augmentation import *
 
 
 class VOCDataset(Dataset):
 
     # 初始化类
-    def __init__(self, config: str):
+    def __init__(self, config: str, train: bool = True):
         cwd = os.path.dirname(__file__)
         self.config = load_yaml(os.path.join(cwd, config))
-
-        self._root = self.config['dataset_root']
+        self.istrain = train
+        self._root = self.config['train_dataset_root'] if self.istrain else self.config['test_dataset_root']
         self._use_difficult = self.config['use_difficult']
         self._use_text = self.config['use_text']
         self._use_mosaic = self.config['use_mosaic']
-        # self._mean = self.config['mean']
-        # self._std = self.config['std']
         self._classes_path = os.path.join(cwd, self.config['classes_path'])
         self._anno_path = os.path.join(self._root, "Annotations", "{}.xml")
         self._img_path = os.path.join(self._root, "JPEGImages", "{}.jpg")
         self._imgset_path = os.path.join(self._root, "ImageSets", "Main", "{}.txt")
 
+        logger.info(f'[VOCDataset]::train ot test: {train}')
         logger.info(f'[VOCDataset]::dataset _root: {self._root}')
         logger.info(f'[VOCDataset]::use difficult: {self._use_difficult}')
         logger.info(f'[VOCDataset]::use text file: {self._use_text}')
@@ -41,12 +38,9 @@ class VOCDataset(Dataset):
         logger.info(f'[VOCDataset]::annotation path: {self._anno_path}')
         logger.info(f'[VOCDataset]::image path: {self._img_path}')
         logger.info(f'[VOCDataset]::image set path: {self._imgset_path}')
-        # logger.info(f'[VOCDataset]::mean: {self._mean}')
-        # logger.info(f'[VOCDataset]::std: {self._std}')
 
         # 读取trainval.txt中内容
-        with open(self._imgset_path.format(self._use_text)) as f:
-            self.img_ids = f.readlines()
+        self.img_ids = read_txt(self._imgset_path.format(self._use_text))
 
         # ['000009', '000052']
         self.img_ids = [x.strip() for x in self.img_ids]
@@ -68,30 +62,34 @@ class VOCDataset(Dataset):
         img_path = self._img_path.format(img_id)
         anno_path = self._anno_path.format(img_id)
 
-        # TODO:mosaic function
-        # if self._use_mosaic:
-        #     if rand() < 0.5:
-        #         image, box = get_random_data_mosaic()
-        #     else:
-        #         image, box = get_random_data()
-        # else:
-        #     image, box = get_random_data()
+        image, boxes, classes = get_random_data(img_path,
+                                                anno_path,
+                                                self.name2id,
+                                                self._use_difficult,
+                                                tuple(self.config['image_shape']),
+                                                random=self.istrain)
 
-        image, boxes, classes = get_random_data(img_path, anno_path, self.name2id, self._use_difficult)
+        image = image_normalization(np.array(image, dtype=np.float32))
+        image = np.transpose(image, (2, 0, 1))  # (h,w,c)->(c,h,w)
 
+        # if len(boxes) != 0:
+        #     boxes[:, [0, 2]] = boxes[:, [0, 2]] / self.config['image_shape'][1]
+        #     boxes[:, [1, 3]] = boxes[:, [1, 3]] / self.config['image_shape'][0]
+        #
+        #     boxes[:, 2:4] = boxes[:, 2:4] - boxes[:, 0:2]
+        #     boxes[:, 0:2] = boxes[:, 0:2] + boxes[:, 2:4] / 2
         return image, boxes, classes
 
 
-def get_random_data(img_path: str,
-                    anno_path: str,
-                    name2id: dict,
-                    use_difficult: bool,
-                    resize: tuple,
-                    jitter: float = .3,
+def get_random_data(img_path: str = None,
+                    anno_path: str = None,
+                    name2id: dict = None,
+                    use_difficult: bool = False,
+                    resize: tuple = None,
                     hue: float = .1,
-                    sat: float = 1.5,
-                    val: float = 1.5,
-                    random: bool = True):
+                    sat: float = .7,
+                    val: float = .4,
+                    random: bool = False):
     img = cv2.cvtColor(cv2.imread(img_path), cv2.COLOR_BGR2RGB)
 
     anno = ET.parse(anno_path).getroot()  # 读取xml文档的根节点
@@ -121,64 +119,36 @@ def get_random_data(img_path: str,
 
     boxes = np.array(boxes, dtype=np.float32)
 
-    # image resize
-    ih, iw, ic = img.shape
-    h, w = resize
-    new_ar = w / h * rand(1 - jitter, 1 + jitter) / rand(1 - jitter, 1 + jitter)
-    scale = rand(.25, 2)
-    if new_ar < 1:
-        nh = int(scale * h)
-        nw = int(nh * new_ar)
-    else:
-        nw = int(scale * w)
-        nh = int(nw / new_ar)
+    # data augmentation
+    # train:random=True
+    # val & test :random=False
 
-    img = cv2.resize(img, resize, interpolation=cv2.INTER_CUBIC)
+    # img resize
+    img_resize = image_resize_letterbox(img, resize) if random else img
 
-    # TODO:
-    # image add gray bar
-    dx = int(rand(0, w - nw))
-    dy = int(rand(0, h - nh))
-
-    # flip image
-    flip = rand() < .5
-    img = img if flip else cv2.flip(img, 1)
-
-    # RGB->HSV->RGB
-    image_data = np.array(img, np.uint8)
-
-    r = np.random.uniform(-1, 1, 3) * [hue, sat, val] + 1
-    #   将图像转到HSV上
-    hue, sat, val = cv2.split(cv2.cvtColor(image_data, cv2.COLOR_RGB2HSV))
-    dtype = image_data.dtype
-    #   应用变换
-    x = np.arange(0, 256, dtype=r.dtype)
-    lut_hue = ((x * r[0]) % 180).astype(dtype)
-    lut_sat = np.clip(x * r[1], 0, 255).astype(dtype)
-    lut_val = np.clip(x * r[2], 0, 255).astype(dtype)
-
-    image_data = cv2.merge((cv2.LUT(hue, lut_hue), cv2.LUT(sat, lut_sat), cv2.LUT(val, lut_val)))
-    img = cv2.cvtColor(image_data, cv2.COLOR_HSV2RGB)
+    # flip = rand() < .5 if random else False
+    flip = random
+    img_resize = image_flip(img_resize) if flip else img_resize
 
     # change bbox
-    if len(boxes) > 0:
-        np.random.shuffle(boxes)
-        boxes[:, [0, 2]] = boxes[:, [0, 2]] * nw / iw + dx
-        boxes[:, [1, 3]] = boxes[:, [1, 3]] * nh / ih + dy
-        if flip: boxes[:, [0, 2]] = w - boxes[:, [2, 0]]
-        boxes[:, 0:2][boxes[:, 0:2] < 0] = 0
-        boxes[:, 2][boxes[:, 2] > w] = w
-        boxes[:, 3][boxes[:, 3] > h] = h
-        box_w = boxes[:, 2] - boxes[:, 0]
-        box_h = boxes[:, 3] - boxes[:, 1]
-        boxes = boxes[np.logical_and(box_w > 1, box_h > 1)]
-    return img, boxes, classes
+    boxes = label_adjust(img.shape[:2], resize, boxes, flip) if random else boxes
+
+    # RGB->HSV->RGB
+    # img = color_jittering(img_resize, hue, sat, val)
+
+    return img_resize, boxes, classes
 
 
-def get_random_data_mosaic():
-    img = None,
-    box = None
-    return img, box
+# DataLoader中collate_fn使用
+def yolo_dataset_collate(batch):
+    images = []
+    bboxes = []
+    for img, box in batch:
+        images.append(img)
+        bboxes.append(box)
+    images = torch.from_numpy(np.array(images)).type(torch.FloatTensor)
+    bboxes = [torch.from_numpy(ann).type(torch.FloatTensor) for ann in bboxes]
+    return images, bboxes
 
 
 if __name__ == '__main__':
@@ -189,8 +159,11 @@ if __name__ == '__main__':
     logger.info(classes)
 
     # 这里简单做一下可视化
-    # 由于opencv读入是矩阵，而img现在是tensor，因此，首先将tensor转成numpy.array
-    img_ = (image.numpy() * 255).astype(np.uint8).transpose(1, 2, 0)  # 注意由于图像像素分布0-255，所以转成uint8
-    logger.info(img_.shape)
-    cv2.imshow('test', img_)
+    img = (image * 255).astype(np.uint8).transpose(1, 2, 0)  # 注意由于图像像素分布0-255，所以转成uint8
+    img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
+    for box in boxes:
+        x1, y1 = int(box[0]), int(box[1])
+        x2, y2 = int(box[2]), int(box[3])
+        cv2.rectangle(img, (x1, y1), (x2, y2), (0, 0, 255), 1, 1)
+    cv2.imshow('test', img)
     cv2.waitKey(0)

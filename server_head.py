@@ -7,9 +7,9 @@ from flask import Flask, jsonify, request
 
 from utils.utils import load_yaml, get_classes, get_anchors
 from utils.utils_bbox import DecodeBox
-from utils.utils_image import image_preprocess
+from utils.image import image_preprocess
 from utils.utils_prediect import Predict
-from utils.utils_image import base64_to_pil
+from utils.image import base64_to_pil
 import config
 
 '''

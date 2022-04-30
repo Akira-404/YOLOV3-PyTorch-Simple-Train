@@ -9,7 +9,7 @@ from modules.yolo import YOLO
 from modules.yolo_spp import YOLOSPP
 from utils.utils import get_anchors, get_classes, load_yaml, load_weights
 from utils.utils_bbox import DecodeBox
-from utils.utils_image import img2rgb, image_normalization, resize_image, image_preprocess
+from utils.image import img2rgb, image_normalization, resize_image, image_preprocess
 
 
 class Predict:

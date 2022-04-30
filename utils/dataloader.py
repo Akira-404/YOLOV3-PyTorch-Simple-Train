@@ -6,7 +6,7 @@ from torch.utils.data.dataset import Dataset
 from PIL import Image
 
 # from utils.utils import img2rgb, preprocess_input
-from utils_image import image_normalization, img2rgb
+from image import image_normalization, img2rgb
 
 
 class YoloDataset(Dataset):

@@ -7,7 +7,7 @@ import torch
 
 import config
 from utils.utils_bbox import DecodeBox
-from utils.utils_image import image_preprocess
+from utils.image import image_preprocess
 from utils.utils import load_yaml, get_classes, get_anchors
 
 # load config file

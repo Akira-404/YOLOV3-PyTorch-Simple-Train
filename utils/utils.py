@@ -12,17 +12,23 @@ import xml.etree.ElementTree as ET
 ImageFile.LOAD_TRUNCATED_IMAGES = True
 
 
+def read_txt(path: str):
+    assert path.endswith(".txt") is True, f'file type must be txt'
+    assert os.path.exists(path) is True, f'{path} is error'
+    with open(path) as f:
+        data = f.readlines()
+    return data
+
+
 # 加载yaml配置文件
-def load_yaml(conf_path: str):
+def load_yaml(yaml_path: str):
     """
-    :param conf_path: xxx/xxx/xxx.yaml
-    :return: dict
+    :param yaml_path: xxx/xxx/xxx.yaml
     """
-    assert conf_path.endswith(".yaml") is True, f'file type must be yaml'
-    assert os.path.exists(conf_path) is True, f'{conf_path}is error'
-    if conf_path.endswith(".yaml"):
-        with open(conf_path, 'r', encoding='UTF-8') as f:
-            conf = yaml.safe_load(f)
+    assert yaml_path.endswith(".yaml") is True, f'file type must be yaml'
+    assert os.path.exists(yaml_path) is True, f'{yaml_path}is error'
+    with open(yaml_path, 'r', encoding='UTF-8') as f:
+        conf = yaml.safe_load(f)
     return conf
 
 
