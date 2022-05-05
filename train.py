@@ -15,7 +15,6 @@ from modules.yolo_spp import YOLOSPP
 from modules.loss import YOLOLoss, weights_init
 
 from utils.callbacks import LossHistory
-from utils.dataloader import YoloDataset
 from vocdataset import VOCDataset, yolo_dataset_collate
 from utils.utils_fit import fit_one_epoch
 from utils.utils import get_anchors, get_classes, load_yaml, get_lr_scheduler, set_optimizer_lr, load_weights
@@ -93,7 +92,6 @@ def train(args):
         model_train = model_train.cuda()
 
     train_file = os.path.join(conf['train_dataset_root'], 'ImageSets/Main', 'trainval.txt')
-    # train_file = os.path.join(cwd, 'train.txt')
     with open(train_file) as f:
         train_lines = f.readlines()
 
@@ -106,12 +104,10 @@ def train(args):
     logger.info(f'[Train]::batch_size:{batch_size}')
     logger.info(f'[Train]::epoch step:{epoch_step}')
 
-    train_dataset = YoloDataset(train_lines, conf['image_shape'], num_classes, train=True, mosaic=False)
     my_train_dataset = VOCDataset(args.config)
 
     nw = 0 if platform.system() != 'Linux' else conf['num_workers']
 
-    # train_dataloader = DataLoader(train_dataset,
     train_dataloader = DataLoader(my_train_dataset,
                                   shuffle=True,
                                   batch_size=batch_size,
@@ -156,7 +152,7 @@ def train(args):
                          cuda,
                          conf['anchors_mask'])
 
-    loss_history = LossHistory("logs/", model, image_shape=conf['image_shape'])
+    loss_history = LossHistory("logs/")
     # <<< model loss <<<
 
     # <<< begin training model <<<
@@ -205,9 +201,7 @@ def train(args):
                       optimizer,
                       curr_epoch,
                       epoch_step,
-                      None,
                       train_dataloader,
-                      None,
                       conf['UnFreeze_Epoch'],
                       cuda,
                       save_period)
