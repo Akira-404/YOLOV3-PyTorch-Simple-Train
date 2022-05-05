@@ -6,8 +6,8 @@ from PIL import Image
 from tqdm import tqdm
 
 from infer import Predict
-from utils.utils import get_classes, load_yaml
-from utils.utils_map import get_coco_map, get_map
+from utils.common import get_classes, load_yaml
+from utils.map import get_coco_map, get_map
 
 _map_out_path = 'map_out'
 _conf = load_yaml('predict.yaml')

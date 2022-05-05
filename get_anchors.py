@@ -5,7 +5,7 @@ import numpy as np
 import yaml
 from tqdm import tqdm
 from scipy.cluster.vq import kmeans
-from utils.utils import load_yaml
+from utils.common import load_yaml
 
 from kmeans_anchors.read_voc import VOCDataSet
 from kmeans_anchors.yolo_kmeans import k_means, wh_iou

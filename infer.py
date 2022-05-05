@@ -5,7 +5,7 @@ import cv2
 import numpy as np
 from PIL import Image
 from prediect import Predict
-from utils.utils import load_yaml
+from utils.common import load_yaml
 
 predict = Predict('predict.yaml')
 predict.load_weights()

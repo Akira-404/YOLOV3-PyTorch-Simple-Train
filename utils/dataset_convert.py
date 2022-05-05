@@ -1,14 +1,11 @@
 import os
 import argparse
 import xml.etree.ElementTree as ET
-from xml.dom import minidom
-from PIL import Image
-import numpy as np
 from tqdm import tqdm
 import cv2
 
 parser = argparse.ArgumentParser('YOLO TO VOC')
-parser.add_argument('-r', '--root', type=str, default='/home/cv/AI_Data/widerperson',
+parser.add_argument('-r', '--root', type=str, default='',
                     help='yolo dataset root')
 args = parser.parse_args()
 
@@ -89,7 +86,7 @@ def yolo2voc():
                 # print(img.shape)
                 img_h, img_w, img_d = int(img.shape[0]), int(img.shape[1]), int(img.shape[2])
                 content = content.strip('\n').split()
-                if len(content)<5:
+                if len(content) < 5:
                     continue
                 x = float(content[1]) * img_w
                 y = float(content[2]) * img_h

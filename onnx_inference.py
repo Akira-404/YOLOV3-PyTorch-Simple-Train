@@ -8,7 +8,7 @@ import torch
 import config
 from utils.utils_bbox import DecodeBox
 from utils.image import image_preprocess
-from utils.utils import load_yaml, get_classes, get_anchors
+from utils.common import load_yaml, get_classes, get_anchors
 
 # load config file
 local_path = os.path.dirname(os.path.dirname(__file__))

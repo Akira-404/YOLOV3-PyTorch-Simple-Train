@@ -10,7 +10,7 @@ from loguru import logger
 from torchvision import transforms
 from torch.utils.data.dataset import Dataset
 
-from utils.utils import load_yaml, read_txt
+from utils.common import load_yaml, read_txt
 from utils.image import image_normalization
 from utils.data_augmentation import *
 

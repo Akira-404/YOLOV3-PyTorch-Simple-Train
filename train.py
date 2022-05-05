@@ -14,10 +14,10 @@ from modules.yolo import YOLO
 from modules.yolo_spp import YOLOSPP
 from modules.loss import YOLOLoss, weights_init
 
-from utils.callbacks import LossHistory
+from utils.history import LossHistory
 from vocdataset import VOCDataset, yolo_dataset_collate
-from utils.utils_fit import fit_one_epoch
-from utils.utils import get_anchors, get_classes, load_yaml, get_lr_scheduler, set_optimizer_lr, load_weights
+from utils.fit import fit_one_epoch
+from utils.common import get_anchors, get_classes, load_yaml, get_lr_scheduler, set_optimizer_lr, load_weights
 
 
 def config_info(args):

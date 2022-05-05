@@ -9,7 +9,7 @@ import onnxruntime
 from loguru import logger
 from flask import Flask, jsonify, request
 
-from utils.utils import load_yaml, get_classes, get_anchors
+from utils.common import load_yaml, get_classes, get_anchors
 from utils.utils_bbox import DecodeBox
 from utils.image import image_preprocess
 from utils.utils_prediect import Predict
