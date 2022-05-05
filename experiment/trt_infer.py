@@ -58,7 +58,7 @@ anchors_path = os.path.join(local_path, type_['anchors_path'])
 anchors, num_anchors = get_anchors(anchors_path)
 
 # read the image
-image = Image.open('../work.jpeg')
+image = Image.open('../images/work.jpeg')
 w, h = image.size
 image_shape = np.array((h, w))
 image_data = image_preprocess(image, (conf['input_shape'][0], conf['input_shape'][1]))

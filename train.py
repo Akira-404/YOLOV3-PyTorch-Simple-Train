@@ -42,7 +42,6 @@ def config_info(args):
     logger.info(f'[Train]::Anchors:{anchors}')
     logger.info(f'[Train]::Num Workers:{conf["num_workers"]}')
     logger.info(f'[Train]::SPP args:{conf["spp"]}')
-    # logger.info(f'[Train]::Mosaic:{conf["mosaic"]}')
     logger.info(f'[Train]::Activation:{conf["activation"]}')
 
     logger.info(f'[Train]::Freeze_Train:{conf["Freeze_Train"]}')
@@ -51,9 +50,9 @@ def config_info(args):
         logger.info(f'[Train]::Freeze batch size:{conf["Freeze_batch_size"]}')
         logger.info(f'[Train]::Freeze_lr:{eval(conf["Freeze_lr"])}')
 
-    logger.info(f'[Train]::Unfreeze epoch:{conf["UnFreeze_Epoch"]}')
-    logger.info(f'[Train]::Unfreeze batch size:{conf["Unfreeze_batch_size"]}')
-    logger.info(f'[Train]::Unfreeze_lr:{eval(conf["Unfreeze_lr"])}')
+    logger.info(f'[Train]::Total epoch:{conf["Total_Epoch"]}')
+    logger.info(f'[Train]::batch size:{conf["batch_size"]}')
+    logger.info(f'[Train]::lr:{eval(conf["lr"])}')
 
     return cuda, device, class_names, num_classes, anchors, num_anchors
 
@@ -96,7 +95,7 @@ def train(args):
         train_lines = f.readlines()
 
     num_train = len(train_lines)
-    batch_size = conf['Freeze_batch_size'] if conf['Freeze_Train'] else conf['Unfreeze_batch_size']
+    batch_size = conf['Freeze_batch_size'] if conf['Freeze_Train'] else conf['batch_size']
     epoch_step = num_train // batch_size
 
     logger.info(f'[Train]::train file:{train_file}')
@@ -104,14 +103,14 @@ def train(args):
     logger.info(f'[Train]::batch_size:{batch_size}')
     logger.info(f'[Train]::epoch step:{epoch_step}')
 
-    my_train_dataset = VOCDataset(args.config)
+    train_dataset = VOCDataset(args.config)
 
-    nw = 0 if platform.system() != 'Linux' else conf['num_workers']
+    conf['num_workers'] = 0 if platform.system() != 'Linux' else conf['num_workers']
 
-    train_dataloader = DataLoader(my_train_dataset,
+    train_dataloader = DataLoader(train_dataset,
                                   shuffle=True,
                                   batch_size=batch_size,
-                                  num_workers=nw,
+                                  num_workers=conf['num_workers'],
                                   pin_memory=True,
                                   drop_last=True,
                                   collate_fn=yolo_dataset_collate)
@@ -156,16 +155,18 @@ def train(args):
     # <<< model loss <<<
 
     # <<< begin training model <<<
-    unfreeze_flag = False
+    unfreeze_flag = False  # use to init net args,just only once.
     save_period = 1
     logger.info(f'Begin to train...')
 
-    for curr_epoch in range(conf['Init_Epoch'], conf['UnFreeze_Epoch']):
-        #   如果模型有冻结学习部分
-        #   则解冻，并设置参数
+    # from begin to end
+    for curr_epoch in range(conf['Init_Epoch'], conf['Total_Epoch']):
+
         if curr_epoch >= conf['Freeze_Epoch'] and not unfreeze_flag and conf['Freeze_Train']:
-            batch_size = conf['Unfreeze_batch_size']
-            logger.info(f'Unfreeze train...')
+            batch_size = conf['batch_size']
+            logger.info(f'Fully network train...')
+
+            # <<< learning rate setting
             nbs = 64
             min_lr = eval(conf['Init_lr']) * 0.01
             init_lr_fit = max(batch_size / nbs * eval(conf['Init_lr']), 1e-4)
@@ -175,15 +176,14 @@ def train(args):
 
             for param in model.backbone.parameters():
                 param.requires_grad = True
+            # <<< learning rate setting
 
             epoch_step = num_train // batch_size
-            # epoch_step_val = num_val // batch_size
 
             if epoch_step == 0:
-                # or epoch_step_val == 0:
                 raise ValueError("数据集过小，无法继续进行训练，请扩充数据集。")
 
-            train_dataloader = DataLoader(my_train_dataset,
+            train_dataloader = DataLoader(train_dataset,
                                           shuffle=True,
                                           batch_size=batch_size,
                                           num_workers=conf['num_workers'],
@@ -194,19 +194,17 @@ def train(args):
 
         set_optimizer_lr(optimizer, lr_scheduler_func, curr_epoch)
 
-        fit_one_epoch(model_train,
-                      model,
+        fit_one_epoch(model,
+                      model_train,
+                      train_dataloader,
                       yolo_loss,
                       loss_history,
                       optimizer,
                       curr_epoch,
                       epoch_step,
-                      train_dataloader,
                       conf['UnFreeze_Epoch'],
                       cuda,
                       save_period)
-
-    loss_history.writer.close()
 
 
 if __name__ == '__main__':

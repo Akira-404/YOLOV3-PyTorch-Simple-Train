@@ -9,17 +9,17 @@ def get_lr(optimizer):
 
 
 @logger.catch
-def fit_one_epoch(model_train,
-                  model,
+def fit_one_epoch(model,
+                  model_train,
+                  train_dataloader,
                   yolo_loss,
                   loss_history,
                   optimizer,
-                  curr_epoch,
-                  epoch_step,
-                  train_dataloader,
-                  epoch,
-                  cuda,
-                  save_period):
+                  curr_epoch: int,
+                  epoch_step: int,
+                  epoch: int,
+                  cuda: bool,
+                  save_period: int):
     loss = 0
 
     model_train.train()
@@ -33,16 +33,8 @@ def fit_one_epoch(model_train,
 
             images, targets = batch[0], batch[1]
             with torch.no_grad():
-                if cuda:
-                    images = images.cuda()
-                    targets = [ann.cuda() for ann in targets]
-                    # images = torch.from_numpy(images).type(torch.FloatTensor).cuda()
-                    # targets = [torch.from_numpy(ann).type(torch.FloatTensor).cuda() for ann in targets]
-                else:
-                    images = images
-                    targets = [ann for ann in targets]
-                    # images = torch.from_numpy(images).type(torch.FloatTensor)
-                    # targets = [torch.from_numpy(ann).type(torch.FloatTensor) for ann in targets]
+                images = images.cuda() if cuda else images
+                targets = [ann.cuda() for ann in targets] if cuda else [ann for ann in targets]
 
             optimizer.zero_grad()
 

@@ -12,6 +12,9 @@ use_mosaic: False
 
 image_shape: [ 416, 416 ] #模型输入图片尺度(h,w)
 #image_shape: [ 608,608 ] #模型输入图片尺度
+
+train_percent: 0.9
+trainval_percent: 0.9
 #<<< dataset config <<<
 
 #<<< training config <<<
@@ -28,10 +31,6 @@ Init_Epoch: 0
 
 anchors_mask: [ [ 6, 7, 8 ], [ 3, 4, 5 ], [ 0, 1, 2 ] ]
 
-#generate config
-train_percent: 0.9
-trainval_percent: 0.9
-
 Freeze_Train: True
 
 #冻结训练参数设置
@@ -40,11 +39,10 @@ Freeze_batch_size: 16
 Freeze_lr: 1e-3
 
 #全网络训练参数设置
-UnFreeze_Epoch: 100
-Unfreeze_batch_size: 8
-Unfreeze_lr: 1e-4
+Total_Epoch: 100
+batch_size: 8
+lr: 1e-4
 
-#new args:
 Init_lr: 1e-2
 optimizer_type: "sgd"
 momentum: 0.937
