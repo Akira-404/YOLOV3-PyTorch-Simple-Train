@@ -1,4 +1,5 @@
 import os
+import platform
 import argparse
 
 from loguru import logger
@@ -14,90 +15,76 @@ from modules.yolo_spp import YOLOSPP
 from modules.loss import YOLOLoss, weights_init
 
 from utils.callbacks import LossHistory
-from utils.dataloader import YoloDataset, yolo_dataset_collate
-from vocdataset import VOCDataset
+from utils.dataloader import YoloDataset
+from vocdataset import VOCDataset, yolo_dataset_collate
 from utils.utils_fit import fit_one_epoch
 from utils.utils import get_anchors, get_classes, load_yaml, get_lr_scheduler, set_optimizer_lr, load_weights
 
 
-# 加载权重
-# def load_weights(model, model_path: str, device, ignore_track: bool = False):
-#     model_dict = model.state_dict()
-#     _model_dict = {}
-#     pretrained_dict = torch.load(model_path, map_location=device)
-#     for k, v in model_dict.items():
-#
-#         # pytorch 0.4.0后BN layer新增 num_batches_tracked 参数
-#         # ignore_track=False:加载net中的 num_batches_tracked参数
-#         # ignore_track=True:忽略加载net中的 num_batches_tracked参数
-#         if 'num_batches_tracked' in k and ignore_track:
-#             logger.info('pass item:', k)
-#         else:
-#             _model_dict[k] = v
-#
-#     load_dict = {}
-#     cnt = 0
-#     pretrained_dict = pretrained_dict['model'] if 'model' in pretrained_dict.keys() else pretrained_dict
-#     for kv1, kv2 in zip(_model_dict.items(), pretrained_dict.items()):
-#         if np.shape(kv1[1]) == np.shape(kv2[1]):
-#             load_dict[kv1[0]] = kv2[1]
-#             cnt += 1
-#
-#     model_dict.update(load_dict)
-#     model.load_state_dict(model_dict)
-#     logger.info(f'Load weight data:{cnt}/{len(pretrained_dict)}')
-
-
-def train(args):
-    logger.info(f'Input config yaml: {args.config}')
+def config_info(args):
+    logger.info(f'[Train]::Input config yaml: {args.config}')
     conf = load_yaml(args.config)
 
     cuda = True if (torch.cuda.is_available() and conf["cuda"]) else False
     device = torch.device('cuda' if cuda else 'cpu')
-    logger.info(f'cuda:{cuda}')
-    logger.info(f'Device:{device}')
+    logger.info(f'[Train]::cuda:{cuda}')
+    logger.info(f'[Train]::Device:{device}')
 
-    local_path = os.path.dirname(__file__)
-    classes_path = os.path.join(local_path, conf['classes_path'])
-    anchors_path = os.path.join(local_path, conf['anchors_path'])
-    logger.info(f'Classes path:{classes_path}')
-    logger.info(f'Anchors path:{anchors_path}')
+    cwd = os.path.dirname(__file__)
+    classes_path = os.path.join(cwd, conf['classes_path'])
+    anchors_path = os.path.join(cwd, conf['anchors_path'])
+    logger.info(f'[Train]::Classes path:{classes_path}')
+    logger.info(f'[Train]::Anchors path:{anchors_path}')
 
     class_names, num_classes = get_classes(classes_path)
     anchors, num_anchors = get_anchors(anchors_path)
 
-    logger.info(f'Classes names:{class_names}')
-    logger.info(f'Anchors:{anchors}')
-    logger.info(f'Num Workers:{conf["num_workers"]}')
-    logger.info(f'SPP args:{conf["spp"]}')
-    logger.info(f'Mosaic:{conf["mosaic"]}')
-    logger.info(f'Activation:{conf["activation"]}')
+    logger.info(f'[Train]::Classes names:{class_names}')
+    logger.info(f'[Train]::Anchors:{anchors}')
+    logger.info(f'[Train]::Num Workers:{conf["num_workers"]}')
+    logger.info(f'[Train]::SPP args:{conf["spp"]}')
+    # logger.info(f'[Train]::Mosaic:{conf["mosaic"]}')
+    logger.info(f'[Train]::Activation:{conf["activation"]}')
 
-    logger.info(f'Freeze_Train:{conf["Freeze_Train"]}')
+    logger.info(f'[Train]::Freeze_Train:{conf["Freeze_Train"]}')
     if conf['Freeze_Train']:
-        logger.info(f'Freeze epoch:{conf["Freeze_Epoch"]}')
-        logger.info(f'Freeze batch size:{conf["Freeze_batch_size"]}')
-        logger.info(f'Freeze_lr:{eval(conf["Freeze_lr"])}')
+        logger.info(f'[Train]::Freeze epoch:{conf["Freeze_Epoch"]}')
+        logger.info(f'[Train]::Freeze batch size:{conf["Freeze_batch_size"]}')
+        logger.info(f'[Train]::Freeze_lr:{eval(conf["Freeze_lr"])}')
 
-    logger.info(f'Unfreeze epoch:{conf["UnFreeze_Epoch"]}')
-    logger.info(f'Unfreeze batch size:{conf["Unfreeze_batch_size"]}')
-    logger.info(f'Unfreeze_lr:{eval(conf["Unfreeze_lr"])}')
+    logger.info(f'[Train]::Unfreeze epoch:{conf["UnFreeze_Epoch"]}')
+    logger.info(f'[Train]::Unfreeze batch size:{conf["Unfreeze_batch_size"]}')
+    logger.info(f'[Train]::Unfreeze_lr:{eval(conf["Unfreeze_lr"])}')
 
+    return cuda, device, class_names, num_classes, anchors, num_anchors
+
+
+def train(args):
+    cuda, device, class_names, num_classes, anchors, num_anchors = config_info(args)
+    conf = load_yaml(args.config)
+    cwd = os.path.dirname(__file__)
+
+    # <<< get the model <<<
     model = YOLO(conf['anchors_mask'], num_classes, conf['activation'])
     if conf['spp']:
         model = YOLOSPP(conf['anchors_mask'], num_classes, conf['spp'], conf['activation'])
+    # <<< get the model <<<
 
+    # <<< init model <<<
     logger.info('Init model weights...')
     weights_init(model)
     logger.info('Init done.')
+    # <<< init model <<<
 
-    # 载入yolo weight
+    # <<< 载入yolo weight  <<<
     if conf['model_path'] != '':
-        model_path = os.path.join(local_path, conf["model_path"])
+        model_path = os.path.join(cwd, conf["model_path"])
         logger.info(f'Loading weights:{model_path}')
         load_weights(model, model_path, device)
         logger.info('Loading weights done.')
+    # <<< 载入yolo weight  <<<
 
+    # <<< prepare dataset  <<<
     model_train = model.train()
 
     if cuda:
@@ -105,33 +92,36 @@ def train(args):
         cudnn.benchmark = True
         model_train = model_train.cuda()
 
-    yolo_loss = YOLOLoss(anchors,
-                         num_classes,
-                         conf['input_shape'],
-                         cuda,
-                         conf['anchors_mask'])
-
-    loss_history = LossHistory("logs/", model, input_shape=conf['input_shape'])
-
-    # load train val dataset txt
-    train_file = os.path.join(local_path, conf['train_file'])
-    val_file = os.path.join(local_path, conf['val_file'])
-    logger.info(f'train file:{train_file}')
-    logger.info(f'val file:{val_file}')
-
+    train_file = os.path.join(conf['train_dataset_root'], 'ImageSets/Main', 'trainval.txt')
+    # train_file = os.path.join(cwd, 'train.txt')
     with open(train_file) as f:
         train_lines = f.readlines()
-    with open(val_file) as f:
-        val_lines = f.readlines()
 
     num_train = len(train_lines)
-    num_val = len(val_lines)
-    logger.info(f'num_train:{num_train}')
-    logger.info(f'num_val:{num_val}')
-
     batch_size = conf['Freeze_batch_size'] if conf['Freeze_Train'] else conf['Unfreeze_batch_size']
-    logger.info(f'batch_size:{batch_size}')
+    epoch_step = num_train // batch_size
 
+    logger.info(f'[Train]::train file:{train_file}')
+    logger.info(f'[Train]::num_train:{num_train}')
+    logger.info(f'[Train]::batch_size:{batch_size}')
+    logger.info(f'[Train]::epoch step:{epoch_step}')
+
+    train_dataset = YoloDataset(train_lines, conf['image_shape'], num_classes, train=True, mosaic=False)
+    my_train_dataset = VOCDataset(args.config)
+
+    nw = 0 if platform.system() != 'Linux' else conf['num_workers']
+
+    # train_dataloader = DataLoader(train_dataset,
+    train_dataloader = DataLoader(my_train_dataset,
+                                  shuffle=True,
+                                  batch_size=batch_size,
+                                  num_workers=nw,
+                                  pin_memory=True,
+                                  drop_last=True,
+                                  collate_fn=yolo_dataset_collate)
+    # <<< prepare dataset  <<<
+
+    # <<< init learning rate <<<
     nbs = 64
     min_lr = eval(conf['Init_lr']) * 0.01
     init_lr_fit = max(batch_size / nbs * eval(conf['Init_lr']), 1e-4)
@@ -157,39 +147,23 @@ def train(args):
     optimizer.add_param_group({"params": pg2})
 
     lr_scheduler_func = get_lr_scheduler(conf['lr_decay_type'], init_lr_fit, min_lr_fit, conf['UnFreeze_Epoch'])
+    # <<< init learning rate <<<
 
-    epoch_step = num_train // batch_size
-    epoch_step_val = num_val // batch_size
-    logger.info(f'epoch step:{epoch_step}')
-    logger.info(f'epoch step val:{epoch_step_val}')
+    # <<< model loss <<<
+    yolo_loss = YOLOLoss(anchors,
+                         num_classes,
+                         conf['image_shape'],
+                         cuda,
+                         conf['anchors_mask'])
 
-    logger.info(f'Create Dataset...')
-    # TODO: test vocdataset
-    train_dataset_ = VOCDataset(args.config, train=True)
+    loss_history = LossHistory("logs/", model, image_shape=conf['image_shape'])
+    # <<< model loss <<<
 
-    train_dataset = YoloDataset(train_lines, conf['input_shape'], num_classes, train=True, mosaic=conf['mosaic'])
-    val_dataset = YoloDataset(val_lines, conf['input_shape'], num_classes, train=False, mosaic=False)
-
-    train_dataloader = DataLoader(train_dataset,
-                                  shuffle=True,
-                                  batch_size=batch_size,
-                                  num_workers=conf['num_workers'],
-                                  pin_memory=True,
-                                  drop_last=True,
-                                  collate_fn=yolo_dataset_collate)
-
-    val_dataloader = DataLoader(val_dataset,
-                                shuffle=True,
-                                batch_size=batch_size,
-                                num_workers=conf['num_workers'],
-                                pin_memory=True,
-                                drop_last=True,
-                                collate_fn=yolo_dataset_collate)
+    # <<< begin training model <<<
     unfreeze_flag = False
     save_period = 1
     logger.info(f'Begin to train...')
 
-    # 从初始epoch到最后一个epoch
     for curr_epoch in range(conf['Init_Epoch'], conf['UnFreeze_Epoch']):
         #   如果模型有冻结学习部分
         #   则解冻，并设置参数
@@ -207,24 +181,18 @@ def train(args):
                 param.requires_grad = True
 
             epoch_step = num_train // batch_size
-            epoch_step_val = num_val // batch_size
+            # epoch_step_val = num_val // batch_size
 
-            if epoch_step == 0 or epoch_step_val == 0:
+            if epoch_step == 0:
+                # or epoch_step_val == 0:
                 raise ValueError("数据集过小，无法继续进行训练，请扩充数据集。")
 
-            train_dataloader = DataLoader(train_dataset,
+            train_dataloader = DataLoader(my_train_dataset,
                                           shuffle=True,
                                           batch_size=batch_size,
                                           num_workers=conf['num_workers'],
                                           pin_memory=True,
                                           drop_last=True, collate_fn=yolo_dataset_collate)
-            val_dataloader = DataLoader(val_dataset,
-                                        shuffle=True,
-                                        batch_size=batch_size,
-                                        num_workers=conf['num_workers'],
-                                        pin_memory=True,
-                                        drop_last=True,
-                                        collate_fn=yolo_dataset_collate)
 
             unfreeze_flag = True
 
@@ -237,9 +205,9 @@ def train(args):
                       optimizer,
                       curr_epoch,
                       epoch_step,
-                      epoch_step_val,
+                      None,
                       train_dataloader,
-                      val_dataloader,
+                      None,
                       conf['UnFreeze_Epoch'],
                       cuda,
                       save_period)

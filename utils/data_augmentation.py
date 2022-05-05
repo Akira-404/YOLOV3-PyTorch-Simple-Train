@@ -1,3 +1,5 @@
+import logging
+
 import cv2
 import torch
 import numpy as np
@@ -66,43 +68,41 @@ def label_adjust(image_shape: tuple = None,
     return boxes
 
 
-def image_resize_letterbox(image_src: np.ndarray = None,
-                           dst_size: tuple = None,
-                           pad_color: tuple = (114, 114, 114)):
-    """
-    缩放图片，保持长宽比。
-    :param image_src:       原图（numpy）
-    :param dst_size:        （h，w）
-    :param pad_color:       填充颜色，默认是灰色
-    :return:
-    """
-    src_h, src_w = image_src.shape[:2]
-    dst_h, dst_w = dst_size
-    scale = min(dst_h / src_h, dst_w / src_w)
-    new_h, new_w = int(round(src_h * scale)), int(round(src_w * scale))
+def letterbox(img,
+              new_shape: tuple = (416, 416),
+              color: tuple = (114, 114, 114),
+              auto: bool = False,
+              scaleFill: bool = False,
+              scaleup: bool = False):
+    # Resize image to a 32-pixel-multiple rectangle https://github.com/ultralytics/yolov3/issues/232
+    img_shape = img.shape[:2]  # current shape [height, width]
+    h, w = img_shape
 
-    min_edge = min(new_h, new_w)
-    pad = dst_h - min_edge
+    dst_h, dst_w = new_shape
+    # Scale ratio (new / old)
+    r = min(dst_h / h, dst_w / w)
+    if not scaleup:  # only scale down, do not scale up (for better test mAP)
+        r = min(r, 1.0)
 
-    # yolov5 letterbox version
-    # pad = np.mod(max_edge - min_edge, 32)
+    # Compute padding
+    new_unpad = int(round(w * r)), int(round(h * r))
+    dw, dh = dst_w - new_unpad[0], dst_h - new_unpad[1]  # wh padding
+    if auto:  # minimum rectangle
+        dw, dh = np.mod(dw, 64), np.mod(dh, 64)  # wh padding
+    elif scaleFill:  # stretch
+        dw, dh = 0.0, 0.0
+        new_unpad = (dst_w, dst_h)
+        ratio = dst_w / w, dst_h / h  # width, height ratios
 
-    if image_src.shape[0:2] != (new_w, new_h):
-        image_dst = cv2.resize(image_src, (new_w, new_h), interpolation=cv2.INTER_LINEAR)
-    else:
-        image_dst = image_src
+    dw /= 2  # divide padding into 2 sides
+    dh /= 2
 
-    if dst_h == new_w:
-        top, down = pad // 2, pad // 2
-        left, right = 0, 0
-    else:
-        top, down = 0, 0
-        left, right = pad // 2, pad // 2
-
-    # add edge border
-    image_dst = cv2.copyMakeBorder(image_dst, top, down, left, right, cv2.BORDER_CONSTANT, value=pad_color)
-
-    return image_dst
+    if img_shape[::-1] != new_unpad:  # resize
+        img = cv2.resize(img, new_unpad, interpolation=cv2.INTER_LINEAR)
+    top, bottom = int(round(dh - 0.1)), int(round(dh + 0.1))
+    left, right = int(round(dw - 0.1)), int(round(dw + 0.1))
+    img = cv2.copyMakeBorder(img, top, bottom, left, right, cv2.BORDER_CONSTANT, value=color)  # add border
+    return img
 
 
 if __name__ == "__main__":
@@ -114,7 +114,7 @@ if __name__ == "__main__":
     boxes = np.array(boxes, dtype=np.float32)
     boxes = np.reshape(boxes, (-1, 4))
 
-    im_resize = image_resize_letterbox(im, (416, 416))
+    im_resize = letterbox(im, (416, 416))
     im_resize = image_flip(im_resize)
     boxes = label_adjust(im.shape[:2], (416, 416), boxes, True)
     print(boxes)

@@ -1,8 +1,8 @@
 #<<< dataset config <<<
-#dataset_root: '/home/ubuntu/data/VOCdevkit/VOC2007/VOC2007/trainval'
-train_dataset_root: '/Users/lee/Desktop/dataset/voc/VOCtrain/VOC2007'
-test_dataset_root: '/Users/lee/Desktop/dataset/voc/VOCtest/VOC2007'
-model_path: 'weights/reflective-ep124-loss4.193.pth' #预加载yolov3权重文件
+train_dataset_root: '/home/ubuntu/data/VOCdevkit/VOC2007/VOCtrainval'
+test_dataset_root: '/home/ubuntu/data/VOCdevkit/VOC2007/VOCtest'
+#model_path: 'weights/person.pth' #预加载yolov3权重文件
+model_path: '' #预加载yolov3权重文件
 classes_path: 'data/voc/classes.yaml' #数据集类别文件
 anchors_path: 'data/voc/anchors.yaml' #数据集聚类anchors
 

@@ -13,7 +13,7 @@ from matplotlib import pyplot as plt
 
 
 class LossHistory():
-    def __init__(self, log_dir, model, input_shape):
+    def __init__(self, log_dir, model, image_shape):
         time_str = datetime.datetime.strftime(datetime.datetime.now(), '%Y_%m_%d_%H_%M_%S')
         self.log_dir = os.path.join(log_dir, "loss_" + str(time_str))
         self.losses = []
@@ -22,7 +22,7 @@ class LossHistory():
         os.makedirs(self.log_dir)
         # self.writer = SummaryWriter(self.log_dir)
         try:
-            dummy_input = torch.randn(2, 3, input_shape[0], input_shape[1])
+            dummy_input = torch.randn(2, 3, image_shape[0], image_shape[1])
             # self.writer.add_graph(model, dummy_input)
         except:
             pass

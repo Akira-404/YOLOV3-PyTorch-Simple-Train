@@ -22,7 +22,7 @@ class VOCDataset(Dataset):
         cwd = os.path.dirname(__file__)
         self.config = load_yaml(os.path.join(cwd, config))
         self.istrain = train
-        self._root = self.config['train_dataset_root'] if self.istrain else self.config['test_dataset_root']
+        self._root = self.config['train_dataset_root']
         self._use_difficult = self.config['use_difficult']
         self._use_text = self.config['use_text']
         self._use_mosaic = self.config['use_mosaic']
@@ -31,7 +31,6 @@ class VOCDataset(Dataset):
         self._img_path = os.path.join(self._root, "JPEGImages", "{}.jpg")
         self._imgset_path = os.path.join(self._root, "ImageSets", "Main", "{}.txt")
 
-        logger.info(f'[VOCDataset]::train ot test: {train}')
         logger.info(f'[VOCDataset]::dataset _root: {self._root}')
         logger.info(f'[VOCDataset]::use difficult: {self._use_difficult}')
         logger.info(f'[VOCDataset]::use text file: {self._use_text}')
@@ -63,12 +62,12 @@ class VOCDataset(Dataset):
         img_path = self._img_path.format(img_id)
         anno_path = self._anno_path.format(img_id)
 
-        image, boxes, classes = get_random_data(img_path,
-                                                anno_path,
-                                                self.name2id,
-                                                self._use_difficult,
-                                                tuple(self.config['image_shape']),
-                                                random=self.istrain)
+        image, boxes = get_random_data(img_path,
+                                       anno_path,
+                                       self.name2id,
+                                       self._use_difficult,
+                                       tuple(self.config['image_shape']),
+                                       random=self.istrain)
 
         image = image_normalization(np.array(image, dtype=np.float32))
         image = np.transpose(image, (2, 0, 1))  # (h,w,c)->(c,h,w)
@@ -99,7 +98,7 @@ class VOCDataset(Dataset):
             boxes[:, [0, 2]] = boxes[:, [0, 2]] / self.config['image_shape'][1]  # w
             boxes[:, [1, 3]] = boxes[:, [1, 3]] / self.config['image_shape'][0]  # h
             # return box=[cx,cy,w,h]
-        return image, boxes, classes
+        return image, boxes
 
 
 def get_random_data(img_path: str = None,
@@ -115,7 +114,6 @@ def get_random_data(img_path: str = None,
 
     anno = ET.parse(anno_path).getroot()  # 读取xml文档的根节点
     boxes = []
-    classes = []
 
     for obj in anno.iter("object"):
         difficult = int(obj.find("difficult").text) == 1
@@ -123,20 +121,17 @@ def get_random_data(img_path: str = None,
             continue
 
         bndbox = obj.find("bndbox")
+        name = obj.find("name").text.lower().strip()
+        # classes.append(name2id[name])  # 将类别映射回去
         box = [
             bndbox.find("xmin").text,
             bndbox.find("ymin").text,
             bndbox.find("xmax").text,
             bndbox.find("ymax").text,
+            name2id[name]
         ]
-        TO_REMOVE = 1  # 由于像素是网格存储，坐标2实质表示第一个像素格，所以-1
-        box = tuple(
-            map(lambda x: x - TO_REMOVE, list(map(float, box)))
-        )
-        boxes.append(box)
 
-        name = obj.find("name").text.lower().strip()
-        classes.append(name2id[name])  # 将类别映射回去
+        boxes.append(box)
 
     boxes = np.array(boxes, dtype=np.float32)
 
@@ -145,7 +140,8 @@ def get_random_data(img_path: str = None,
     # val & test :random=False
 
     # img resize
-    img_resize = image_resize_letterbox(img, resize) if random else img
+    # img_resize = image_resize_letterbox(img, resize) if random else img
+    img_resize = letterbox(img, resize) if random else img
 
     # image flip
     flip = rand() < .5 if random else False
@@ -157,7 +153,7 @@ def get_random_data(img_path: str = None,
     # RGB->HSV->RGB
     img_resize = color_jittering(img_resize, hue, sat, val)
 
-    return img_resize, boxes, classes
+    return img_resize, boxes
 
 
 # DataLoader中collate_fn使用
@@ -174,10 +170,9 @@ def yolo_dataset_collate(batch):
 
 if __name__ == '__main__':
     dataset = VOCDataset('data/voc/config.yaml')  # 实例化一个对象
-    image, boxes, classes = dataset[0]  # 返回第一张图像及box和对应的类别
+    image, boxes = dataset[0]  # 返回第一张图像及box和对应的类别
     logger.info(image.shape)
     logger.info(boxes)
-    logger.info(classes)
 
     img = (image * 255).astype(np.uint8).transpose(1, 2, 0)  # 注意由于图像像素分布0-255，所以转成uint8
     img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
