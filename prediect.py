@@ -4,6 +4,7 @@ import time
 import numpy as np
 import torch
 import torch.nn as nn
+from loguru import logger
 
 from modules.yolo import YOLO
 from modules.yolo_spp import YOLOSPP
@@ -12,8 +13,9 @@ from utils.utils_bbox import DecodeBox
 from utils.image import img2rgb, image_normalization, resize_image, image_preprocess
 
 
+
 class Predict:
-    def __init__(self, conf_path: str, ignore_track: bool = False, obj_type: str = None):
+    def __init__(self, conf_path: str, ignore_track: bool = False):
         """
         :param conf_path: xxx.yaml
         """
@@ -23,21 +25,15 @@ class Predict:
         # 加载配置文件
         self.conf = load_yaml(conf_path)
 
-        if obj_type is not None:
-            self.conf['obj_type'] = obj_type
-
-        # get the object,like yolov3 ,hat...
-        self.type = self.conf['object'][self.conf['obj_type']]
-
         self.CUDA = True if torch.cuda.is_available() and self.conf['cuda'] else False
         self.device = torch.device('cuda' if self.CUDA else 'cpu')
 
         self.ignore_track = ignore_track
-        _local_path = os.path.dirname(os.path.dirname(__file__))
+        cwd = os.path.dirname(__file__)
 
-        self.classes_path = os.path.join(_local_path, self.type['classes_path'])
-        self.anchors_path = os.path.join(_local_path, self.type['anchors_path'])
-        self.model_path = os.path.join(_local_path, self.type['model_path'])
+        self.classes_path = os.path.join(cwd, self.conf['classes_path'])
+        self.anchors_path = os.path.join(cwd, self.conf['anchors_path'])
+        self.model_path = os.path.join(cwd, self.conf['model_path'])
 
         assert os.path.exists(self.classes_path) is True, self.classes_path
         assert os.path.exists(self.anchors_path) is True, self.anchors_path + 'is error'
@@ -48,7 +44,7 @@ class Predict:
 
         self.bbox_util = DecodeBox(self.anchors,
                                    self.num_classes,
-                                   (self.conf['input_shape'][0], self.conf['input_shape'][1]),
+                                   (self.conf['image_shape'][0], self.conf['image_shape'][1]),
                                    self.conf['anchors_mask'])
 
         # load the yolov3 net
@@ -60,7 +56,6 @@ class Predict:
         self.prepare_flag = False
 
     def get_model_with_weights(self, ignore_track: bool = False):
-        print(f'model type:{self.conf["obj_type"]}')
         load_weights(self.net, self.model_path, self.device, ignore_track)
         return self.net
 
@@ -70,7 +65,7 @@ class Predict:
     def load_weights(self, ignore_track: bool = False):
         self.net = self.get_model_with_weights(ignore_track)
         self.net = self.net.eval()
-        print(f'{self.type["model_path"]} model,anchors,classes loaded')
+        logger.info(f'{self.conf["model_path"]} model,anchors,classes loaded')
 
         if self.CUDA:
             self.net = nn.DataParallel(self.net)
@@ -80,14 +75,14 @@ class Predict:
     def detect_image(self, image) -> list:
 
         if not self.prepare_flag:
-            print('This net is not load weights,please use Predict.load_weights()')
+            logger.info('This net is not load weights,please use Predict.load_weights()')
             return []
 
         # image_shape = np.array(np.shape(image)[0:2])  # h,w
         w, h = image.size
         image_shape = np.array((h, w))  # h,w
-        image_data = image_preprocess(image, (self.conf['input_shape'][0],
-                                              self.conf['input_shape'][1]))
+        image_data = image_preprocess(image, (self.conf['image_shape'][0],
+                                              self.conf['image_shape'][1]))
 
         with torch.no_grad():
             images = torch.from_numpy(image_data)
@@ -102,7 +97,7 @@ class Predict:
             # results shape:(len(prediction),num_anchors,4)
             results = self.bbox_util.nms_(torch.cat(outputs, 1),
                                           self.num_classes,
-                                          self.conf['input_shape'],
+                                          self.conf['image_shape'],
                                           image_shape,
                                           self.conf['letterbox_image'],
                                           conf_thres=self.conf['confidence'],
@@ -122,7 +117,7 @@ class Predict:
 
         # if draw:
         #     draw_box(self.num_classes, image, top_label, top_conf, top_boxes, self.class_names,
-        #              self.conf['input_shape'])
+        #              self.conf['image_shape'])
 
         # package data
         data = []
@@ -161,7 +156,7 @@ class Predict:
 
         #   给图像增加灰条，实现不失真的resize
         #   也可以直接resize进行识别
-        image_data = resize_image(image, (self.conf['input_shape'][1], self.conf['input_shape'][0]),
+        image_data = resize_image(image, (self.conf['image_shape'][1], self.conf['image_shape'][0]),
                                   self.conf['letterbox_image'])
 
         #   添加上batch_size维度
@@ -182,7 +177,7 @@ class Predict:
 
             results = self.bbox_util.nms_(torch.cat(outputs, 1),
                                           self.num_classes,
-                                          self.conf['input_shape'],
+                                          self.conf['image_shape'],
                                           image_shape,
                                           self.conf['letterbox_image'],
                                           conf_thres=self.conf['confidence'],
@@ -200,7 +195,7 @@ class Predict:
 
                 results = self.bbox_util.nms_(torch.cat(outputs, 1),
                                               self.num_classes,
-                                              self.conf['input_shape'],
+                                              self.conf['image_shape'],
                                               image_shape,
                                               self.conf['letterbox_image'],
                                               conf_thres=self.conf['confidence'],
@@ -220,7 +215,7 @@ class Predict:
 
         #   给图像增加灰条，实现不失真的resize
         #   也可以直接resize进行识别
-        image_data = resize_image(image, (self.conf['input_shape'][1], self.conf['input_shape'][0]),
+        image_data = resize_image(image, (self.conf['image_shape'][1], self.conf['image_shape'][0]),
                                   self.conf['letterbox_image'])
 
         #   添加上batch_size维度
@@ -238,7 +233,7 @@ class Predict:
             #   将预测框进行堆叠，然后进行非极大抑制
             results = self.bbox_util.nms_(torch.cat(outputs, 1),
                                           self.num_classes,
-                                          self.conf['input_shape'],
+                                          self.conf['image_shape'],
                                           image_shape,
                                           self.conf['letterbox_image'],
                                           conf_thres=self.conf['confidence'],
@@ -265,3 +260,5 @@ class Predict:
 
         f.close()
         return
+
+

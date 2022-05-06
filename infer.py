@@ -7,36 +7,32 @@ from PIL import Image
 from prediect import Predict
 from utils.common import load_yaml
 
-predict = Predict('predict.yaml')
-predict.load_weights()
-conf = load_yaml('predict.yaml')
-conf = conf['object'][conf['obj_type']]
-
 
 def main(args):
-    if args.mode == 'image':
-        if args.image != "":
-            if os.path.exists(args.image) is True:
-                image = Image.open(args.image)
-                data = predict.detect_image(image)
-                print(f'data:{data}')
+    predict = Predict(args.config)
+    predict.load_weights()
+    if args.image != '':
+        if os.path.exists(args.image) is True:
+            image = Image.open(args.image)
+            data = predict.detect_image(image)
+            print(f'data:{data}')
 
-                # PIL:Image->OpenCV
-                frame = cv2.cvtColor(np.asarray(image), cv2.COLOR_RGB2BGR)
+            # PIL:Image->OpenCV
+            frame = cv2.cvtColor(np.asarray(image), cv2.COLOR_RGB2BGR)
 
-                for item in data:
-                    x1, y1 = item['left'], item['top']
-                    x2, y2 = item['left'] + item['width'], item['top'] + item['height']
-                    cv2.rectangle(frame, (x1 - 10, y1 - 10), (x2 + 10, y2 + 10), (255, 0, 0), 1)
-                    cv2.putText(frame, str(item['label']), (x1, y1), cv2.FONT_HERSHEY_PLAIN, 1, (255, 0, 0))
-                    cv2.putText(frame, str(round(item['score'], 3)), (x1, y1 + 15), cv2.FONT_HERSHEY_PLAIN, 1,
-                                (255, 0, 0))
-                cv2.imshow("video", frame)
-                cv2.waitKey(0)
-            else:
-                print(f'{args.image} is error')
+            for item in data:
+                x1, y1 = item['left'], item['top']
+                x2, y2 = item['left'] + item['width'], item['top'] + item['height']
+                cv2.rectangle(frame, (x1 - 10, y1 - 10), (x2 + 10, y2 + 10), (255, 0, 0), 1)
+                cv2.putText(frame, str(item['label']), (x1, y1), cv2.FONT_HERSHEY_PLAIN, 1, (255, 0, 0))
+                cv2.putText(frame, str(round(item['score'], 3)), (x1, y1 + 15), cv2.FONT_HERSHEY_PLAIN, 1,
+                            (255, 0, 0))
+            cv2.imshow("video", frame)
+            cv2.waitKey(0)
+        else:
+            print(f'{args.image} is error')
 
-    elif args.mode == 'video':
+    elif args.video != '':
 
         assert os.path.exists(args.video) is True, f'{args.video} is error'
         _fps = 0.0
@@ -63,6 +59,8 @@ def main(args):
                 cv2.rectangle(frame, (x1 - 10, y1 - 10), (x2 + 10, y2 + 10), (255, 0, 0), 1)
                 cv2.putText(frame, str(item['label']), (x1, y1), cv2.FONT_HERSHEY_PLAIN, 1, (255, 0, 0))
                 cv2.putText(frame, str(round(item['score'], 3)), (x1, y1 + 15), cv2.FONT_HERSHEY_PLAIN, 1, (255, 0, 0))
+
+            frame = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
             cv2.imshow("video", frame)
 
             c = cv2.waitKey(25) & 0xff
@@ -77,7 +75,7 @@ def main(args):
         out.release()
         cv2.destroyAllWindows()
 
-    elif args.mode == 'dir':
+    elif args.dir != '':
         assert os.path.exists(args.dir) is True, f'{args.dir} is error'
         _support_img_type = ['.bmp', '.dib', '.png', '.jpg', '.jpeg', '.pbm', '.pgm', '.ppm', '.tif', '.tiff']
         # _dir_out_path = os.path.join(args.save_path, os.path.basename(args.dir))
@@ -109,16 +107,20 @@ def main(args):
 
 
 if __name__ == '__main__':
-    parse = argparse.ArgumentParser('predict config')
-    parse.add_argument('-m', '--mode', type=str, choices=['image', 'video', 'dir'], default='dir',
-                       help='predict image or video or dir')
-    parse.add_argument('-i', '--image', type=str, default='./image1.jpeg',
-                       help='image path')
-    parse.add_argument('-v', '--video', type=str, default='/home/ubuntu/github/opencv/samples/data/vtest.avi',
-                       help='video path')
+    '''
+    image path:  images/person.jpeg
+    video path: /home/ubuntu/github/opencv/samples/data/vtest.avi
+    '''
+    parse = argparse.ArgumentParser('inference config')
+    parse.add_argument('-c', '--config', type=str, default='data/head/config.yaml',
+                       help='input config path')
+    parse.add_argument('-i', '--image', type=str, default='images/person.jpeg',
+                       help='input image path')
+    parse.add_argument('-v', '--video', type=str, default='',
+                       help='input video path')
     parse.add_argument('-d', '--dir', type=str,
                        default='/home/ubuntu/data/VOCdevkit/VOC2007/WiderPerson/test_images',
-                       help='dir path')
+                       help='input dir path')
     parse.add_argument('-s', '--save_path', type=str, default='')
     args = parse.parse_args()
     main(args)

@@ -1,9 +1,9 @@
 #<<< dataset config <<<
-train_dataset_root: '/home/ubuntu/data/VOCdevkit/VOC2007/VOCtrainval'
-test_dataset_root: '/home/ubuntu/data/VOCdevkit/VOC2007/VOCtest'
-model_path: '' #预加载yolov3权重文件
-classes_path: 'data/voc/classes.yaml' #数据集类别文件
-anchors_path: 'data/voc/anchors.yaml' #数据集聚类anchors
+train_dataset_root: '/home/ubuntu/data/VOCdevkit/VOC2007'
+test_dataset_root: '/home/ubuntu/data/VOCdevkit/VOC2007'
+model_path: 'weights/head.pth' #预加载yolov3权重文件
+classes_path: 'data/head/head_classes.yaml' #数据集类别文件
+anchors_path: 'data/head/head_anchors.yaml' #数据集聚类anchors
 
 use_text: trainval
 use_difficult: False
@@ -48,3 +48,9 @@ momentum: 0.937
 weight_decay: 5e-4
 lr_decay_type: "cos"
 #<<< training config <<<
+
+#<<< perdict config <<<
+confidence: 0.5 #置信度
+nms_iou: 0.3 #nms iou阈值
+letterbox_image: False #是否使用letterbox缩放
+#<<< perdict config <<<
