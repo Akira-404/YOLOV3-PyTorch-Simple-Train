@@ -2,6 +2,7 @@
 train_dataset_root: '/home/ubuntu/data/VOCdevkit/VOC2007/widerperson'
 test_dataset_root: '/home/ubuntu/data/VOCdevkit/VOC2007/widerperson'
 model_path: 'weights/person.pth' #预加载yolov3权重文件
+onnx_path: 'onnx/person.onnx'
 classes_path: 'data/person/person_classes.yaml' #数据集类别文件
 anchors_path: 'data/person/person_anchors.yaml' #数据集聚类anchors
 

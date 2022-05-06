@@ -8,7 +8,7 @@ from flask import Flask, jsonify, request
 from utils.common import load_yaml, get_classes, get_anchors
 from utils.utils_bbox import DecodeBox
 from utils.image import image_preprocess
-from utils.utils_prediect import Predict
+from prediect import Predict
 from utils.image import base64_to_pil
 import config
 
@@ -31,23 +31,22 @@ logger.add(sink=_LOG.file_head,
            retention=_LOG.retention,
            compression=_LOG.compression)
 
-_local_path = os.path.dirname(__file__)
-predict_file = os.path.join(_local_path, 'predict.yaml')
+cwd = os.path.dirname(__file__)
+predict_file = os.path.join(cwd, 'data/head/config.yaml')
 
-predict = Predict(predict_file, obj_type='head')
+predict = Predict(predict_file)
 # predict.load_weights()
 app = Flask(__name__)
 
 conf = load_yaml(predict_file)
-type_ = conf['object']['head']
 
-classes_path = os.path.join(_local_path, type_['classes_path'])
-anchors_path = os.path.join(_local_path, type_['anchors_path'])
+classes_path = os.path.join(cwd, conf['classes_path'])
+anchors_path = os.path.join(cwd, conf['anchors_path'])
 class_names, num_classes = get_classes(classes_path)
 anchors, num_anchors = get_anchors(anchors_path)
 
 logger.info('Load yolov3 onnx model.')
-onnx_path = os.path.join(_local_path, './onnx/head.onnx')
+onnx_path = os.path.join(cwd, conf['onnx_path'])
 session = onnxruntime.InferenceSession(onnx_path, providers=['CUDAExecutionProvider', 'CPUExecutionProvider'])
 logger.info('Load done.')
 

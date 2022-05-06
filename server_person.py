@@ -12,9 +12,9 @@ from flask import Flask, jsonify, request
 from utils.common import load_yaml, get_classes, get_anchors
 from utils.utils_bbox import DecodeBox
 from utils.image import image_preprocess
-from utils.utils_prediect import Predict
 from utils.polygon import winding_number
 from utils.image import base64_to_pil
+from prediect import Predict
 import config
 
 '''
@@ -25,8 +25,8 @@ log位置：./logs/yolov3
 压缩格式：ZIP
 '''
 _LOG = config.get_log_config()
-_local_path = os.path.dirname(__file__)
-log_path = os.path.join(_local_path, 'log/person')
+cwd = os.path.dirname(__file__)
+log_path = os.path.join(cwd, 'log/person')
 if os.path.exists(log_path) is False:
     os.makedirs(log_path)
 
@@ -40,23 +40,22 @@ logger.add(sink=os.path.join(log_path, 'person_{time}.log'),
 _Thr = config.get_threshold()
 _Url = config.get_url()
 
-_local_path = os.path.dirname(__file__)
-predict_file = os.path.join(_local_path, 'predict.yaml')
+cwd = os.path.dirname(__file__)
+predict_file = os.path.join(cwd, 'data/person/config.yaml')
 
-predict = Predict(predict_file, obj_type='yolov3')
+predict = Predict(predict_file)
 predict.load_weights()
 app = Flask(__name__)
 
 conf = load_yaml(predict_file)
-type_ = conf['object']['yolov3']
 
-classes_path = os.path.join(_local_path, type_['classes_path'])
-anchors_path = os.path.join(_local_path, type_['anchors_path'])
+classes_path = os.path.join(cwd, conf['classes_path'])
+anchors_path = os.path.join(cwd, conf['anchors_path'])
 class_names, num_classes = get_classes(classes_path)
 anchors, num_anchors = get_anchors(anchors_path)
 
 logger.info('Load yolov3 onnx model.')
-onnx_path = os.path.join(_local_path, './onnx/person.onnx')
+onnx_path = os.path.join(cwd, conf['onnx_path'])
 t1 = time.time()
 session = onnxruntime.InferenceSession(onnx_path, providers=['CUDAExecutionProvider', 'CPUExecutionProvider'])
 t2 = time.time()

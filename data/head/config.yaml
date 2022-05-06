@@ -2,6 +2,7 @@
 train_dataset_root: '/home/ubuntu/data/VOCdevkit/VOC2007'
 test_dataset_root: '/home/ubuntu/data/VOCdevkit/VOC2007'
 model_path: 'weights/head.pth' #预加载yolov3权重文件
+onnx_path: 'onnx/head.onnx'
 classes_path: 'data/head/head_classes.yaml' #数据集类别文件
 anchors_path: 'data/head/head_anchors.yaml' #数据集聚类anchors
 

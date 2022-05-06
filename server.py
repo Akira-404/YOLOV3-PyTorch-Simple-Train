@@ -6,42 +6,40 @@ import onnxruntime
 from loguru import logger
 from flask import Flask, jsonify, request
 
-from prediect import Predict
-from utils.image import base64_to_pil
 from utils.common import load_yaml, get_classes, get_anchors
 from utils.utils_bbox import DecodeBox
 from utils.image import image_preprocess
-
+from prediect import Predict
+from utils.image import base64_to_pil
 import config
 
 '''
 日志大小上限：10 MB
-log位置：./logs/helmet
-写入级别:WARNING
+log位置：./logs/head
+写入级别:INFO
 保留时间：7天
 压缩格式：ZIP
 '''
 _LOG = config.get_log_config()
-cwd = os.path.dirname(__file__)
-log_path = os.path.join(cwd, 'log/helmet')
-if os.path.exists(log_path) is False:
-    os.makedirs(log_path)
+
+if os.path.exists('./logs/server_log') is False:
+    os.makedirs('./logs/server_log')
 
 logger.remove(handler_id=None)  # 不在终端输出文本信息
-logger.add(sink=os.path.join(log_path, 'helmet_{time}.log'),
+logger.add(sink=_LOG.file_head,
            level=_LOG.level,
            rotation=_LOG.rotation,
            retention=_LOG.retention,
            compression=_LOG.compression)
 
 cwd = os.path.dirname(__file__)
-predict_file = os.path.join(cwd, 'data/HardHatWorker/config.yaml')
+predict_file = os.path.join(cwd, 'data/xxx/config.yaml')
+
 predict = Predict(predict_file)
 # predict.load_weights()
 app = Flask(__name__)
 
 conf = load_yaml(predict_file)
-type_ = conf['object']['helmet']
 
 classes_path = os.path.join(cwd, conf['classes_path'])
 anchors_path = os.path.join(cwd, conf['anchors_path'])
@@ -54,29 +52,26 @@ session = onnxruntime.InferenceSession(onnx_path, providers=['CUDAExecutionProvi
 logger.info('Load done.')
 
 
-def jsonify_(code: int, message: str, data):
+def _get_result(code: int, message: str, data):
     result = {
         "code": code,
         "message": message,
         "data": data
     }
-
+    print("Response data:", result)
     return jsonify(result)
 
 
-@app.route('/yolov3_get_helmet', methods=['POST'])
-@logger.catch()
-def get_helmet():
+@app.route('/yolov3_get_head', methods=['POST'])
+def get_head():
     params = request.json if request.method == "POST" else request.args
     img = base64_to_pil(params['img'])
     data = predict.detect_image(img)
+    return _get_result(200, 'success', data)
 
-    return jsonify_(200, 'success', data)
 
-
-@app.route('/yolov3_get_helmet_onnx', methods=['POST'])
-@logger.catch()
-def get_helmet_onnx():
+@app.route('/yolov3_get_head_onnx', methods=['POST'])
+def get_head_onnx():
     params = request.json if request.method == "POST" else request.args
     image = base64_to_pil(params['img'])
     w, h = image.size
@@ -108,7 +103,7 @@ def get_helmet_onnx():
                                  nms_thres=conf['nms_iou'])
 
         if results[0] is None:
-            return jsonify_(200, 'empty', [])
+            return _get_result(200, 'empty', [])
 
         top_label = np.array(results[0][:, 6], dtype='int32')
         top_conf = results[0][:, 4] * results[0][:, 5]
@@ -136,7 +131,7 @@ def get_helmet_onnx():
             'width': int(x1 - x0)
         }
         data.append(item)
-    return jsonify_(200, 'success', data)
+    return _get_result(200, 'success', data)
 
 
 _HTTP = config.get_http()
@@ -144,7 +139,7 @@ _HTTP = config.get_http()
 
 def run():
     app.config['JSON_AS_ASCII'] = False
-    app.run(host=_HTTP.local, port=_HTTP.helmet_port, use_reloader=False)
+    app.run(host=_HTTP.local, port=_HTTP.head_port, use_reloader=False)
 
 
 if __name__ == "__main__":
