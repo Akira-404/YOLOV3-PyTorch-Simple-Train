@@ -209,7 +209,7 @@ def train(args):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser('YOLOV3 config.')
-    parser.add_argument('--config', '-c', default='data/voc/config.yaml', type=str,
-                        help='training config yaml. eg: person.yaml')
+    parser.add_argument('--config', '-c', default='data/widerface/config.yaml', type=str,
+                        help='training config yaml. eg: data/voc/config.yaml')
     args = parser.parse_args()
     train(args)

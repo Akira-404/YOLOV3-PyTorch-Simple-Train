@@ -1,7 +1,9 @@
+import os
 import glob
 import argparse
 import xml.etree.ElementTree as ET
 
+import cv2
 import matplotlib.pyplot as plt
 import numpy as np
 from tqdm import tqdm
@@ -64,7 +66,41 @@ def kmeans(box, k):
     return cluster, near
 
 
-def load_data(path):
+def yolo_load_data(path):
+    wh = []
+    labels = os.listdir(path)
+    for label_file in tqdm(labels):
+
+        label_file = os.path.join(path, label_file)
+        image_file = label_file.replace('labels', 'images').replace('txt', 'jpg')
+
+        # read the image
+        img = cv2.imread(image_file)
+        h, w, c = img.shape
+
+        if h <= 0 or w <= 0:
+            continue
+
+        # read the label file
+        with open(label_file, 'r') as f:
+            bbox_data = f.readlines()
+        for data in bbox_data:
+            data = data.split()
+            x_, y_, w_, h_ = eval(data[1]), eval(data[2]), eval(data[3]), eval(data[4])
+
+            x1 = w * x_ - 0.5 * w * w_
+            x2 = w * x_ + 0.5 * w * w_
+            y1 = h * y_ - 0.5 * h * h_
+            y2 = h * y_ + 0.5 * h * h_
+
+            # 得到宽高
+            bbox_w = x2 - x1
+            bbox_h = y2 - y1
+            wh.append([bbox_w, bbox_h])
+    return np.array(wh)
+
+
+def voc_load_data(path):
     data = []
     #   对于每一个xml都寻找box
     for xml_file in tqdm(glob.glob('{}/*xml'.format(path))):
@@ -100,9 +136,10 @@ def main(args):
 
     #   载入所有的xml
     #   存储格式为转化为比例后的width,height
-    print('Load xmls.')
-    data = load_data(path)
-    print('Load xmls done.')
+    print('Load labels.')
+    data = voc_load_data(path)
+    # data = yolo_load_data(path)
+    print('Load labels done.')
 
     #   使用k聚类算法
     print('K-means boxes.')
@@ -137,8 +174,8 @@ def main(args):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser('Get the anchors,just support VOC')
     parser.add_argument('-l', '--label_root', type=str,
-                        default='/home/ubuntu/data/VOCdevkit/VOC2007/VOCtrainval/Annotations',
-                        help='input the label root eg:-l VOCdevkit/VOC2007/Annotations')
+                        default='/home/ubuntu/data/wider_face/annotation',
+                        help='input the label root(yolo or voc support) eg:-l VOCdevkit/VOC2006/Annotations')
     parser.add_argument('-s', '--shape', type=int, default=416,
                         help='input the image shape eg: -s 416')
     args = parser.parse_args()

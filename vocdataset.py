@@ -123,6 +123,32 @@ def get_random_data(img_path: str = None,
         if not use_difficult and difficult:
             continue
 
+        # <<< this part is use to train wider face dataset <<<
+        if int(obj.find("truncated").text) == 1:
+            continue
+
+        if int(obj.find("difficult").text) == 1:
+            continue
+
+        if int(obj.find("blur").text) == 2:
+            continue
+
+        # if int(obj.find("expression").text) == 2:
+        #     continue
+
+        if int(obj.find("illumination").text) == 1:
+            continue
+
+        if int(obj.find("invalid").text) == 1:
+            continue
+
+        # if int(obj.find("occlusion").text) == 1:
+        #     continue
+
+        # if int(obj.find("pose").text) == 1:
+        #     continue
+        # <<< this part is use to train wider face dataset <<<
+
         bndbox = obj.find("bndbox")
         name = obj.find("name").text.lower().strip()
         # classes.append(name2id[name])  # 将类别映射回去

@@ -1,9 +1,9 @@
 #<<< dataset config <<<
-train_dataset_root: '/home/ubuntu/data/wider_face'
-test_dataset_root: '/home/ubuntu/data/wider_face'
-model_path: '/weights/head.pth' #预加载yolov3权重文件
-classes_path: 'data/widerface/classes.yaml' #数据集类别文件
-anchors_path: 'data/widerface/anchors.yaml' #数据集聚类anchors
+train_dataset_root: '/home/ubuntu/data/yolo/traffic_signs'
+test_dataset_root: '/home/ubuntu/data/yolo/traffic_signs'
+model_path: '' #预加载yolov3权重文件
+classes_path: 'data/reflective/classes.yaml' #数据集类别文件
+anchors_path: 'data/reflective/anchors.yaml' #数据集聚类anchors
 
 use_text: trainval
 use_difficult: False
@@ -48,6 +48,7 @@ momentum: 0.937
 weight_decay: 5e-4
 lr_decay_type: "cos"
 #<<< training config <<<
+
 
 #<<< perdict config <<<
 confidence: 0.5 #置信度

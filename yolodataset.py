@@ -1,13 +1,7 @@
 import os
 import copy
-from random import sample, shuffle
-import xml.etree.ElementTree as ET
 
-import cv2
-import torch
-import numpy as np
 from loguru import logger
-from torchvision import transforms
 from torch.utils.data.dataset import Dataset
 
 from utils.common import load_yaml, read_txt
@@ -125,7 +119,6 @@ def get_random_data(img_path: str = None,
     boxes = []
     for data in bbox_data:
         data = data.split()
-        # 根据第1部分公式进行转换
         x_, y_, w_, h_ = eval(data[1]), eval(data[2]), eval(data[3]), eval(data[4])
 
         x1 = w * x_ - 0.5 * w * w_
