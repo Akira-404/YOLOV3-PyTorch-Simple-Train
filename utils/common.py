@@ -15,7 +15,7 @@ ImageFile.LOAD_TRUNCATED_IMAGES = True
 def read_txt(path: str):
     assert path.endswith(".txt") is True, f'file type must be txt'
     assert os.path.exists(path) is True, f'{path} is error'
-    with open(path) as f:
+    with open(path, 'rt') as f:
         data = f.readlines()
     return data
 

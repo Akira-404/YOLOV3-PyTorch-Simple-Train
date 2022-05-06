@@ -15,7 +15,7 @@ from utils.image import image_normalization
 from utils.data_augmentation import *
 
 
-class VOCDataset(Dataset):
+class YOLODataset(Dataset):
 
     # 初始化类
     def __init__(self, config: str, train: bool = True):
@@ -25,34 +25,36 @@ class VOCDataset(Dataset):
 
         self._root = self.config['train_dataset_root'] if train else self.config['test_dataset_root']
 
-        self._use_difficult = self.config['use_difficult']
+        self.images_path = os.path.join(self._root, 'images')
+        self.labels_path = os.path.join(self._root, 'labels')
+
+        self.classes_file_path = os.path.join(self._root, 'classes.names')
+        self.train_file_path = os.path.join(self._root, 'train.txt')
+        self.test_file_path = os.path.join(self._root, 'test.txt')
+
         self._use_text = self.config['use_text']
         self._use_mosaic = self.config['use_mosaic']
-        self._classes_path = os.path.join(cwd, self.config['classes_path'])
 
-        self._anno_path = os.path.join(self._root, "Annotations", "{}.xml")
-        self._img_path = os.path.join(self._root, "JPEGImages", "{}.jpg")
-        self._imgset_path = os.path.join(self._root, "ImageSets", "Main", "{}.txt")
+        logger.info(f'[YOLODataset]::dataset _root: {self._root}')
+        logger.info(f'[YOLODataset]::images path: {self.images_path}')
+        logger.info(f'[YOLODataset]::labels path: {self.labels_path}')
+        logger.info(f'[YOLODataset]::classes file: {self.classes_file_path}')
+        logger.info(f'[YOLODataset]::train.txt path: {self.train_file_path}')
+        logger.info(f'[YOLODataset]::test.txt path: {self.test_file_path}')
 
-        logger.info(f'[VOCDataset]::dataset _root: {self._root}')
-        logger.info(f'[VOCDataset]::use difficult: {self._use_difficult}')
-        logger.info(f'[VOCDataset]::use text file: {self._use_text}')
-        logger.info(f'[VOCDataset]::classes path: {self._classes_path}')
-        logger.info(f'[VOCDataset]::annotation path: {self._anno_path}')
-        logger.info(f'[VOCDataset]::image path: {self._img_path}')
-        logger.info(f'[VOCDataset]::image set path: {self._imgset_path}')
-
-        # 读取trainval.txt中内容
-        self.img_ids = read_txt(self._imgset_path.format(self._use_text))
+        # 读取train.txt中内容
+        self.img_ids = read_txt(self.train_file_path)
 
         # ['000009', '000052']
         self.img_ids = [x.strip() for x in self.img_ids]
+        logger.info(f'[YOLODataset]::image len: {len(self.img_ids)}')
 
-        # load classes yaml
-        self.classes_cfg = load_yaml(self._classes_path)
-        self.classes_names = self.classes_cfg['names']
+        # read the classes.names
+        with open(self.classes_file_path, 'rt') as f:
+            self.classes_names = f.read().rstrip("\n").split("\n")
+
         self.name2id = dict(zip(self.classes_names, range(len(self.classes_names))))
-        logger.info(f'[VOCDataset]::[name:id]: {self.name2id}')
+        logger.info(f'[YOLODataset]::[name:id]: {self.name2id}')
 
         logger.info("Dataset init finished  ! !")
 
@@ -62,14 +64,12 @@ class VOCDataset(Dataset):
     def __getitem__(self, index):
         index = index % len(self.img_ids)
         img_id = self.img_ids[index]
-        img_path = self._img_path.format(img_id)
-        anno_path = self._anno_path.format(img_id)
+        img_file = os.path.join(self.images_path, img_id)
+        label_file = img_file.replace('images', 'labels').replace('jpg', 'txt')
 
-        image, boxes = get_random_data(img_path,
-                                       anno_path,
-                                       self.name2id,
-                                       self._use_difficult,
-                                       tuple(self.config['image_shape']),
+        image, boxes = get_random_data(img_path=img_file,
+                                       label_path=label_file,
+                                       resize=tuple(self.config['image_shape']),
                                        random=self.istrain)
 
         image = image_normalization(np.array(image, dtype=np.float32))
@@ -105,34 +105,35 @@ class VOCDataset(Dataset):
 
 
 def get_random_data(img_path: str = None,
-                    anno_path: str = None,
-                    name2id: dict = None,
-                    use_difficult: bool = False,
+                    label_path: str = None,
                     resize: tuple = None,
                     hue: float = .1,
                     sat: float = .7,
                     val: float = .4,
                     random: bool = False):
+    # read the image
     img = cv2.cvtColor(cv2.imread(img_path), cv2.COLOR_BGR2RGB)
+    # read the label
 
-    anno = ET.parse(anno_path).getroot()  # 读取xml文档的根节点
+    # format:类别序号 中心横坐标和宽度比 中心纵坐标和高度比 bbox宽度和image宽度之比 bbox高度和image高度之比
+    h, w, c = img.shape
+    # yolo标注数据文件名为786_rgb_0616.txt
+    # bbox_data = read_txt(label_path)
+    with open(label_path, 'r') as f:
+        bbox_data = f.readlines()
+
     boxes = []
+    for data in bbox_data:
+        data = data.split()
+        # 根据第1部分公式进行转换
+        x_, y_, w_, h_ = eval(data[1]), eval(data[2]), eval(data[3]), eval(data[4])
 
-    for obj in anno.iter("object"):
-        difficult = int(obj.find("difficult").text) == 1
-        if not use_difficult and difficult:
-            continue
+        x1 = w * x_ - 0.5 * w * w_
+        x2 = w * x_ + 0.5 * w * w_
+        y1 = h * y_ - 0.5 * h * h_
+        y2 = h * y_ + 0.5 * h * h_
 
-        bndbox = obj.find("bndbox")
-        name = obj.find("name").text.lower().strip()
-        # classes.append(name2id[name])  # 将类别映射回去
-        box = [
-            bndbox.find("xmin").text,
-            bndbox.find("ymin").text,
-            bndbox.find("xmax").text,
-            bndbox.find("ymax").text,
-            name2id[name]
-        ]
+        box = [x1, y1, x2, y2, data[0]]
 
         boxes.append(box)
 
@@ -172,7 +173,7 @@ def yolo_dataset_collate(batch):
 
 
 if __name__ == '__main__':
-    dataset = VOCDataset('data/voc/config.yaml')  # 实例化一个对象
+    dataset = YOLODataset('data/traffic_signs/config.yaml')  # 实例化一个对象
     image, boxes = dataset[0]  # 返回第一张图像及box和对应的类别
     logger.info(image.shape)
     logger.info(boxes)
