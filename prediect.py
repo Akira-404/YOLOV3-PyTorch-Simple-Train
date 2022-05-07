@@ -33,7 +33,7 @@ class Predict:
 
         self.classes_path = os.path.join(cwd, self.conf['classes_path'])
         self.anchors_path = os.path.join(cwd, self.conf['anchors_path'])
-        self.model_path = os.path.join(cwd, self.conf['model_path'])
+        self.model_path = os.path.join(cwd, self.conf['infer_model_path'])
 
         assert os.path.exists(self.classes_path) is True, self.classes_path
         assert os.path.exists(self.anchors_path) is True, self.anchors_path + 'is error'
@@ -56,7 +56,9 @@ class Predict:
         self.prepare_flag = False
 
     def get_model_with_weights(self, ignore_track: bool = False):
-        load_weights(self.net, self.model_path, self.device, ignore_track)
+        checkpoint = torch.load(self.model_path)
+        self.net.load_state_dict(checkpoint['state_dict'])
+        # load_weights(self.net, self.model_path, self.device, ignore_track)
         return self.net
 
     def get_model_without_weights(self):

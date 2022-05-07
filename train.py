@@ -173,6 +173,7 @@ def train(opt):
     # <<< checkpoint <<<
 
     if conf['Freeze_Train']:
+        logger.info('Freeze Train Begin.')
         for param in model.backbone.parameters():
             param.requires_grad = False
 
@@ -189,7 +190,6 @@ def train(opt):
     # <<< begin training model <<<
     unfreeze_flag = False  # use to init net args,just only once.
     save_period = 1
-    logger.info(f'Begin to train...')
 
     # from begin to end
     for curr_epoch in range(conf['Init_Epoch'], conf['Total_Epoch']):
@@ -244,7 +244,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser('YOLOV3 config.')
     parser.add_argument('--config', '-c', default='data/mask/config.yaml', type=str,
                         help='training config yaml. eg: data/voc/config.yaml')
-    parser.add_argument('--resume', '-r', default='logs/checkpoint/ckpt_ep30_loss0.pth', type=str,
+    parser.add_argument('--resume', '-r', default='', type=str,
                         help='xxx/xxx/checkpoint.pth')
     args = parser.parse_args()
     train(args)

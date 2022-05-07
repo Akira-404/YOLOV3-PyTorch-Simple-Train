@@ -112,9 +112,9 @@ if __name__ == '__main__':
     video path: /home/ubuntu/github/opencv/samples/data/vtest.avi
     '''
     parse = argparse.ArgumentParser('inference config')
-    parse.add_argument('-c', '--config', type=str, default='data/head/config.yaml',
+    parse.add_argument('-c', '--config', type=str, default='data/mask/config.yaml',
                        help='input config path')
-    parse.add_argument('-i', '--image', type=str, default='images/person.jpeg',
+    parse.add_argument('-i', '--image', type=str, default='/home/ubuntu/data/mask/test/mask2.jpg',
                        help='input image path')
     parse.add_argument('-v', '--video', type=str, default='',
                        help='input video path')
@@ -124,3 +124,4 @@ if __name__ == '__main__':
     parse.add_argument('-s', '--save_path', type=str, default='')
     args = parse.parse_args()
     main(args)
+
