@@ -1,7 +1,7 @@
 #<<< dataset config <<<
 train_dataset_root: '/home/ubuntu/data/wider_face'
 test_dataset_root: '/home/ubuntu/data/wider_face'
-model_path: '/weights/head.pth' #预加载yolov3权重文件
+model_path: 'weights/head.pth' #预加载yolov3权重文件
 classes_path: 'data/widerface/classes.yaml' #数据集类别文件
 anchors_path: 'data/widerface/anchors.yaml' #数据集聚类anchors
 

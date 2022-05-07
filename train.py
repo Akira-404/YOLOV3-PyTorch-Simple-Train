@@ -141,7 +141,7 @@ def train(args):
     optimizer.add_param_group({"params": pg1, "weight_decay": eval(conf['weight_decay'])})
     optimizer.add_param_group({"params": pg2})
 
-    lr_scheduler_func = get_lr_scheduler(conf['lr_decay_type'], init_lr_fit, min_lr_fit, conf['UnFreeze_Epoch'])
+    lr_scheduler_func = get_lr_scheduler(conf['lr_decay_type'], init_lr_fit, min_lr_fit, conf['Total_Epoch'])
     # <<< init learning rate <<<
 
     # <<< model loss <<<
@@ -202,7 +202,7 @@ def train(args):
                       optimizer,
                       curr_epoch,
                       epoch_step,
-                      conf['UnFreeze_Epoch'],
+                      conf['Total_Epoch'],
                       cuda,
                       save_period)
 
