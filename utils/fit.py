@@ -74,5 +74,5 @@ def fit_one_epoch(model,
             'epoch': curr_epoch,
         }
 
-        torch.save(checkpoint, f'logs/checkpoint/ckpt_ep{str(curr_epoch)}_loss{loss / epoch_step}.pth')
-        logger.success(f'checkpoint:logs/checkpoint/ckpt_ep{str(curr_epoch)}_loss{loss / epoch_step}.pth')
+        torch.save(checkpoint, f'logs/checkpoint/ckpt_ep{str(curr_epoch)}_loss{round(loss / epoch_step, 4)}.pth')
+        logger.success(f'checkpoint:logs/checkpoint/ckpt_ep{str(curr_epoch)}_loss{round(loss / epoch_step, 4)}.pth')

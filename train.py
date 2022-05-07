@@ -88,9 +88,9 @@ def train(opt):
         logger.info('Loading weights done.')
     # <<< 载入yolo weight  <<<
 
-    # <<< prepare dataset  <<<
     model_train = model.train()
 
+    # <<< prepare dataset  <<<
     if cuda:
         model_train = torch.nn.DataParallel(model)
         model_train = model_train.cuda()
@@ -172,6 +172,10 @@ def train(opt):
         logger.info('loading checkpoint done.')
     # <<< checkpoint <<<
 
+    if conf['Freeze_Train']:
+        for param in model.backbone.parameters():
+            param.requires_grad = False
+
     # <<< model loss <<<
     yolo_loss = YOLOLoss(anchors,
                          num_classes,
@@ -202,6 +206,7 @@ def train(opt):
 
             lr_scheduler_func = get_lr_scheduler(conf['lr_decay_type'], init_lr_fit, min_lr_fit, conf['Total_Epoch'])
 
+            logger.info('Unfreeze Training Begin.')
             for param in model.backbone.parameters():
                 param.requires_grad = True
             # <<< learning rate setting
@@ -239,7 +244,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser('YOLOV3 config.')
     parser.add_argument('--config', '-c', default='data/mask/config.yaml', type=str,
                         help='training config yaml. eg: data/voc/config.yaml')
-    parser.add_argument('--resume', '-r', default='logs/checkpoint/ckpt_ep3_loss0.47645998338483414.pth', type=str,
+    parser.add_argument('--resume', '-r', default='logs/checkpoint/ckpt_ep30_loss0.pth', type=str,
                         help='xxx/xxx/checkpoint.pth')
     args = parser.parse_args()
     train(args)
