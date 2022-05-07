@@ -1,8 +1,10 @@
 import os
-import yaml
 import math
+import random
 
+import yaml
 import torch
+import torch.backends.cudnn
 import numpy as np
 from tqdm import tqdm
 from PIL import ImageFile
@@ -251,6 +253,12 @@ def package_data(image_shape, top_label, top_conf, top_boxes, class_names):
     return data
 
 
-if __name__ == '__main__':
-    conf = load_yaml_conf('../train.yaml')
-    check_dataset(conf)
+def set_random_seed(seed: int = 0, deterministic: bool = False, benchmark: bool = False):
+    random.seed(seed)
+    np.random.random(seed)
+    torch.manual_seed(seed)
+    torch.cuda.manual_seed_all(seed)
+    if deterministic:
+        torch.backends.cudnn.deterministic = True
+    if benchmark:
+        torch.backends.cudnn.benchmark = True

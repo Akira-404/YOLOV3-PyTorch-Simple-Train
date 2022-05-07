@@ -1,3 +1,4 @@
+import os
 import torch
 from tqdm import tqdm
 from loguru import logger
@@ -8,7 +9,7 @@ def get_lr(optimizer):
         return param_group['lr']
 
 
-@logger.catch
+# @logger.catch
 def fit_one_epoch(model,
                   model_train,
                   train_dataloader,
@@ -63,4 +64,15 @@ def fit_one_epoch(model,
     logger.info('epoch:' + str(curr_epoch + 1) + '/' + str(epoch))
     logger.info(f'Total Loss: {loss / epoch_step}')
     if (curr_epoch + 1) % save_period == 0 or curr_epoch + 1 == epoch:
-        torch.save(model.state_dict(), f'logs/epoch{curr_epoch + 1}_loss{loss / epoch_step}.pth')
+        if not os.path.isdir("logs/checkpoint"):
+            os.mkdir("logs/checkpoint")
+
+        # torch.save(model.state_dict(), f'logs/epoch{curr_epoch + 1}_loss{loss / epoch_step}.pth')
+        checkpoint = {
+            'state_dict': model.state_dict(),
+            'optimizer': optimizer.state_dict(),
+            'epoch': curr_epoch,
+        }
+
+        torch.save(checkpoint, f'logs/checkpoint/ckpt_ep{str(curr_epoch)}_loss{loss / epoch_step}.pth')
+        logger.success(f'checkpoint:logs/checkpoint/ckpt_ep{str(curr_epoch)}_loss{loss / epoch_step}.pth')

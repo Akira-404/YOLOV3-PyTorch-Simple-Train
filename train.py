@@ -2,13 +2,11 @@ import os
 import platform
 import argparse
 
-from loguru import logger
 import torch
-import torch.backends.cudnn as cudnn
-
-import torch.optim as optim
 from torch import nn
+import torch.optim as optim
 from torch.utils.data import DataLoader
+from loguru import logger
 
 from modules.yolo import YOLO
 from modules.yolo_spp import YOLOSPP
@@ -16,13 +14,19 @@ from modules.loss import YOLOLoss, weights_init
 
 from utils.history import LossHistory
 from vocdataset import VOCDataset, yolo_dataset_collate
+from yolodataset import YOLODataset
 from utils.fit import fit_one_epoch
-from utils.common import get_anchors, get_classes, load_yaml, get_lr_scheduler, set_optimizer_lr, load_weights
+from utils.common import get_anchors, get_classes, load_yaml, get_lr_scheduler, set_optimizer_lr, load_weights, \
+    set_random_seed
 
 
-def config_info(args):
-    logger.info(f'[Train]::Input config yaml: {args.config}')
-    conf = load_yaml(args.config)
+def config_info(opt):
+    logger.info(f'[Train]::Input config yaml: {opt.config}')
+    conf = load_yaml(opt.config)
+
+    logger.info(f'[Train]::seed:{conf["seed"]}')
+    logger.info(f'[Train]::deterministic:{conf["deterministic"]}')
+    logger.info(f'[Train]::benchmark:{conf["benchmark"]}')
 
     cuda = True if (torch.cuda.is_available() and conf["cuda"]) else False
     device = torch.device('cuda' if cuda else 'cpu')
@@ -57,10 +61,12 @@ def config_info(args):
     return cuda, device, class_names, num_classes, anchors, num_anchors
 
 
-def train(args):
-    cuda, device, class_names, num_classes, anchors, num_anchors = config_info(args)
-    conf = load_yaml(args.config)
+def train(opt):
+    cuda, device, class_names, num_classes, anchors, num_anchors = config_info(opt)
+    conf = load_yaml(opt.config)
     cwd = os.path.dirname(__file__)
+
+    set_random_seed(conf['seed'], conf['deterministic'], conf['benchmark'])
 
     # <<< get the model <<<
     model = YOLO(conf['anchors_mask'], num_classes, conf['activation'])
@@ -75,7 +81,7 @@ def train(args):
     # <<< init model <<<
 
     # <<< 载入yolo weight  <<<
-    if conf['model_path'] != '':
+    if conf['model_path'] != '' and opt.resume is False:
         model_path = os.path.join(cwd, conf["model_path"])
         logger.info(f'Loading weights:{model_path}')
         load_weights(model, model_path, device)
@@ -87,10 +93,14 @@ def train(args):
 
     if cuda:
         model_train = torch.nn.DataParallel(model)
-        cudnn.benchmark = True
         model_train = model_train.cuda()
 
-    train_file = os.path.join(conf['train_dataset_root'], 'ImageSets/Main', 'trainval.txt')
+    train_file = None
+    if conf['voc']:
+        train_file = os.path.join(conf['train_dataset_root'], 'ImageSets/Main', 'trainval.txt')
+    elif conf['yolo']:
+        train_file = os.path.join(conf['train_dataset_root'], 'train.txt')
+
     with open(train_file) as f:
         train_lines = f.readlines()
 
@@ -103,7 +113,7 @@ def train(args):
     logger.info(f'[Train]::batch_size:{batch_size}')
     logger.info(f'[Train]::epoch step:{epoch_step}')
 
-    train_dataset = VOCDataset(args.config)
+    train_dataset = VOCDataset(opt.config) if conf['voc'] else YOLODataset(opt.config)
 
     conf['num_workers'] = 0 if platform.system() != 'Linux' else conf['num_workers']
 
@@ -144,6 +154,24 @@ def train(args):
     lr_scheduler_func = get_lr_scheduler(conf['lr_decay_type'], init_lr_fit, min_lr_fit, conf['Total_Epoch'])
     # <<< init learning rate <<<
 
+    # <<< checkpoint <<<
+    if opt.resume != '':
+        logger.info('loading checkpoint...')
+        # path_checkpoint = os.path.join(cwd, conf["model_path"])  # 断点路径
+        checkpoint = torch.load(opt.resume)  # 加载断点
+
+        logger.info('loading checkpoint.state_dict...')
+        model.load_state_dict(checkpoint['state_dict'])  # 加载模型可学习参数
+
+        logger.info('loading checkpoint.optimizer...')
+        optimizer.load_state_dict(checkpoint['optimizer'])  # 加载优化器参数
+
+        logger.info('loading checkpoint.epoch...')
+        conf['Init_Epoch'] = checkpoint['epoch']  # 设置开始的epoch
+
+        logger.info('loading checkpoint done.')
+    # <<< checkpoint <<<
+
     # <<< model loss <<<
     yolo_loss = YOLOLoss(anchors,
                          num_classes,
@@ -172,7 +200,7 @@ def train(args):
             init_lr_fit = max(batch_size / nbs * eval(conf['Init_lr']), 1e-4)
             min_lr_fit = max(batch_size / nbs * min_lr, 1e-6)
 
-            lr_scheduler_func = get_lr_scheduler(conf['lr_decay_type'], init_lr_fit, min_lr_fit, conf['UnFreeze_Epoch'])
+            lr_scheduler_func = get_lr_scheduler(conf['lr_decay_type'], init_lr_fit, min_lr_fit, conf['Total_Epoch'])
 
             for param in model.backbone.parameters():
                 param.requires_grad = True
@@ -209,7 +237,9 @@ def train(args):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser('YOLOV3 config.')
-    parser.add_argument('--config', '-c', default='data/widerface/config.yaml', type=str,
+    parser.add_argument('--config', '-c', default='data/mask/config.yaml', type=str,
                         help='training config yaml. eg: data/voc/config.yaml')
+    parser.add_argument('--resume', '-r', default='logs/checkpoint/ckpt_ep3_loss0.47645998338483414.pth', type=str,
+                        help='xxx/xxx/checkpoint.pth')
     args = parser.parse_args()
     train(args)

@@ -3,11 +3,11 @@
 voc: True
 yolo: False
 
-train_dataset_root: '/home/ubuntu/data/wider_face'
-test_dataset_root: '/home/ubuntu/data/wider_face'
+train_dataset_root: '/home/ubuntu/data/mask'
+test_dataset_root: '/home/ubuntu/data/mask'
 model_path: 'weights/head.pth' #预加载yolov3权重文件
-classes_path: 'data/widerface/classes.yaml' #数据集类别文件
-anchors_path: 'data/widerface/anchors.yaml' #数据集聚类anchors
+classes_path: 'data/mask/classes.yaml' #数据集类别文件
+anchors_path: 'data/mask/anchors.yaml' #数据集聚类anchors
 
 use_text: trainval
 use_difficult: False
@@ -20,11 +20,6 @@ train_percent: 0.9
 trainval_percent: 0.9
 #<<< dataset config <<<
 
-#<<< checkpoint <<<
-resume: False
-checkpoint_path: ''
-#<<< checkpoint <<<
-
 #<<< training config <<<
 seed: 0
 deterministic: True
@@ -35,9 +30,9 @@ num_workers: 8
 spp: [ ] #不使用SPP 则设为[]
 #spp: [ 5,9,13 ]
 
-#activation: mish #leakyrelu or mish
-activation: leakyrelu #leakyrelu or mish
-label_smoothing: 0 #if label_smoothing=0:不适用平滑标签
+activation: mish #leakyrelu or mish
+#activation: leakyrelu #leakyrelu or mish
+#label_smoothing: 0 #if label_smoothing=0:不适用平滑标签
 
 Init_Epoch: 0
 
@@ -46,8 +41,8 @@ anchors_mask: [ [ 6, 7, 8 ], [ 3, 4, 5 ], [ 0, 1, 2 ] ]
 Freeze_Train: True
 
 #冻结训练参数设置
-Freeze_Epoch: 50
-Freeze_batch_size: 16
+Freeze_Epoch: 30
+Freeze_batch_size: 8
 Freeze_lr: 1e-3
 
 #全网络训练参数设置

@@ -174,7 +174,7 @@ def main(args):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser('Get the anchors,just support VOC')
     parser.add_argument('-l', '--label_root', type=str,
-                        default='/home/ubuntu/data/wider_face/annotation',
+                        default='/home/ubuntu/data/mask/Annotations',
                         help='input the label root(yolo or voc support) eg:-l VOCdevkit/VOC2006/Annotations')
     parser.add_argument('-s', '--shape', type=int, default=416,
                         help='input the image shape eg: -s 416')
