@@ -1,5 +1,6 @@
 import os
 import cv2
+import xml.etree.ElementTree as ET
 
 
 def main():
@@ -14,10 +15,20 @@ def main():
     for xml_file in anno_dir:
         image_file = xml_file.replace('xml', 'jpg')
         image_file = os.path.join(root, 'JPEGImages', image_file)
-        print(image_file)
+        xml_file = os.path.join(anno_path, xml_file)
         im = cv2.imread(image_file)
+
+        anno = ET.parse(xml_file).getroot()  # 读取xml文档的根节点
+        for obj in anno.iter("object"):
+            bndbox = obj.find("bndbox")
+            xmin = int(bndbox.find("xmin").text)
+            ymin = int(bndbox.find("ymin").text)
+            xmax = int(bndbox.find("xmax").text)
+            ymax = int(bndbox.find("ymax").text)
+            cv2.rectangle(im, (xmin, ymin), (xmax, ymax), (0, 0, 255))
+
         cv2.imshow('image', im)
-        cv2.waitKey(30)
+        cv2.waitKey(300)
 
 
 # trainval_file = '/home/ubuntu/data/mask/ImageSets/Main/trainval.txt'

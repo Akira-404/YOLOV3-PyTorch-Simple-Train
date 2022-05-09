@@ -89,18 +89,12 @@ class VOCDataset(Dataset):
             # y = y * dh
             # h = h * dh
 
-            boxes_tmp = copy.deepcopy(boxes)
-            # this box =[xmin,ymin,xmax,ymax]
-            # [cx,cy.]=([x1,y1]+[x2,y2])/2
-            boxes[:, [0, 1]] = (boxes_tmp[:, [0, 1]] + boxes_tmp[:, [2, 3]]) / 2 - 1
-            # [w,h]=[x2,y2]-[x1,y1]
-            boxes[:, [2, 3]] = boxes_tmp[:, [2, 3]] - boxes_tmp[:, [0, 1]]
+            boxes[:, [0, 2]] = boxes[:, [0, 2]] / self.config['image_shape'][1]
+            boxes[:, [1, 3]] = boxes[:, [1, 3]] / self.config['image_shape'][0]
 
-            # [cx,w]/iw
-            # [cy,h]/ih
-            boxes[:, [0, 2]] = boxes[:, [0, 2]] / self.config['image_shape'][1]  # w
-            boxes[:, [1, 3]] = boxes[:, [1, 3]] / self.config['image_shape'][0]  # h
-            # return box=[cx,cy,w,h]
+            boxes[:, 2:4] = boxes[:, 2:4] - boxes[:, 0:2]
+            boxes[:, 0:2] = boxes[:, 0:2] + boxes[:, 2:4] / 2
+
         return image, boxes
 
 
@@ -119,9 +113,9 @@ def get_random_data(img_path: str = None,
     boxes = []
 
     for obj in anno.iter("object"):
-        # difficult = int(obj.find("difficult").text) == 1
-        # if not use_difficult and difficult:
-        #     continue
+        difficult = int(obj.find("difficult").text) == 1
+        if not use_difficult and difficult:
+            continue
 
         # <<< this part is use to train wider face dataset <<<
         # if int(obj.find("truncated").text) == 1:

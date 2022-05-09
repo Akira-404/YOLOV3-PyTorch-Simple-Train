@@ -5,8 +5,8 @@ yolo: False
 
 train_dataset_root: '/home/ubuntu/data/mask'
 test_dataset_root: '/home/ubuntu/data/mask'
-model_path: '' #预加载yolov3权重文件
-infer_model_path: 'logs/checkpoint/'
+model_path: 'weights/head.pth' #预加载yolov3权重文件
+infer_model_path: 'logs/checkpoint/ckpt_ep99_loss0.3466.pth'
 classes_path: 'data/mask/classes.yaml' #数据集类别文件
 anchors_path: 'data/mask/anchors.yaml' #数据集聚类anchors
 
@@ -47,7 +47,7 @@ Freeze_batch_size: 8
 Freeze_lr: 1e-3
 
 #全网络训练参数设置
-Total_Epoch: 100
+Total_Epoch: 50
 batch_size: 8
 lr: 1e-4
 
